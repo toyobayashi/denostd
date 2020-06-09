@@ -9,21 +9,25 @@ function changeSource (changeList) {
     if (!existsSync(filepath + '.copy')) {
       copyFileSync(filepath, filepath + '.copy')
     }
-    const src = readFileSync(filepath, 'utf8')
+    let src = readFileSync(filepath, 'utf8')
+    let lines = src.split(/\r?\n/)
 
-    const lines = src.split(/\r?\n/)
     for (let x = 0; x < item.opts.length; x++) {
       if (item.opts[x].type === 'remove') {
         const targetLine = Array.isArray(item.opts[x].line) ? item.opts[x].line : [item.opts[x].line, item.opts[x].line + 1]
         lines.splice(targetLine[0], targetLine[1] - targetLine[0])
+        src = lines.join(EOL)
       } else if (item.opts[x].type === 'insert') {
         const valueLines = item.opts[x].value.split(/\r?\n/)
         lines.splice(item.opts[x].line, 0, ...valueLines)
+        src = lines.join(EOL)
+      } else if (item.opts[x].type === 'replace') {
+        src = src.replace(item.opts[x].test, item.opts[x].value)
+        lines = src.split(/\r?\n/)
       }
     }
 
-    const newSrc = lines.join(EOL)
-    writeFileSync(filepath, newSrc, 'utf8')
+    writeFileSync(filepath, src, 'utf8')
   }
 }
 
