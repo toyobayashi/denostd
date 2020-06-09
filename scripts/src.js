@@ -5,7 +5,7 @@ const { EOL } = require('os')
 function changeSource (changeList) {
   for (let i = 0; i < changeList.length; i++) {
     const item = changeList[i]
-    const filepath = join(__dirname, '../std', item.path)
+    const filepath = join(__dirname, '..', item.path)
     if (!existsSync(filepath + '.copy')) {
       copyFileSync(filepath, filepath + '.copy')
     }
@@ -34,7 +34,7 @@ function changeSource (changeList) {
 function restoreSource (changeList) {
   for (let i = 0; i < changeList.length; i++) {
     const item = changeList[i]
-    const filepathNew = join(__dirname, '../std', item.path)
+    const filepathNew = join(__dirname, '..', item.path)
     const filepath = filepathNew + '.copy'
 
     unlinkSync(filepathNew)
