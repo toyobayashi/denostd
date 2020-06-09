@@ -1,0 +1,27 @@
+{
+  "name": "@tybys/denostd",
+  "version": "0.56.0-dev",
+  "description": "deno standard library porting",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "author": "toyobayashi",
+  "license": "MIT",
+  "keywords": [
+    "deno"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/toyobayashi/denostd.git"
+  },
+  "homepage": "https://github.com/toyobayashi/denostd#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {
+    "@microsoft/api-extractor": "^7.8.10",
+    "@rollup/plugin-typescript": "^4.1.2",
+    "rollup": "^2.15.0",
+    "rollup-plugin-terser": "^6.1.0",
+    "typescript": "^3.9.5"
+  }
+}
