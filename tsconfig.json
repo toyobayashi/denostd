@@ -1,0 +1,22 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "es2019",
+    "declaration": true,
+    "sourceMap": true,
+    "outDir": "./dist/cjs"
+  },
+  "include": [
+    "std/async",
+    "std/bytes",
+    "std/fmt",
+    "std/testing",
+    "std/uuid",
+  ],
+  "exclude": [
+    "std/**/*test.ts",
+    "std/**/*example.ts",
+    "std/**/tests/**/*"
+  ]
+}

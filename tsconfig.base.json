@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "allowJs": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitAny": false,
+    "noImplicitThis": true,
+    "noImplicitReturns": true,
+    "strictNullChecks": false,
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "experimentalDecorators": true
+  }
+}

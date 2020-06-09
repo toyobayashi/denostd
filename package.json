@@ -3,6 +3,9 @@
   "version": "0.56.0-dev",
   "description": "deno standard library porting",
   "main": "dist/cjs/index.js",
+  "scripts": {
+    "deno": "cd typings&&deno types>lib.deno.d.ts&&deno -V>version"
+  },
   "module": "dist/esm/index.js",
   "author": "toyobayashi",
   "license": "MIT",
