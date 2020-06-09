@@ -117,5 +117,40 @@ export function delay(ms: number): Promise<void> {
         value: 'throw new Error($1)'
       }
     ]
+  },
+  {
+    path: 'std/path/_constants.ts',
+    opts: [
+      {
+        type: 'replace',
+        test: /let isWindows = false.*(\r?\n.*)*.*includes\("Win"\);\r?\n\}/g,
+        value: 'const isWindows = (typeof process !== "undefined" ? (process.platform === "win32") : navigator.appVersion.includes("Win"));'
+      }
+    ]
+  },
+  {
+    path: 'std/path/posix.ts',
+    opts: [
+      {
+        type: 'replace',
+        test: /Deno\.cwd\(\)/g,
+        value: '(typeof process !== "undefined" ? process.cwd() : "/")'
+      }
+    ]
+  },
+  {
+    path: 'std/path/win32.ts',
+    opts: [
+      {
+        type: 'replace',
+        test: /Deno\.cwd\(\)/g,
+        value: '(typeof process !== "undefined" ? process.cwd() : "C:\\\\")'
+      },
+      {
+        type: 'replace',
+        test: /Deno\.env\.get\(`=\$\{resolvedDevice\}`\)/g,
+        value: '(typeof process !== "undefined" ? process.env[`=${resolvedDevice}`] : "C:\\\\")'
+      }
+    ]
   }
 ]

@@ -9,7 +9,10 @@
   "include": [
     "std/async",
     "std/bytes",
+    "std/datetime",
     "std/fmt",
+    "std/hash",
+    "std/path",
     "std/testing",
     "std/uuid",
   ],
