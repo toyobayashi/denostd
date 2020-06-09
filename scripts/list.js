@@ -32,20 +32,9 @@ module.exports = [
     path: 'std/async/delay.ts',
     opts: [
       {
-        type: 'remove',
-        line: [2, 9]
-      },
-      {
-        type: 'insert',
-        line: 2,
-        value: `
-export function delay(ms: number): Promise<void> {
-  return new Promise((res) => {
-    setTimeout((): void => {
-      res();
-    }, ms)
-  });
-}`
+        type: 'replace',
+        test: '(res): number',
+        value: '(res): any'
       }
     ]
   },
@@ -53,13 +42,9 @@ export function delay(ms: number): Promise<void> {
     path: 'std/_util/deep_assign.ts',
     opts: [
       {
-        type: 'remove',
-        line: 10
-      },
-      {
-        type: 'insert',
-        line: 10,
-        value: `return undefined;`
+        type: 'replace',
+        test: /(if\s*\(!source.*\{\r?\n\s*)(return;)/,
+        value: '$1return undefined;'
       }
     ]
   },
@@ -69,18 +54,13 @@ export function delay(ms: number): Promise<void> {
       {
         type: 'replace',
         test: 'Deno.stdout.writeSync(new TextEncoder().encode(s));',
-        value: 'console.log(new TextEncoder().encode(s));'
+        value: 'console.log(s);'
       },
       {
         type: 'insert',
         line: 0,
         value: `import * as Deno from "../../polyfill/deno.ts";`
       }
-      // {
-      //   type: 'replace',
-      //   test: /Deno\.inspect\(/g,
-      //   value: 'console.log(new TextEncoder().encode(s));'
-      // }
     ]
   },
   {
