@@ -10,3 +10,4 @@ node_modules
 babel.config.js
 package-lock.json
 tsconf*.json
+api-extractor.json

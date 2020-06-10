@@ -4,6 +4,7 @@
     "module": "esnext",
     "target": "es2019",
     "declaration": true,
+    "sourceMap": false,
     "outDir": "./dist/esm"
   },
   "include": [
