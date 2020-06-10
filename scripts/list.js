@@ -142,5 +142,30 @@ module.exports = [
         value: 'new URL(url as any)'
       }
     ]
+  },
+  {
+    path: 'std/node/querystring.ts',
+    opts: [
+      {
+        type: 'insert',
+        line: 0,
+        value: `import * as Deno from "../../polyfill/deno.ts";`
+      }
+    ]
+  },
+  {
+    path: 'std/node/url.ts',
+    opts: [
+      {
+        type: 'insert',
+        line: 0,
+        value: `import * as Deno from "../../polyfill/deno.ts";`
+      },
+      {
+        type: 'replace',
+        test: /const isWindows = Deno\.build.+?;/g,
+        value: 'const isWindows = (typeof process !== "undefined" ? (process.platform === "win32") : navigator.appVersion.includes("Win"));'
+      }
+    ]
   }
 ]
