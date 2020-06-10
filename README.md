@@ -16,6 +16,20 @@ Available module list:
 
 * hash
 
+* node
+
+   * events
+
+   * path
+
+   * querystring
+
+   * timers
+
+   * url
+
+   * util
+
 * path
 
 * testing
