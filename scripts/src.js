@@ -1,15 +1,14 @@
-const { readFileSync, copyFileSync, writeFileSync, unlinkSync, renameSync, existsSync } = require('fs')
+const { existsSync, promises } = require('fs')
 const { join } = require('path')
 const { EOL } = require('os')
 
 function changeSource (changeList) {
-  for (let i = 0; i < changeList.length; i++) {
-    const item = changeList[i]
+  return Promise.all(changeList.map(async item => {
     const filepath = join(__dirname, '..', item.path)
     if (!existsSync(filepath + '.copy')) {
-      copyFileSync(filepath, filepath + '.copy')
+      await promises.copyFile(filepath, filepath + '.copy')
     }
-    let src = readFileSync(filepath, 'utf8')
+    let src = await promises.readFile(filepath, 'utf8')
     let lines = src.split(/\r?\n/)
 
     for (let x = 0; x < item.opts.length; x++) {
@@ -27,19 +26,18 @@ function changeSource (changeList) {
       }
     }
 
-    writeFileSync(filepath, src, 'utf8')
-  }
+    await promises.writeFile(filepath, src, 'utf8')
+  }))
 }
 
 function restoreSource (changeList) {
-  for (let i = 0; i < changeList.length; i++) {
-    const item = changeList[i]
+  return Promise.all(changeList.map(async item => {
     const filepathNew = join(__dirname, '..', item.path)
     const filepath = filepathNew + '.copy'
 
-    unlinkSync(filepathNew)
-    renameSync(filepath, filepathNew)
-  }
+    await promises.unlink(filepathNew)
+    await promises.rename(filepath, filepathNew)
+  }))
 }
 
 exports.changeSource = changeSource
