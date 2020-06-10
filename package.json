@@ -21,8 +21,13 @@
     "access": "public"
   },
   "devDependencies": {
+    "@babel/core": "^7.10.2",
+    "@babel/plugin-transform-runtime": "^7.10.1",
+    "@babel/preset-env": "^7.10.2",
     "@microsoft/api-extractor": "^7.8.10",
+    "@rollup/plugin-babel": "^5.0.3",
     "@rollup/plugin-json": "^4.1.0",
+    "@rollup/plugin-node-resolve": "^8.0.1",
     "@rollup/plugin-replace": "^2.3.3",
     "@tybys/find-npm-prefix": "^2.0.0",
     "@types/node": "^12.12.47",
