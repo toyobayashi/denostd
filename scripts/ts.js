@@ -47,7 +47,7 @@ function compile (tsconfig) {
   const oldWriteFile = compilerHost.writeFile
   compilerHost.writeFile = function (fileName, data, writeByteOrderMark, onError, sourceFiles) {
     // console.log(fileName)
-    let newData = data.replace(/(import\s+.+?\s+from\s+)"(.+)\.tsx?"/g, '$1"$2"')
+    let newData = data.replace(/((import|export)\s+.+?\s+from\s+)"(.+)\.tsx?"/g, '$1"$3"')
       .replace(/(import\s+)"(.+)\.tsx?"/g, '$1"$2"')
       .replace(/import\("(.+)\.tsx?"\)/g, 'import("$1")')
       .replace(/require\("(.+)\.tsx?"\)/g, 'require("$1")')
