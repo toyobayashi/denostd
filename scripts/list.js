@@ -54,7 +54,7 @@ module.exports = [
       {
         type: 'replace',
         test: 'Deno.stdout.writeSync(new TextEncoder().encode(s));',
-        value: 'console.log(s);'
+        value: 'typeof process !== "undefined" ? process.stdout.write(new TextEncoder().encode(s)) : console.log(s);'
       },
       {
         type: 'insert',
@@ -69,7 +69,7 @@ module.exports = [
       {
         type: 'replace',
         test: 'const [state, result] = Deno.core.getPromiseDetails(value);',
-        value: 'const [state, result] = [-1, "[Not Implemented]", value]'
+        value: 'const [state, result] = [-1, "[Not Implemented]", value];'
       }
     ]
   },
@@ -115,6 +115,11 @@ module.exports = [
         type: 'replace',
         test: /Deno\.cwd\(\)/g,
         value: '(typeof process !== "undefined" ? process.cwd() : "/")'
+      },
+      {
+        type: 'replace',
+        test: 'new URL(url)',
+        value: 'new URL(url as any)'
       }
     ]
   },
@@ -130,6 +135,11 @@ module.exports = [
         type: 'replace',
         test: /Deno\.env\.get\(`=\$\{resolvedDevice\}`\)/g,
         value: '(typeof process !== "undefined" ? process.env[`=${resolvedDevice}`] : "C:\\\\")'
+      },
+      {
+        type: 'replace',
+        test: 'new URL(url)',
+        value: 'new URL(url as any)'
       }
     ]
   }
