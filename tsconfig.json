@@ -21,7 +21,7 @@
     "std/node/util.ts",
     "std/path",
     "std/testing",
-    "std/uuid",
+    "std/uuid"
   ],
   "exclude": [
     "std/**/*test.ts",

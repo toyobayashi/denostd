@@ -2,7 +2,7 @@
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
     "module": "esnext",
-    "target": "es2019",
+    "target": "es6",
     "declaration": true,
     "outDir": "./dist/esm"
   },
@@ -20,7 +20,7 @@
     "std/node/util.ts",
     "std/path",
     "std/testing",
-    "std/uuid",
+    "std/uuid"
   ],
   "exclude": [
     "std/**/*test.ts",

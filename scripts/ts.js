@@ -1,6 +1,7 @@
 const { dirname, basename, extname, join } = require('path')
 const { existsSync } = require('fs')
 const { builtinModules } = require('module')
+const { getPath } = require('./path.js')
 
 const ts = require('typescript')
 
@@ -47,10 +48,10 @@ function compile (tsconfig) {
   const oldWriteFile = compilerHost.writeFile
   compilerHost.writeFile = function (fileName, data, writeByteOrderMark, onError, sourceFiles) {
     // console.log(fileName)
-    let newData = data.replace(/((import|export)\s+.+?\s+from\s+)"(.+)\.tsx?"/g, '$1"$3"')
-      .replace(/(import\s+)"(.+)\.tsx?"/g, '$1"$2"')
-      .replace(/import\("(.+)\.tsx?"\)/g, 'import("$1")')
-      .replace(/require\("(.+)\.tsx?"\)/g, 'require("$1")')
+    let newData = data.replace(/((import|export)\s+.+?\s+from\s+)['"](.+)\.tsx?['"]/g, '$1"$3"')
+      .replace(/(import\s+)['"](.+)\.tsx?['"]/g, '$1"$2"')
+      .replace(/import\(['"](.+)\.tsx?['"]\)/g, 'import("$1")')
+      .replace(/require\(['"](.+)\.tsx?['"]\)/g, 'require("$1")')
     // if (!compilerOptions.options.module || compilerOptions.options.module === ts.ModuleKind.CommonJS) {
 
     // } else if (compilerOptions.options.module >= ts.ModuleKind.ES2015) {
@@ -67,7 +68,7 @@ function compile (tsconfig) {
       if (request[0] !== '.') {
         if (builtinModules.includes(request)) {
           return {
-            resolvedFileName: join(__dirname, '../node_modules/@types/node', request + '.d.ts'),
+            resolvedFileName: getPath('node_modules/@types/node', request + '.d.ts'),
             isExternalLibraryImport: true
           }
         }

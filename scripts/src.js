@@ -1,10 +1,10 @@
 const { existsSync, promises } = require('fs')
-const { join } = require('path')
 const { EOL } = require('os')
+const { getPath } = require('./path.js')
 
 function changeSource (changeList) {
   return Promise.all(changeList.map(async item => {
-    const filepath = join(__dirname, '..', item.path)
+    const filepath = getPath(item.path)
     if (!existsSync(filepath + '.copy')) {
       await promises.copyFile(filepath, filepath + '.copy')
     }
@@ -32,7 +32,7 @@ function changeSource (changeList) {
 
 function restoreSource (changeList) {
   return Promise.all(changeList.map(async item => {
-    const filepathNew = join(__dirname, '..', item.path)
+    const filepathNew = getPath(item.path)
     const filepath = filepathNew + '.copy'
 
     await promises.unlink(filepathNew)
