@@ -4,7 +4,8 @@
   "description": "deno standard library porting",
   "main": "dist/cjs/index.js",
   "scripts": {
-    "deno": "cd typings&&deno types>lib.deno.d.ts&&deno -V>version"
+    "deno": "cd typings&&deno types>lib.deno.d.ts&&deno -V>version",
+    "prepare": "node ./scripts/index.js"
   },
   "module": "dist/esm/index.js",
   "author": "toyobayashi",
