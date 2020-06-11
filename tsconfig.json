@@ -8,6 +8,7 @@
     "outDir": "./dist/cjs"
   },
   "include": [
+    "index.ts",
     "std/async",
     "std/bytes",
     "std/datetime",

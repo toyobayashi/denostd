@@ -1,7 +1,7 @@
 const { compile } = require('./ts.js')
 const srcUtil = require('./src.js')
 const { getPath } = require('./path.js')
-const { bundle, createConfig } = require('./rollup.js')
+const { bundle, createConfig, getRollupConfig } = require('./rollup.js')
 const { extractApi } = require('./apiex.js')
 
 const list = require('./list.js')
@@ -27,6 +27,20 @@ const umdList = [
   ...createConfig('testing', 'bench.js', 'bench', 'testing.bench'),
   ...createConfig('testing', 'diff.js', 'diff', 'testing.diff'),
   ...createConfig('uuid'),
+  ...([
+    getRollupConfig({
+      entry: `dist/esm/index.js`,
+      output: `denostd`,
+      ns: `denostd`,
+      minify: false
+    }),
+    getRollupConfig({
+      entry: `dist/esm/index.js`,
+      output: `denostd`,
+      ns: `denostd`,
+      minify: true
+    })
+  ])
 ]
 
 function extractApis () {
