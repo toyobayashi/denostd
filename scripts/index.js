@@ -30,32 +30,32 @@ const umdList = [
 ]
 
 function extractApis () {
-  extractApi('async')
-  extractApi('bytes')
-  extractApi('datetime')
-  extractApi('fmt', 'printf', 'fmt')
-  extractApi('hash', 'fnv', 'fnv', 'hash.fnv')
-  extractApi('hash', 'md5', 'md5', 'hash.md5')
-  extractApi('hash', 'sha1', 'sha1', 'hash.sha1')
-  extractApi('hash', 'sha256', 'sha256', 'hash.sha256')
-  extractApi('hash', 'sha512', 'sha512', 'hash.sha512')
-  extractApi('node', 'events', 'events', 'node.events')
+  // extractApi('async')
+  // extractApi('bytes')
+  // extractApi('datetime')
+  // extractApi('fmt', 'printf', 'fmt')
+  // extractApi('hash', 'fnv', 'fnv', 'hash.fnv')
+  // extractApi('hash', 'md5', 'md5', 'hash.md5')
+  // extractApi('hash', 'sha1', 'sha1', 'hash.sha1')
+  // extractApi('hash', 'sha256', 'sha256', 'hash.sha256')
+  // extractApi('hash', 'sha512', 'sha512', 'hash.sha512')
+  // extractApi('node', 'events', 'events', 'node.events')
 
   // extractApi('node', 'path', 'path', 'node.path')
 
-  extractApi('node', 'querystring', 'querystring', 'node.querystring')
-  extractApi('node', 'timers', 'timers', 'node.timers')
-  extractApi('node', 'url', 'url', 'node.url')
+  // extractApi('node', 'querystring', 'querystring', 'node.querystring')
+  // extractApi('node', 'timers', 'timers', 'node.timers')
+  // extractApi('node', 'url', 'url', 'node.url')
 
   // extractApi('node', 'util', 'util', 'node.util')
 
   // Internal Error: getResolvedModule() could not resolve module name "./_interface"
-  // extractApi('path')
+  extractApi('path')
 
-  extractApi('testing', 'asserts', 'asserts', 'testing.asserts')
-  extractApi('testing', 'bench', 'bench', 'testing.bench')
-  extractApi('testing', 'diff', 'diff', 'testing.diff')
-  extractApi('uuid')
+  // extractApi('testing', 'asserts', 'asserts', 'testing.asserts')
+  // extractApi('testing', 'bench', 'bench', 'testing.bench')
+  // extractApi('testing', 'diff', 'diff', 'testing.diff')
+  // extractApi('uuid')
 }
 
 async function main () {
