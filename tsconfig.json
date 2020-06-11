@@ -9,20 +9,20 @@
   },
   "include": [
     "index.ts",
-    "std/async",
-    "std/bytes",
-    "std/datetime",
-    "std/fmt",
-    "std/hash",
+    "std/async/mod.ts",
+    "std/bytes/mod.ts",
+    "std/datetime/mod.ts",
+    "std/fmt/printf.ts",
+    "std/hash/mod.ts",
     "std/node/events.ts",
     "std/node/path.ts",
     "std/node/querystring.ts",
     "std/node/timers.ts",
     "std/node/url.ts",
     "std/node/util.ts",
-    "std/path",
-    "std/testing",
-    "std/uuid"
+    "std/path/mod.ts",
+    "std/testing/mod.ts",
+    "std/uuid/mod.ts"
   ],
   "exclude": [
     "std/**/*test.ts",
