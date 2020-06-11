@@ -40,6 +40,10 @@ function getRollupConfig (opts) {
           babelHelpers: 'bundled'
         }),
         ...(minify ? [rollupTerser({
+          output: {
+            comments: false,
+            beautify: false
+          },
           ...(terserOptions || {}),
           module: (terserOptions && terserOptions.module) || (['es', 'esm', 'module']).includes(format)
         })] : [])
