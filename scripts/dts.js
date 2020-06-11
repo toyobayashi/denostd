@@ -64,7 +64,7 @@ function applyChange (outDir) {
         }
       }
     }
-    let code = dts[key].code.replace(/declare /g, '').replace(/export /g, '')
+    let code = dts[key].code.replace(/declare /g, '').replace(/export\s+\{\s*\};/g, '')
     if (code.includes('//# sourceMappingURL=')) {
       code = code.replace(/(\/\/# sourceMappingURL=(.*)(\r?\n)?)/g, `}${EOL}export default ${dts[key].ns};${EOL}$1${EOL}`)
     } else {
