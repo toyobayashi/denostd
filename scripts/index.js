@@ -15,7 +15,7 @@ const tsEntries = [
   { entry: 'std/testing/bench.ts', compilerOptions: { target: ts.ScriptTarget.ES5, downlevelIteration: true, outDir: getPath('dist/esm/std') } }
 ]
 
-const umdList = [
+const browserlist = [
   ...createConfig('async'),
   ...createConfig('bytes'),
   ...createConfig('datetime'),
@@ -75,8 +75,8 @@ function extractApis () {
   // extractApi('node', 'util', 'util', 'node.util')
 
   extractApi('path')
-  const dest = getPath('dist/umd/node/path.d.ts')
-  copyFileSync(getPath('dist/umd/path/path.d.ts'), dest)
+  const dest = getPath('dist/browser/node/path.d.ts')
+  copyFileSync(getPath('dist/browser/path/path.d.ts'), dest)
   const code = readFileSync(dest, 'utf8').split(/\r?\n/)
   code.splice(1, 0, 'export namespace node {')
   code.push('}')
@@ -104,13 +104,14 @@ async function main () {
     console.log('Overwrite async ...')
     compileForRollup(tsEntries)
   } catch (err) {
-    console.log(err)
+    await srcUtil.restoreSource(list)
+    throw err
   }
   await srcUtil.restoreSource(list)
 
-  console.log('Output umd ...')
-  await bundle(umdList)
-  console.log('Output umd .d.ts ...')
+  console.log('Output browser code ...')
+  await bundle(browserlist)
+  console.log('Output .d.ts ...')
   extractApis()
 }
 

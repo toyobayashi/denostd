@@ -1,6 +1,7 @@
 const { getPath } = require('./path.js')
+const { readFileSync, writeFileSync } = require('fs')
 
-const outputPrefix = getPath('dist/umd')
+const outputPrefix = getPath('dist/browser')
 
 /**
  * @param {{ entry: string; output: string; ns: string; minify?: boolean; terserOptions?: import('rollup-plugin-terser').Options }} opts 
@@ -18,7 +19,7 @@ function getRollupConfig (opts) {
   const rollupBabel = require('@rollup/plugin-babel').default
 
   const outputFilename = minify ? getPath(outputPrefix, `${output}.min.js`) : getPath(outputPrefix, `${output}.js`)
-  const format = 'umd'
+  const format = 'iife'
   return {
     input: {
       input: getPath(entry),
@@ -63,9 +64,12 @@ async function bundle (configList, replaceESModule) {
   const rollup = require('rollup').rollup
 
   await Promise.all(configList.map(conf => rollup(conf.input).then(bundle => bundle.write(conf.output))))
-  if (replaceESModule === true) {
-    configList.forEach(conf => {
-      let code = readFileSync(getPath(conf.output.file), 'utf8')
+
+  configList.forEach(conf => {
+    let code = readFileSync(getPath(conf.output.file), 'utf8')
+    code = code.replace(/this\.denostd/g, 'window.denostd')
+      .replace(/var denostd(\s*=)/g, 'window.denostd$1')
+    if (replaceESModule === true) {
       code = code.replace(/(.\s*)?Object\.defineProperty\s*\(\s*(exports|\S{1})\s*,\s*(['"])__esModule['"]\s*,\s*\{\s*value\s*:\s*(.*?)\s*\}\s*\)\s*;?/g, (_match, token, exp, quote, value) => {
         const iifeTemplate = (content, replaceVar) => {
           if (replaceVar != null && replaceVar !== '') {
@@ -88,9 +92,9 @@ async function bundle (configList, replaceESModule) {
         }
       })
       code = code.replace(/exports\.default/g, 'exports[\'default\']')
-      writeFileSync(getPath(conf.output.file), code, 'utf8')
-    })
-  }
+    }
+    writeFileSync(getPath(conf.output.file), code, 'utf8')
+  })
 }
 
 function createConfig (mod, entry, out, ns) {

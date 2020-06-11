@@ -41,22 +41,11 @@ function invokeApiExtractor (entry, output) {
     throw new Error(`API Extractor completed with ${extractorResult.errorCount} errors`
       + ` and ${extractorResult.warningCount} warnings`)
   }
-
-  // const dts = fs.readFileSync(output, 'utf8')
-  // let globalDts = dts.replace(/declare\s/g, '').replace(/export \{ \}/g, '')
-  // globalDts = globalDts.replace(/export default (\S+);/g, 'export { $1 as default }')
-  // const prefix = ns.indexOf('.') === -1
-  //   ? `declare namespace denostd {${EOL}export namespace ${ns} {${EOL}`
-  //   : `declare namespace denostd {${EOL}export namespace ${ns.split('.')[0]} {${EOL}export namespace ${ns.split('.')[1]} {${EOL}`
-  
-  // const suffix = ns.indexOf('.') === -1 ? `${EOL}}${EOL}}${EOL}` : `${EOL}}${EOL}}${EOL}}${EOL}`
-  // globalDts = `${prefix}${globalDts}${suffix}`
-  // fs.writeFileSync(output, globalDts, 'utf8')
 }
 
 function extractApi (mod, entry, out, ns) {
   const prefix = 'dist/esm/std'
-  const dtsPath = getPath('dist/umd', mod, (out || mod) + '.d.ts')
+  const dtsPath = getPath('dist/browser', mod, (out || mod) + '.d.ts')
   let info = dtsHack.applyChange(getPath(prefix, mod))
   try {
     invokeApiExtractor(getPath(prefix, mod, (entry || 'mod') + '.d.ts'), dtsPath)
