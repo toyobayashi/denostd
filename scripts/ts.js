@@ -16,7 +16,7 @@ class TSError extends Error {
   }
 }
 
-function compile (tsconfig) {
+function compile (tsconfig, opts) {
   const parseConfigHost = {
     fileExists: ts.sys.fileExists,
     readFile: ts.sys.readFile,
@@ -38,6 +38,14 @@ function compile (tsconfig) {
     parseConfigHost,
     dirname(tsconfig)
   )
+
+  if (opts !== undefined) {
+    compilerOptions.options = {
+      ...compilerOptions.options,
+      ...opts.compilerOptions
+    }
+    compilerOptions.fileNames = [getPath(opts.entry)]
+  }
 
   if (compilerOptions.errors.length) {
     throw new TSError(compilerOptions.errors[0].messageText, compilerOptions.errors[0].code)

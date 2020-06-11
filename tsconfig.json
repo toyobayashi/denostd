@@ -13,7 +13,7 @@
     "std/bytes/mod.ts",
     "std/datetime/mod.ts",
     "std/fmt/printf.ts",
-    "std/hash/mod.ts",
+    "std/hash",
     "std/node/events.ts",
     "std/node/path.ts",
     "std/node/querystring.ts",
@@ -21,7 +21,7 @@
     "std/node/url.ts",
     "std/node/util.ts",
     "std/path/mod.ts",
-    "std/testing/mod.ts",
+    "std/testing",
     "std/uuid/mod.ts"
   ],
   "exclude": [

@@ -3,8 +3,15 @@ const srcUtil = require('./src.js')
 const { getPath } = require('./path.js')
 const { bundle, createConfig, getRollupConfig } = require('./rollup.js')
 const { extractApi } = require('./apiex.js')
+const ts = require('typescript')
 
 const list = require('./list.js')
+
+const tsEntries = [
+  { entry: 'std/async/mod.ts', compilerOptions: { target: ts.ScriptTarget.ES5, downlevelIteration: true, outDir: getPath('dist/esm/std/async') } },
+  { entry: 'std/testing/asserts.ts', compilerOptions: { target: ts.ScriptTarget.ES5, downlevelIteration: true, outDir: getPath('dist/esm/std') } },
+  { entry: 'std/testing/bench.ts', compilerOptions: { target: ts.ScriptTarget.ES5, downlevelIteration: true, outDir: getPath('dist/esm/std') } }
+]
 
 const umdList = [
   ...createConfig('async'),
@@ -72,6 +79,12 @@ function extractApis () {
   extractApi('uuid')
 }
 
+function compileForRollup (tsEntries) {
+  for (let i = 0; i < tsEntries.length; i++) {
+    compile(getPath('tsconfig.esm.json'), tsEntries[i])
+  }
+}
+
 async function main () {
   await srcUtil.changeSource(list)
   try {
@@ -79,6 +92,8 @@ async function main () {
     compile(getPath('tsconfig.json'))
     console.log('Output esm ...')
     compile(getPath('tsconfig.esm.json'))
+    console.log('Overwrite async ...')
+    compileForRollup(tsEntries)
   } catch (err) {
     console.log(err)
   }
