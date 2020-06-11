@@ -2,7 +2,7 @@ const { compile } = require('./ts.js')
 const srcUtil = require('./src.js')
 const { getPath } = require('./path.js')
 const { bundle, createConfig, getRollupConfig } = require('./rollup.js')
-const { extractApi } = require('./apiex.js')
+const { extractApi, extractEntryApi } = require('./apiex.js')
 const ts = require('typescript')
 const { copyFileSync, readFileSync, writeFileSync } = require('fs')
 const { EOL } = require('os')
@@ -122,6 +122,7 @@ async function main () {
   await bundle(browserlist)
   console.log('Output .d.ts ...')
   extractApis()
+  // extractEntryApi()
 }
 
 main().catch(err => console.log(err))

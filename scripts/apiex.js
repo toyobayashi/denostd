@@ -57,5 +57,26 @@ function extractApi (mod, entry, out, ns) {
   dtsHack.resolveDeclarationFile(dtsPath, ns || mod, 'iife')
 }
 
+function extractEntryApi () {
+  const dtsPath = getPath('dist/browser/denostd.d.ts')
+  let info = dtsHack.applyChange(getPath('dist/esm'))
+  try {
+    invokeApiExtractor(getPath('dist/esm/index.d.ts'), dtsPath)
+  } catch (err) {
+    dtsHack.revertChange(info)
+    throw err
+  }
+  dtsHack.revertChange(info)
+  const dts = fs.readFileSync(dtsPath, 'utf8')
+  let globalDts = dts.replace(/declare\s/g, '')
+  globalDts = globalDts.replace(/export default (\S+);/g, 'export { $1 as default }')
+  const prefix = `declare namespace denostd {${EOL}`
+
+  const suffix = `${EOL}}${EOL}`
+  globalDts = `${prefix}${globalDts}${suffix}`
+  fs.writeFileSync(dtsPath, globalDts, 'utf8')
+}
+
 exports.invokeApiExtractor = invokeApiExtractor
 exports.extractApi = extractApi
+exports.extractEntryApi = extractEntryApi

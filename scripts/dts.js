@@ -23,14 +23,14 @@ function collectInfo (outDir) {
   walk(outDir, (dtspath) => {
     const dirpath = path.dirname(dtspath)
     const code = fs.readFileSync(dtspath, 'utf8')
-    const re = new RegExp('import \\* as (\\S+) from [\'"](\\.\\S*\\/\\S+)[\'"]', 'g')
+    const re = new RegExp('(import|export) \\* as (\\S+) from [\'"](\\.\\S*\\/\\S+)[\'"]', 'g')
     let arr = re.exec(code)
     while (arr !== null) {
-      const targetDts = path.join(dirpath, arr[2] + '.d.ts')
+      const targetDts = path.join(dirpath, arr[3] + '.d.ts')
       if (info.needWrap[targetDts] === undefined) {
         const targetDtsCode = fs.readFileSync(targetDts, 'utf8')
         info.needWrap[targetDts] = {
-          ns: arr[1],
+          ns: arr[2],
           code: targetDtsCode
         }
       }
@@ -75,7 +75,8 @@ function applyChange (outDir) {
     const importLines = []
     lineNumber = 0
     for (let i = 0; i < lines.length; i++) {
-      if (/^(import) /.test(lines[i].trimLeft())) {
+      const trimLine = lines[i].trimLeft()
+      if (/^(import) /.test(trimLine) || /^export\s+.*\s+from\s+/.test(trimLine)) {
         importLines.push(lines[i])
         lines.splice(i, 1)
         i--
