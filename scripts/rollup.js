@@ -63,38 +63,50 @@ function getRollupConfig (opts) {
 async function bundle (configList, replaceESModule) {
   const rollup = require('rollup').rollup
 
-  await Promise.all(configList.map(conf => rollup(conf.input).then(bundle => bundle.write(conf.output))))
+  const indexEntry = getPath('dist/esm/index.js')
 
-  configList.forEach(conf => {
-    let code = readFileSync(getPath(conf.output.file), 'utf8')
-    code = code.replace(/this\.denostd/g, 'window.denostd')
-      .replace(/var denostd(\s*=)/g, 'window.denostd$1')
-    if (replaceESModule === true) {
-      code = code.replace(/(.\s*)?Object\.defineProperty\s*\(\s*(exports|\S{1})\s*,\s*(['"])__esModule['"]\s*,\s*\{\s*value\s*:\s*(.*?)\s*\}\s*\)\s*;?/g, (_match, token, exp, quote, value) => {
-        const iifeTemplate = (content, replaceVar) => {
-          if (replaceVar != null && replaceVar !== '') {
-            return `(function(${replaceVar}){${content.replace(new RegExp(exp, 'g'), replaceVar)}})(${exp})`
+  const denostdPlugin = {
+    name: 'denostd',
+    renderChunk (code , chunk, options) {
+      if (chunk.facadeModuleId === indexEntry) {
+        code = code.replace(/(exports|\S{1})\.VERSION(\s*=)\s*(\S+?)(;|,)/g, 'Object.defineProperty($1,"VERSION",{value:$3})$4')
+      }
+      code = code.replace(/this\.denostd/g, 'window.denostd')
+        .replace(/var denostd(\s*=)/g, 'window.denostd$1')
+      
+      if (replaceESModule) {
+        code = code.replace(/(.\s*)?Object\.defineProperty\s*\(\s*(exports|\S{1})\s*,\s*(['"])__esModule['"]\s*,\s*\{\s*value\s*:\s*(.*?)\s*\}\s*\)\s*;?/g, (_match, token, exp, quote, value) => {
+          const iifeTemplate = (content, replaceVar) => {
+            if (replaceVar != null && replaceVar !== '') {
+              return `(function(${replaceVar}){${content.replace(new RegExp(exp, 'g'), replaceVar)}})(${exp})`
+            }
+            return `(function(){${content}})()`
           }
-          return `(function(){${content}})()`
-        }
-        const content = (iife) => {
-          return `try{${iife ? 'return ' : ''}Object.defineProperty(${exp},${quote}__esModule${quote},{value:${value}})}catch(_){${iife ? 'return ' : ''}${exp}.__esModule=${value}${iife ? (',' + exp) : ''}}`
-        }
-        const _token = token === undefined ? undefined : token.trim()
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        if (!_token) return content(false)
-        if (_token === '{' || _token === ';') {
-          return `${token}${content(false)}`
-        } else if (_token === ')' || /^[a-zA-Z$_][a-zA-Z\d_]*$/.test(_token)) {
-          return `${token};${content(false)}`
-        } else {
-          return `${token}${iifeTemplate(content(true), exp === 'this' ? 'e' : '')}`
-        }
-      })
-      code = code.replace(/exports\.default/g, 'exports[\'default\']')
+          const content = (iife) => {
+            return `try{${iife ? 'return ' : ''}Object.defineProperty(${exp},${quote}__esModule${quote},{value:${value}})}catch(_){${iife ? 'return ' : ''}${exp}.__esModule=${value}${iife ? (',' + exp) : ''}}`
+          }
+          const _token = token === undefined ? undefined : token.trim()
+          // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+          if (!_token) return content(false)
+          if (_token === '{' || _token === ';') {
+            return `${token}${content(false)}`
+          } else if (_token === ')' || /^[a-zA-Z$_][a-zA-Z\d_]*$/.test(_token)) {
+            return `${token};${content(false)}`
+          } else {
+            return `${token}${iifeTemplate(content(true), exp === 'this' ? 'e' : '')}`
+          }
+        })
+        code = code.replace(/exports\.default/g, 'exports[\'default\']')
+      }
+
+      return code
     }
-    writeFileSync(getPath(conf.output.file), code, 'utf8')
-  })
+  }
+
+  await Promise.all(configList.map(conf => {
+    conf.input.plugins.push(denostdPlugin)
+    return rollup(conf.input).then(bundle => bundle.write(conf.output))
+  }))
 }
 
 function createConfig (mod, entry, out, ns) {

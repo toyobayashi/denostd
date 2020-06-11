@@ -71,8 +71,17 @@ function extractApis () {
   extractApi('node', 'timers', 'timers', 'node.timers')
   extractApi('node', 'url', 'url', 'node.url')
 
-  // not implemented
-  // extractApi('node', 'util', 'util', 'node.util')
+  const dtspath = getPath('dist/esm/std/node/util.d.ts')
+  const utildts = readFileSync(dtspath, 'utf8')
+  let newCode = utildts.replace(/import\("\.\/_utils"\)\._Text(\S{2})coder/g, 'typeof globalThis.Text$1coder.prototype')
+  writeFileSync(dtspath, newCode, 'utf8')
+  try {
+    extractApi('node', 'util', 'util', 'node.util')
+  } catch (err) {
+    writeFileSync(dtspath, utildts, 'utf8')
+    throw err
+  }
+  writeFileSync(dtspath, utildts, 'utf8')
 
   extractApi('path')
   const dest = getPath('dist/browser/node/path.d.ts')

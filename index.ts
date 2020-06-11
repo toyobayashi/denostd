@@ -30,8 +30,4 @@ export const testing = { asserts, bench, diff };
 
 export * as uuid from "./std/uuid/mod.ts";
 
-import { VERSION } from "./std/version.ts"
-
-Object.defineProperty(exports, 'VERSION', {
-  value: VERSION
-})
+export { VERSION } from "./std/version.ts";
