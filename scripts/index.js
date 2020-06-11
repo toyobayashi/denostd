@@ -4,6 +4,8 @@ const { getPath } = require('./path.js')
 const { bundle, createConfig, getRollupConfig } = require('./rollup.js')
 const { extractApi } = require('./apiex.js')
 const ts = require('typescript')
+const { copyFileSync, readFileSync, writeFileSync } = require('fs')
+const { EOL } = require('os')
 
 const list = require('./list.js')
 
@@ -62,16 +64,23 @@ function extractApis () {
   extractApi('hash', 'sha512', 'sha512', 'hash.sha512')
   extractApi('node', 'events', 'events', 'node.events')
 
+  // just copy std/path
   // extractApi('node', 'path', 'path', 'node.path')
 
   extractApi('node', 'querystring', 'querystring', 'node.querystring')
   extractApi('node', 'timers', 'timers', 'node.timers')
   extractApi('node', 'url', 'url', 'node.url')
 
+  // not implemented
   // extractApi('node', 'util', 'util', 'node.util')
 
-  // Internal Error: getResolvedModule() could not resolve module name "./_interface"
-  // extractApi('path')
+  extractApi('path')
+  const dest = getPath('dist/umd/node/path.d.ts')
+  copyFileSync(getPath('dist/umd/path/path.d.ts'), dest)
+  const code = readFileSync(dest, 'utf8').split(/\r?\n/)
+  code.splice(1, 0, 'export namespace node {')
+  code.push('}')
+  writeFileSync(dest, code.join(EOL), 'utf8')
 
   extractApi('testing', 'asserts', 'asserts', 'testing.asserts')
   extractApi('testing', 'bench', 'bench', 'testing.bench')

@@ -72,6 +72,17 @@ function applyChange (outDir) {
     }
     lines = code.split(/\r?\n/)
     lines.splice(lineNumber, 0, `declare namespace ${dts[key].ns} {`)
+    const importLines = []
+    lineNumber = 0
+    for (let i = 0; i < lines.length; i++) {
+      if (/^(import) /.test(lines[i].trimLeft())) {
+        importLines.push(lines[i])
+        lines.splice(i, 1)
+        i--
+      }
+    }
+
+    lines = [...importLines, ...lines]
     code = lines.join(EOL)
     fs.writeFileSync(key, code, 'utf8')
   }
