@@ -3,11 +3,11 @@
   "version": "0.56.0-dev",
   "description": "deno standard library porting",
   "main": "dist/cjs/index.js",
-  "scripts": {
-    "deno": "cd typings&&deno types>lib.deno.d.ts&&deno -V>version",
-    "prepare": "node ./scripts/index.js"
-  },
   "module": "dist/esm/index.js",
+  "scripts": {
+    "prepare": "npm run build",
+    "build": "node ./scripts/index.js"
+  },
   "author": "toyobayashi",
   "license": "MIT",
   "keywords": [
@@ -23,7 +23,6 @@
   },
   "devDependencies": {
     "@babel/core": "^7.10.2",
-    "@babel/plugin-transform-runtime": "^7.10.1",
     "@babel/preset-env": "^7.10.2",
     "@microsoft/api-extractor": "^7.8.11",
     "@rollup/plugin-babel": "^5.0.3",
