@@ -1,9 +1,10 @@
 {
   "name": "@tybys/denostd",
-  "version": "0.56.0-dev",
+  "version": "0.56.0",
   "description": "deno standard library porting",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
+  "typings": "dist/cjs/index.d.ts",
   "scripts": {
     "prepare": "npm run build",
     "build": "node ./scripts/index.js"
