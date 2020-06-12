@@ -154,6 +154,21 @@ module.exports = [
     ]
   },
   {
+    path: 'std/node/timers.ts',
+    opts: [
+      {
+        type: 'replace',
+        test: /window\./g,
+        value: 'globalThis.'
+      },
+      {
+        type: 'replace',
+        test: /(setTimeout\(cb, 0, \.\.\.args\));/g,
+        value: '$1 as any;'
+      }
+    ]
+  },
+  {
     path: 'std/node/url.ts',
     opts: [
       {
