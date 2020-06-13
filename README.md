@@ -23,7 +23,7 @@ $ npm run build # output dist folder
 Full version:
 
 ``` html
-<script src="node_modules/@tybys/denostd/dist/browser/denostd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tybys/denostd/dist/browser/denostd.min.js"></script>
 <script>
 console.log(denostd);
 denostd.fmt.printf('%s', 'yo');
@@ -33,9 +33,9 @@ denostd.fmt.printf('%s', 'yo');
 Standalone:
 
 ``` html
-<script src="node_modules/@tybys/denostd/dist/browser/fmt/fmt.min.js"></script>
-<script src="node_modules/@tybys/denostd/dist/browser/node/events.min.js"></script>
-<script src="node_modules/@tybys/denostd/dist/browser/node/path.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tybys/denostd/dist/browser/fmt/fmt.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tybys/denostd/dist/browser/node/events.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tybys/denostd/dist/browser/node/path.min.js"></script>
 <script>
 console.log(denostd.fmt);
 console.log(denostd.node);
