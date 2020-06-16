@@ -8,7 +8,7 @@ import { Sha1 } from "../hash/sha1.ts";
 import { writeResponse } from "../http/_io.ts";
 import { TextProtoReader } from "../textproto/mod.ts";
 import { Deferred, deferred } from "../async/deferred.ts";
-import { assert } from "../testing/asserts.ts";
+import { assert } from "../_util/assert.ts";
 import { concat } from "../bytes/mod.ts";
 import Conn = Deno.Conn;
 import Writer = Deno.Writer;
@@ -262,7 +262,7 @@ class WebSocketImpl implements WebSocket {
             payloadsLength = 0;
           }
           break;
-        case OpCode.Close:
+        case OpCode.Close: {
           // [0x12, 0x34] -> 0x1234
           const code = (frame.payload[0] << 8) | frame.payload[1];
           const reason = decode(
@@ -271,6 +271,7 @@ class WebSocketImpl implements WebSocket {
           await this.close(code, reason);
           yield { code, reason };
           return;
+        }
         case OpCode.Ping:
           await this.enqueue({
             opcode: OpCode.Pong,

@@ -1,18 +1,19 @@
 const { compile } = require('./ts.js')
 const srcUtil = require('./src.js')
 const { getPath } = require('./path.js')
-const { bundle, createConfig, getRollupConfig } = require('./rollup.js')
+const { bundle, createConfig, getRollupConfig, outputPrefix, inputPrefix } = require('./rollup.js')
 const { extractApi, extractEntryApi } = require('./apiex.js')
 const ts = require('typescript')
 const { copyFileSync, readFileSync, writeFileSync } = require('fs')
 const { EOL } = require('os')
+const rm = require('rimraf').sync
 
 const list = require('./list.js')
 
-const tsEntries = [
-  { entry: 'std/async/mod.ts', compilerOptions: { target: ts.ScriptTarget.ES5, downlevelIteration: true, outDir: getPath('dist/esm/std/async') } },
-  { entry: 'std/testing/asserts.ts', compilerOptions: { target: ts.ScriptTarget.ES5, downlevelIteration: true, outDir: getPath('dist/esm/std') } },
-  { entry: 'std/testing/bench.ts', compilerOptions: { target: ts.ScriptTarget.ES5, downlevelIteration: true, outDir: getPath('dist/esm/std') } }
+const recompileEntries = [
+  { entry: 'std/async/mod.ts', compilerOptions: { target: ts.ScriptTarget.ES5, downlevelIteration: true, outDir: getPath(`${inputPrefix}/std/async`) } },
+  { entry: 'std/testing/asserts.ts', compilerOptions: { target: ts.ScriptTarget.ES5, downlevelIteration: true, outDir: getPath(`${inputPrefix}/std`) } },
+  { entry: 'std/testing/bench.ts', compilerOptions: { target: ts.ScriptTarget.ES5, downlevelIteration: true, outDir: getPath(`${inputPrefix}/std`) } }
 ]
 
 const browserlist = [
@@ -23,8 +24,10 @@ const browserlist = [
   ...createConfig('hash', 'fnv.js', 'fnv', 'hash.fnv'),
   ...createConfig('hash', 'md5.js', 'md5', 'hash.md5'),
   ...createConfig('hash', 'sha1.js', 'sha1', 'hash.sha1'),
+  ...createConfig('hash', 'sha3.js', 'sha3', 'hash.sha3'),
   ...createConfig('hash', 'sha256.js', 'sha256', 'hash.sha256'),
   ...createConfig('hash', 'sha512.js', 'sha512', 'hash.sha512'),
+  ...createConfig('node', 'buffer.js', 'buffer', 'node.buffer'),
   ...createConfig('node', 'events.js', 'events', 'node.events'),
   ...createConfig('node', 'path.js', 'path', 'node.path'),
   ...createConfig('node', 'querystring.js', 'querystring', 'node.querystring'),
@@ -38,13 +41,13 @@ const browserlist = [
   ...createConfig('uuid'),
   ...([
     getRollupConfig({
-      entry: `dist/esm/index.js`,
+      entry: `${inputPrefix}/index.js`,
       output: `denostd`,
       ns: `denostd`,
       minify: false
     }),
     getRollupConfig({
-      entry: `dist/esm/index.js`,
+      entry: `${inputPrefix}/index.js`,
       output: `denostd`,
       ns: `denostd`,
       minify: true
@@ -60,8 +63,10 @@ function extractApis () {
   extractApi('hash', 'fnv', 'fnv', 'hash.fnv')
   extractApi('hash', 'md5', 'md5', 'hash.md5')
   extractApi('hash', 'sha1', 'sha1', 'hash.sha1')
+  extractApi('hash', 'sha3', 'sha3', 'hash.sha3')
   extractApi('hash', 'sha256', 'sha256', 'hash.sha256')
   extractApi('hash', 'sha512', 'sha512', 'hash.sha512')
+  extractApi('node', 'buffer', 'buffer', 'node.buffer')
   extractApi('node', 'events', 'events', 'node.events')
 
   // just copy std/path
@@ -84,8 +89,8 @@ function extractApis () {
   writeFileSync(dtspath, utildts, 'utf8')
 
   extractApi('path')
-  const dest = getPath('dist/browser/node/path.d.ts')
-  copyFileSync(getPath('dist/browser/path/path.d.ts'), dest)
+  const dest = getPath(outputPrefix, 'node/path.d.ts')
+  copyFileSync(getPath(outputPrefix, 'path/path.d.ts'), dest)
   const code = readFileSync(dest, 'utf8').split(/\r?\n/)
   code.splice(1, 0, 'export namespace node {')
   code.push('}')
@@ -97,29 +102,31 @@ function extractApis () {
   extractApi('uuid')
 }
 
-function compileForRollup (tsEntries) {
+function avoidRegeneratorRuntime (tsEntries) {
   for (let i = 0; i < tsEntries.length; i++) {
-    compile(getPath('tsconfig.esm.json'), tsEntries[i])
+    compile(getPath('tsconfig.browser.json'), tsEntries[i])
   }
 }
 
 async function main () {
   await srcUtil.changeSource(list)
   try {
-    console.log('Output cjs ...')
+    console.log('Output dist/cjs ...')
     compile(getPath('tsconfig.json'))
-    console.log('Output esm ...')
+    console.log('Output dist/esm ...')
     compile(getPath('tsconfig.esm.json'))
-    console.log('Overwrite async ...')
-    compileForRollup(tsEntries)
+    console.log('Output dist/browser ...')
+    compile(getPath('tsconfig.browser.json'))
+    avoidRegeneratorRuntime(recompileEntries)
+    // console.log('Output browser code ...')
+    await bundle(browserlist)
+    rm(getPath(inputPrefix))
   } catch (err) {
     await srcUtil.restoreSource(list)
     throw err
   }
   await srcUtil.restoreSource(list)
 
-  console.log('Output browser code ...')
-  await bundle(browserlist)
   console.log('Output .d.ts ...')
   extractApis()
   // extractEntryApi()

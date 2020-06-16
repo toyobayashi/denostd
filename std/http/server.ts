@@ -1,7 +1,7 @@
 // Copyright 2018-2020 the Deno authors. All rights reserved. MIT license.
 import { encode } from "../encoding/utf8.ts";
 import { BufReader, BufWriter } from "../io/bufio.ts";
-import { assert } from "../testing/asserts.ts";
+import { assert } from "../_util/assert.ts";
 import { deferred, Deferred, MuxAsyncIterator } from "../async/mod.ts";
 import {
   bodyReader,
@@ -90,7 +90,9 @@ export class ServerRequest {
       try {
         // Eagerly close on error.
         this.conn.close();
-      } catch {}
+      } catch {
+        // Pass
+      }
       err = e;
     }
     // Signal that this request has been processed and the next pipelined
@@ -108,7 +110,9 @@ export class ServerRequest {
     // Consume unread body
     const body = this.body;
     const buf = new Uint8Array(1024);
-    while ((await body.read(buf)) !== null) {}
+    while ((await body.read(buf)) !== null) {
+      // Pass
+    }
     this.finalized = true;
   }
 }
@@ -211,8 +215,12 @@ export class Server implements AsyncIterable<ServerRequest> {
     try {
       conn = await this.listener.accept();
     } catch (error) {
-      if (error instanceof Deno.errors.BadResource) {
-        return;
+      if (
+        error instanceof Deno.errors.BadResource ||
+        error instanceof Deno.errors.InvalidData ||
+        error instanceof Deno.errors.UnexpectedEof
+      ) {
+        return mux.add(this.acceptConnAndIterateHttpRequests(mux));
       }
       throw error;
     }

@@ -2,7 +2,7 @@
 /** This module is browser compatible. */
 
 import { globrex } from "./_globrex.ts";
-import { assert } from "../testing/asserts.ts";
+import { assert } from "../_util/assert.ts";
 
 export interface GlobOptions {
   extended?: boolean;

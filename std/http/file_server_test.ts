@@ -5,7 +5,7 @@ import { TextProtoReader } from "../textproto/mod.ts";
 import { ServerRequest } from "./server.ts";
 import { serveFile } from "./file_server.ts";
 const { test } = Deno;
-let fileServer: Deno.Process;
+let fileServer: Deno.Process<Deno.RunOptions & { stdout: "piped" }>;
 
 type FileServerCfg = {
   target?: string;
@@ -36,6 +36,24 @@ async function startFileServer({
   const r = new TextProtoReader(new BufReader(fileServer.stdout));
   const s = await r.readLine();
   assert(s !== null && s.includes("server listening"));
+}
+
+async function startFileServerAsLibrary({}: FileServerCfg = {}): Promise<void> {
+  fileServer = await Deno.run({
+    cmd: [
+      Deno.execPath(),
+      "run",
+      "--allow-read",
+      "--allow-net",
+      "http/testdata/file_server_as_library.ts",
+    ],
+    stdout: "piped",
+    stderr: "null",
+  });
+  assert(fileServer.stdout != null);
+  const r = new TextProtoReader(new BufReader(fileServer.stdout));
+  const s = await r.readLine();
+  assert(s !== null && s.includes("Server running..."));
 }
 
 async function killFileServer(): Promise<void> {
@@ -165,4 +183,14 @@ test("contentType", async () => {
   const contentType = response.headers!.get("content-type");
   assertEquals(contentType, "text/html");
   (response.body as Deno.File).close();
+});
+
+test("file_server running as library", async function (): Promise<void> {
+  await startFileServerAsLibrary();
+  try {
+    const res = await fetch("http://localhost:8000");
+    assertEquals(res.status, 200);
+  } finally {
+    await killFileServer();
+  }
 });

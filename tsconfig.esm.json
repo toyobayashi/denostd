@@ -14,6 +14,7 @@
     "std/datetime/mod.ts",
     "std/fmt/printf.ts",
     "std/hash",
+    "std/node/buffer.ts",
     "std/node/events.ts",
     "std/node/path.ts",
     "std/node/querystring.ts",
