@@ -23,17 +23,15 @@
     "access": "public"
   },
   "devDependencies": {
-    "@babel/core": "^7.10.2",
-    "@babel/preset-env": "^7.10.2",
-    "@microsoft/api-extractor": "^7.8.11",
+    "@babel/core": "7.10.2",
+    "@babel/preset-env": "7.10.2",
+    "@microsoft/api-extractor": "7.8.12",
     "@rollup/plugin-babel": "^5.0.3",
     "@rollup/plugin-json": "^4.1.0",
-    "@rollup/plugin-node-resolve": "^8.0.1",
-    "@rollup/plugin-replace": "^2.3.3",
     "@tybys/find-npm-prefix": "^2.0.0",
     "@types/node": "^12.12.47",
-    "rollup": "^2.15.0",
-    "rollup-plugin-terser": "^6.1.0",
-    "typescript": "^3.9.5"
+    "rollup": "2.16.1",
+    "rollup-plugin-terser": "6.1.0",
+    "typescript": "3.9.5"
   }
 }
