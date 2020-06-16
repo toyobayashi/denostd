@@ -1,6 +1,6 @@
 const { getPath } = require('./path.js')
-const { readFileSync, writeFileSync } = require('fs')
 
+const inputPrefix = 'dist/_esm'
 const outputPrefix = getPath('dist/browser')
 
 /**
@@ -67,7 +67,7 @@ function getRollupConfig (opts) {
 async function bundle (configList, replaceESModule) {
   const rollup = require('rollup').rollup
 
-  const indexEntry = getPath('dist/esm/index.js')
+  const indexEntry = getPath(inputPrefix, 'index.js')
 
   const denostdPlugin = {
     name: 'denostd',
@@ -114,7 +114,7 @@ async function bundle (configList, replaceESModule) {
 }
 
 function createConfig (mod, entry, out, ns) {
-  const prefix = 'dist/esm/std'
+  const prefix = `${inputPrefix}/std`
   return [
     getRollupConfig({
       entry: `${prefix}/${mod}/${entry || 'mod.js'}`,
@@ -134,3 +134,5 @@ function createConfig (mod, entry, out, ns) {
 exports.getRollupConfig = getRollupConfig
 exports.bundle = bundle
 exports.createConfig = createConfig
+exports.inputPrefix = inputPrefix
+exports.outputPrefix = outputPrefix

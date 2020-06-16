@@ -8,11 +8,13 @@ export { async, bytes, datetime, fmt };
 import * as fnv from "./std/hash/fnv.ts";
 import * as md5 from "./std/hash/md5.ts";
 import * as sha1 from "./std/hash/sha1.ts";
+import * as sha3 from "./std/hash/sha3.ts";
 import * as sha256 from "./std/hash/sha256.ts";
 import * as sha512 from "./std/hash/sha512.ts";
 
-export const hash = { fnv, md5, sha1, sha256, sha512 };
+export const hash = { fnv, md5, sha1, sha3, sha256, sha512 };
 
+import * as buffer from "./std/node/buffer.ts";
 import * as events from "./std/node/events.ts";
 import * as path from "./std/path/mod.ts";
 import * as querystring from "./std/node/querystring.ts";
@@ -20,7 +22,7 @@ import * as timers from "./std/node/timers.ts";
 import * as url from "./std/node/url.ts";
 import * as util from "./std/node/util.ts";
 
-export const node = { events, path, querystring, timers, url, util };
+export const node = { buffer, events, path, querystring, timers, url, util };
 
 export { path };
 

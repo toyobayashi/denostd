@@ -1,5 +1,6 @@
 const { getPath } = require('./path.js')
 const fs = require('fs')
+const { outputPrefix } = require('./rollup.js')
 
 const {
   Extractor,
@@ -45,7 +46,7 @@ function invokeApiExtractor (entry, output) {
 
 function extractApi (mod, entry, out, ns) {
   const prefix = 'dist/esm/std'
-  const dtsPath = getPath('dist/browser', mod, (out || mod) + '.d.ts')
+  const dtsPath = getPath(outputPrefix, mod, (out || mod) + '.d.ts')
   let info = dtsHack.applyChange(getPath(prefix, mod))
   try {
     invokeApiExtractor(getPath(prefix, mod, (entry || 'mod') + '.d.ts'), dtsPath)
@@ -58,7 +59,7 @@ function extractApi (mod, entry, out, ns) {
 }
 
 function extractEntryApi () {
-  const dtsPath = getPath('dist/browser/denostd.d.ts')
+  const dtsPath = getPath(outputPrefix, 'denostd.d.ts')
   let info = dtsHack.applyChange(getPath('dist/esm'))
   try {
     invokeApiExtractor(getPath('dist/esm/index.d.ts'), dtsPath)
