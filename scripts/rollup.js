@@ -14,7 +14,7 @@ function getRollupConfig (opts) {
   // const rollupTypescript = require('@rollup/plugin-typescript')
   const rollupJSON = require('@rollup/plugin-json')
   // const rollupCommonJS = require('@rollup/plugin-commonjs')
-  const rollupReplace = require('@rollup/plugin-replace')
+  // const rollupReplace = require('@rollup/plugin-replace')
   // const rollupNodeResolve = require('@rollup/plugin-node-resolve').default
   const rollupBabel = require('@rollup/plugin-babel').default
 
@@ -30,9 +30,9 @@ function getRollupConfig (opts) {
         //   tsconfig: getPath('tsconfig.prod.json')
         // }),
         rollupJSON(),
-        rollupReplace({
-          'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV)
-        }),
+        // rollupReplace({
+        //   'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV)
+        // }),
         /* rollupCommonJS({
           extensions: ['.js', 'jsx', '.ts', '.tsx']
         }), */
