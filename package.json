@@ -1,7 +1,7 @@
 {
   "name": "@tybys/denostd",
-  "version": "0.57.0-dev",
-  "description": "deno standard library porting",
+  "version": "0.57.0",
+  "description": "Deno standard library porting for Node.js and browser",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "typings": "dist/cjs/index.d.ts",
@@ -30,6 +30,7 @@
     "@rollup/plugin-json": "^4.1.0",
     "@tybys/find-npm-prefix": "^2.0.0",
     "@types/node": "^12.12.47",
+    "rimraf": "^3.0.2",
     "rollup": "2.16.1",
     "rollup-plugin-terser": "6.1.0",
     "typescript": "3.9.5"
