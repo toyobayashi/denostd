@@ -23,8 +23,10 @@ const browserlist = [
   ...createConfig('hash', 'fnv.js', 'fnv', 'hash.fnv'),
   ...createConfig('hash', 'md5.js', 'md5', 'hash.md5'),
   ...createConfig('hash', 'sha1.js', 'sha1', 'hash.sha1'),
+  ...createConfig('hash', 'sha3.js', 'sha3', 'hash.sha3'),
   ...createConfig('hash', 'sha256.js', 'sha256', 'hash.sha256'),
   ...createConfig('hash', 'sha512.js', 'sha512', 'hash.sha512'),
+  ...createConfig('node', 'buffer.js', 'buffer', 'node.buffer'),
   ...createConfig('node', 'events.js', 'events', 'node.events'),
   ...createConfig('node', 'path.js', 'path', 'node.path'),
   ...createConfig('node', 'querystring.js', 'querystring', 'node.querystring'),
@@ -60,8 +62,10 @@ function extractApis () {
   extractApi('hash', 'fnv', 'fnv', 'hash.fnv')
   extractApi('hash', 'md5', 'md5', 'hash.md5')
   extractApi('hash', 'sha1', 'sha1', 'hash.sha1')
+  extractApi('hash', 'sha3', 'sha3', 'hash.sha3')
   extractApi('hash', 'sha256', 'sha256', 'hash.sha256')
   extractApi('hash', 'sha512', 'sha512', 'hash.sha512')
+  extractApi('node', 'buffer', 'buffer', 'node.buffer')
   extractApi('node', 'events', 'events', 'node.events')
 
   // just copy std/path
