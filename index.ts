@@ -1,9 +1,20 @@
 import * as async from "./std/async/mod.ts";
 import * as bytes from "./std/bytes/mod.ts";
 import * as datetime from "./std/datetime/mod.ts";
-import * as fmt from "./std/fmt/printf.ts";
 
-export { async, bytes, datetime, fmt };
+export { async, bytes, datetime };
+
+import * as base32 from "./std/encoding/base32.ts";
+import * as base64 from "./std/encoding/base64.ts";
+import * as base64url from "./std/encoding/base64url.ts";
+import * as hex from "./std/encoding/hex.ts";
+import * as toml from "./std/encoding/toml.ts";
+import * as utf8 from "./std/encoding/utf8.ts";
+
+export const encoding = { base32, base64, base64url, hex, toml, utf8 };
+
+import * as fmt from "./std/fmt/printf.ts";
+export { fmt };
 
 import * as fnv from "./std/hash/fnv.ts";
 import * as md5 from "./std/hash/md5.ts";
