@@ -48,7 +48,12 @@ function getRollupConfig (opts) {
           module: (terserOptions && terserOptions.module) || (['es', 'esm', 'module']).includes(format)
         })] : [])
       ],
-      context: 'this'
+      context: 'this',
+      onwarn(warning, warn) {
+        // suppress eval warnings
+        if (warning.code === 'EVAL') return
+        warn(warning)
+      }
     },
     output: {
       file: outputFilename,

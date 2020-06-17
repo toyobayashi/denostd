@@ -113,6 +113,20 @@ import * as path from '@tybys/denostd/dist/esm/std/path/mod'
 
 * datetime
 
+* encoding
+
+    * base32
+    
+    * base64
+    
+    * base64url
+    
+    * hex
+    
+    * toml
+    
+    * utf8
+
 * fmt
 
     * print

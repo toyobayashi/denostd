@@ -20,6 +20,12 @@ const browserlist = [
   ...createConfig('async'),
   ...createConfig('bytes'),
   ...createConfig('datetime'),
+  ...createConfig('encoding', 'base32.js', 'base32', 'encoding.base32'),
+  ...createConfig('encoding', 'base64.js', 'base64', 'encoding.base64'),
+  ...createConfig('encoding', 'base64url.js', 'base64url', 'encoding.base64url'),
+  ...createConfig('encoding', 'hex.js', 'hex', 'encoding.hex'),
+  ...createConfig('encoding', 'toml.js', 'toml', 'encoding.toml'),
+  ...createConfig('encoding', 'utf8.js', 'utf8', 'encoding.utf8'),
   ...createConfig('fmt', 'printf.js', 'fmt'),
   ...createConfig('hash', 'fnv.js', 'fnv', 'hash.fnv'),
   ...createConfig('hash', 'md5.js', 'md5', 'hash.md5'),
@@ -59,6 +65,12 @@ function extractApis () {
   extractApi('async')
   extractApi('bytes')
   extractApi('datetime')
+  extractApi('encoding', 'base32', 'base32', 'encoding.base32')
+  extractApi('encoding', 'base64', 'base64', 'encoding.base64')
+  extractApi('encoding', 'base64url', 'base64url', 'encoding.base64url')
+  extractApi('encoding', 'hex', 'hex', 'encoding.hex')
+  extractApi('encoding', 'toml', 'toml', 'encoding.toml')
+  extractApi('encoding', 'utf8', 'utf8', 'encoding.utf8')
   extractApi('fmt', 'printf', 'fmt')
   extractApi('hash', 'fnv', 'fnv', 'hash.fnv')
   extractApi('hash', 'md5', 'md5', 'hash.md5')
@@ -66,7 +78,17 @@ function extractApis () {
   extractApi('hash', 'sha3', 'sha3', 'hash.sha3')
   extractApi('hash', 'sha256', 'sha256', 'hash.sha256')
   extractApi('hash', 'sha512', 'sha512', 'hash.sha512')
+
   extractApi('node', 'buffer', 'buffer', 'node.buffer')
+  writeFileSync(getPath('dist/browser/node/buffer.d.ts'), readFileSync(getPath('dist/browser/node/buffer.d.ts'), 'utf8') + `${EOL}declare const Buffer: typeof denostd.node.buffer.Buffer;${EOL}`, 'utf8')
+  const globalBuffer = `declare type _Buffer = typeof Buffer;
+declare global {
+    export const Buffer: _Buffer;
+}
+`
+  writeFileSync(getPath('dist/cjs/std/node/buffer.d.ts'), readFileSync(getPath('dist/cjs/std/node/buffer.d.ts'), 'utf8') + `${EOL}${globalBuffer}`, 'utf8')
+  writeFileSync(getPath('dist/esm/std/node/buffer.d.ts'), readFileSync(getPath('dist/esm/std/node/buffer.d.ts'), 'utf8') + `${EOL}${globalBuffer}`, 'utf8')
+
   extractApi('node', 'events', 'events', 'node.events')
 
   // just copy std/path
