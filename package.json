@@ -6,7 +6,6 @@
   "module": "dist/esm/index.js",
   "typings": "dist/cjs/index.d.ts",
   "scripts": {
-    "prepare": "npm run build",
     "build": "node ./scripts/index.js"
   },
   "author": "toyobayashi",

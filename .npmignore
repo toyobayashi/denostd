@@ -13,3 +13,4 @@ package-lock.json
 tsconf*.json
 api-extractor.json
 /index.ts
+.github
