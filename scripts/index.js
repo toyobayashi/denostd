@@ -66,7 +66,17 @@ function extractApis () {
   extractApi('hash', 'sha3', 'sha3', 'hash.sha3')
   extractApi('hash', 'sha256', 'sha256', 'hash.sha256')
   extractApi('hash', 'sha512', 'sha512', 'hash.sha512')
+
   extractApi('node', 'buffer', 'buffer', 'node.buffer')
+  writeFileSync(getPath('dist/browser/node/buffer.d.ts'), readFileSync(getPath('dist/browser/node/buffer.d.ts'), 'utf8') + `${EOL}declare const Buffer: typeof denostd.node.buffer.Buffer;${EOL}`, 'utf8')
+  const globalBuffer = `declare type _Buffer = typeof Buffer;
+declare global {
+    export const Buffer: _Buffer;
+}
+`
+  writeFileSync(getPath('dist/cjs/std/node/buffer.d.ts'), readFileSync(getPath('dist/cjs/std/node/buffer.d.ts'), 'utf8') + `${EOL}${globalBuffer}`, 'utf8')
+  writeFileSync(getPath('dist/esm/std/node/buffer.d.ts'), readFileSync(getPath('dist/esm/std/node/buffer.d.ts'), 'utf8') + `${EOL}${globalBuffer}`, 'utf8')
+
   extractApi('node', 'events', 'events', 'node.events')
 
   // just copy std/path
