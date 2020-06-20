@@ -1,5 +1,4 @@
 // Copyright 2018-2020 the Deno authors. All rights reserved. MIT license.
-
 import {
   assert,
   assertNotEquals,
@@ -17,9 +16,8 @@ import {
   unreachable,
 } from "./asserts.ts";
 import { red, green, gray, bold, yellow } from "../fmt/colors.ts";
-const { test } = Deno;
 
-test("testingEqual", function (): void {
+Deno.test("testingEqual", function (): void {
   assert(equal("world", "world"));
   assert(!equal("hello", "world"));
   assert(equal(5, 5));
@@ -114,9 +112,18 @@ test("testingEqual", function (): void {
   assert(!equal([1, 2, 3, 4], [1, 4, 2, 3]));
   assert(equal(new Uint8Array([1, 2, 3, 4]), new Uint8Array([1, 2, 3, 4])));
   assert(!equal(new Uint8Array([1, 2, 3, 4]), new Uint8Array([2, 1, 4, 3])));
+  assert(
+    equal(new URL("https://example.test"), new URL("https://example.test"))
+  );
+  assert(
+    !equal(
+      new URL("https://example.test"),
+      new URL("https://example.test/with-path")
+    )
+  );
 });
 
-test("testingNotEquals", function (): void {
+Deno.test("testingNotEquals", function (): void {
   const a = { foo: "bar" };
   const b = { bar: "foo" };
   assertNotEquals(a, b);
@@ -132,7 +139,7 @@ test("testingNotEquals", function (): void {
   assertEquals(didThrow, true);
 });
 
-test("testingAssertStringContains", function (): void {
+Deno.test("testingAssertStringContains", function (): void {
   assertStringContains("Denosaurus", "saur");
   assertStringContains("Denosaurus", "Deno");
   assertStringContains("Denosaurus", "rus");
@@ -147,7 +154,7 @@ test("testingAssertStringContains", function (): void {
   assertEquals(didThrow, true);
 });
 
-test("testingArrayContains", function (): void {
+Deno.test("testingArrayContains", function (): void {
   const fixture = ["deno", "iz", "luv"];
   const fixtureObject = [{ deno: "luv" }, { deno: "Js" }];
   assertArrayContains(fixture, ["deno"]);
@@ -159,7 +166,7 @@ test("testingArrayContains", function (): void {
   );
 });
 
-test("testingAssertStringContainsThrow", function (): void {
+Deno.test("testingAssertStringContainsThrow", function (): void {
   let didThrow = false;
   try {
     assertStringContains("Denosaurus from Jurassic", "Raptor");
@@ -174,11 +181,11 @@ test("testingAssertStringContainsThrow", function (): void {
   assert(didThrow);
 });
 
-test("testingAssertStringMatching", function (): void {
+Deno.test("testingAssertStringMatching", function (): void {
   assertMatch("foobar@deno.com", RegExp(/[a-zA-Z]+@[a-zA-Z]+.com/));
 });
 
-test("testingAssertStringMatchingThrows", function (): void {
+Deno.test("testingAssertStringMatchingThrows", function (): void {
   let didThrow = false;
   try {
     assertMatch("Denosaurus from Jurassic", RegExp(/Raptor/));
@@ -193,7 +200,7 @@ test("testingAssertStringMatchingThrows", function (): void {
   assert(didThrow);
 });
 
-test("testingAssertsUnimplemented", function (): void {
+Deno.test("testingAssertsUnimplemented", function (): void {
   let didThrow = false;
   try {
     unimplemented();
@@ -205,7 +212,7 @@ test("testingAssertsUnimplemented", function (): void {
   assert(didThrow);
 });
 
-test("testingAssertsUnreachable", function (): void {
+Deno.test("testingAssertsUnreachable", function (): void {
   let didThrow = false;
   try {
     unreachable();
@@ -217,7 +224,7 @@ test("testingAssertsUnreachable", function (): void {
   assert(didThrow);
 });
 
-test("testingAssertFail", function (): void {
+Deno.test("testingAssertFail", function (): void {
   assertThrows(fail, AssertionError, "Failed assertion.");
   assertThrows(
     (): void => {
@@ -228,7 +235,7 @@ test("testingAssertFail", function (): void {
   );
 });
 
-test("testingAssertFailWithWrongErrorClass", function (): void {
+Deno.test("testingAssertFailWithWrongErrorClass", function (): void {
   assertThrows(
     (): void => {
       //This next assertThrows will throw an AssertionError due to the wrong
@@ -246,14 +253,14 @@ test("testingAssertFailWithWrongErrorClass", function (): void {
   );
 });
 
-test("testingAssertThrowsWithReturnType", () => {
+Deno.test("testingAssertThrowsWithReturnType", () => {
   assertThrows(() => {
     throw new Error();
     return "a string";
   });
 });
 
-test("testingAssertThrowsAsyncWithReturnType", () => {
+Deno.test("testingAssertThrowsAsyncWithReturnType", () => {
   assertThrowsAsync(() => {
     throw new Error();
     return Promise.resolve("a Promise<string>");
@@ -273,7 +280,7 @@ const createHeader = (): string[] => [
 const added: (s: string) => string = (s: string): string => green(bold(s));
 const removed: (s: string) => string = (s: string): string => red(bold(s));
 
-test({
+Deno.test({
   name: "pass case",
   fn(): void {
     assertEquals({ a: 10 }, { a: 10 });
@@ -284,7 +291,7 @@ test({
   },
 });
 
-test({
+Deno.test({
   name: "failed with number",
   fn(): void {
     assertThrows(
@@ -301,7 +308,7 @@ test({
   },
 });
 
-test({
+Deno.test({
   name: "failed with number vs string",
   fn(): void {
     assertThrows(
@@ -317,7 +324,7 @@ test({
   },
 });
 
-test({
+Deno.test({
   name: "failed with array",
   fn(): void {
     assertThrows(
@@ -334,7 +341,7 @@ test({
   },
 });
 
-test({
+Deno.test({
   name: "failed with object",
   fn(): void {
     assertThrows(
@@ -355,7 +362,7 @@ test({
   },
 });
 
-test({
+Deno.test({
   name: "strict pass case",
   fn(): void {
     assertStrictEquals(true, true);
@@ -372,7 +379,7 @@ test({
   },
 });
 
-test({
+Deno.test({
   name: "strict failed with structure diff",
   fn(): void {
     assertThrows(
@@ -389,7 +396,7 @@ test({
   },
 });
 
-test({
+Deno.test({
   name: "strict failed with reference diff",
   fn(): void {
     assertThrows(

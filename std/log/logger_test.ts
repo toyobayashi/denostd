@@ -1,5 +1,4 @@
 // Copyright 2018-2020 the Deno authors. All rights reserved. MIT license.
-const { test } = Deno;
 import { assertEquals, assert } from "../testing/asserts.ts";
 import { LogRecord, Logger } from "./logger.ts";
 import { LogLevels, LevelName } from "./levels.ts";
@@ -19,22 +18,39 @@ class TestHandler extends BaseHandler {
   }
 }
 
-test("simpleLogger", function (): void {
+Deno.test({
+  name: "Logger names can be output in logs",
+  fn() {
+    const handlerNoName = new TestHandler("DEBUG");
+    const handlerWithLoggerName = new TestHandler("DEBUG", {
+      formatter: "[{loggerName}] {levelName} {msg}",
+    });
+
+    const logger = new Logger("config", "DEBUG", {
+      handlers: [handlerNoName, handlerWithLoggerName],
+    });
+    logger.debug("hello");
+    assertEquals(handlerNoName.messages[0], "DEBUG hello");
+    assertEquals(handlerWithLoggerName.messages[0], "[config] DEBUG hello");
+  },
+});
+
+Deno.test("simpleLogger", function (): void {
   const handler = new TestHandler("DEBUG");
-  let logger = new Logger("DEBUG");
+  let logger = new Logger("default", "DEBUG");
 
   assertEquals(logger.level, LogLevels.DEBUG);
   assertEquals(logger.levelName, "DEBUG");
   assertEquals(logger.handlers, []);
 
-  logger = new Logger("DEBUG", [handler]);
+  logger = new Logger("default", "DEBUG", { handlers: [handler] });
 
   assertEquals(logger.handlers, [handler]);
 });
 
-test("customHandler", function (): void {
+Deno.test("customHandler", function (): void {
   const handler = new TestHandler("DEBUG");
-  const logger = new Logger("DEBUG", [handler]);
+  const logger = new Logger("default", "DEBUG", { handlers: [handler] });
 
   const inlineData: string = logger.debug("foo", 1, 2);
 
@@ -48,10 +64,10 @@ test("customHandler", function (): void {
   assertEquals(inlineData!, "foo");
 });
 
-test("logFunctions", function (): void {
+Deno.test("logFunctions", function (): void {
   const doLog = (level: LevelName): TestHandler => {
     const handler = new TestHandler(level);
-    const logger = new Logger(level, [handler]);
+    const logger = new Logger("default", level, { handlers: [handler] });
     const debugData = logger.debug("foo");
     const infoData = logger.info("bar");
     const warningData = logger.warning("baz");
@@ -98,24 +114,31 @@ test("logFunctions", function (): void {
   assertEquals(handler.messages, ["CRITICAL doo"]);
 });
 
-test("String resolver fn will not execute if msg will not be logged", function (): void {
+Deno.test(
+  "String resolver fn will not execute if msg will not be logged",
+  function (): void {
+    const handler = new TestHandler("ERROR");
+    const logger = new Logger("default", "ERROR", { handlers: [handler] });
+    let called = false;
+
+    const expensiveFunction = (): string => {
+      called = true;
+      return "expensive function result";
+    };
+
+    const inlineData: string | undefined = logger.debug(
+      expensiveFunction,
+      1,
+      2
+    );
+    assert(!called);
+    assertEquals(inlineData, undefined);
+  }
+);
+
+Deno.test("String resolver fn resolves as expected", function (): void {
   const handler = new TestHandler("ERROR");
-  const logger = new Logger("ERROR", [handler]);
-  let called = false;
-
-  const expensiveFunction = (): string => {
-    called = true;
-    return "expensive function result";
-  };
-
-  const inlineData: string | undefined = logger.debug(expensiveFunction, 1, 2);
-  assert(!called);
-  assertEquals(inlineData, undefined);
-});
-
-test("String resolver fn resolves as expected", function (): void {
-  const handler = new TestHandler("ERROR");
-  const logger = new Logger("ERROR", [handler]);
+  const logger = new Logger("default", "ERROR", { handlers: [handler] });
   const expensiveFunction = (x: number): string => {
     return "expensive function result " + x;
   };
@@ -126,96 +149,99 @@ test("String resolver fn resolves as expected", function (): void {
   assertEquals(secondInlineData, "expensive function result 12");
 });
 
-test("All types map correctly to log strings and are returned as is", function (): void {
-  const handler = new TestHandler("DEBUG");
-  const logger = new Logger("DEBUG", [handler]);
-  const sym = Symbol();
-  const syma = Symbol("a");
-  const fn = (): string => {
-    return "abc";
-  };
+Deno.test(
+  "All types map correctly to log strings and are returned as is",
+  function (): void {
+    const handler = new TestHandler("DEBUG");
+    const logger = new Logger("default", "DEBUG", { handlers: [handler] });
+    const sym = Symbol();
+    const syma = Symbol("a");
+    const fn = (): string => {
+      return "abc";
+    };
 
-  // string
-  const data1: string = logger.debug("abc");
-  assertEquals(data1, "abc");
-  const data2: string = logger.debug("def", 1);
-  assertEquals(data2, "def");
-  assertEquals(handler.messages[0], "DEBUG abc");
-  assertEquals(handler.messages[1], "DEBUG def");
+    // string
+    const data1: string = logger.debug("abc");
+    assertEquals(data1, "abc");
+    const data2: string = logger.debug("def", 1);
+    assertEquals(data2, "def");
+    assertEquals(handler.messages[0], "DEBUG abc");
+    assertEquals(handler.messages[1], "DEBUG def");
 
-  // null
-  const data3: null = logger.info(null);
-  assertEquals(data3, null);
-  const data4: null = logger.info(null, 1);
-  assertEquals(data4, null);
-  assertEquals(handler.messages[2], "INFO null");
-  assertEquals(handler.messages[3], "INFO null");
+    // null
+    const data3: null = logger.info(null);
+    assertEquals(data3, null);
+    const data4: null = logger.info(null, 1);
+    assertEquals(data4, null);
+    assertEquals(handler.messages[2], "INFO null");
+    assertEquals(handler.messages[3], "INFO null");
 
-  // number
-  const data5: number = logger.warning(3);
-  assertEquals(data5, 3);
-  const data6: number = logger.warning(3, 1);
-  assertEquals(data6, 3);
-  assertEquals(handler.messages[4], "WARNING 3");
-  assertEquals(handler.messages[5], "WARNING 3");
+    // number
+    const data5: number = logger.warning(3);
+    assertEquals(data5, 3);
+    const data6: number = logger.warning(3, 1);
+    assertEquals(data6, 3);
+    assertEquals(handler.messages[4], "WARNING 3");
+    assertEquals(handler.messages[5], "WARNING 3");
 
-  // bigint
-  const data7: bigint = logger.error(5n);
-  assertEquals(data7, 5n);
-  const data8: bigint = logger.error(5n, 1);
-  assertEquals(data8, 5n);
-  assertEquals(handler.messages[6], "ERROR 5");
-  assertEquals(handler.messages[7], "ERROR 5");
+    // bigint
+    const data7: bigint = logger.error(5n);
+    assertEquals(data7, 5n);
+    const data8: bigint = logger.error(5n, 1);
+    assertEquals(data8, 5n);
+    assertEquals(handler.messages[6], "ERROR 5");
+    assertEquals(handler.messages[7], "ERROR 5");
 
-  // boolean
-  const data9: boolean = logger.critical(true);
-  assertEquals(data9, true);
-  const data10: boolean = logger.critical(false, 1);
-  assertEquals(data10, false);
-  assertEquals(handler.messages[8], "CRITICAL true");
-  assertEquals(handler.messages[9], "CRITICAL false");
+    // boolean
+    const data9: boolean = logger.critical(true);
+    assertEquals(data9, true);
+    const data10: boolean = logger.critical(false, 1);
+    assertEquals(data10, false);
+    assertEquals(handler.messages[8], "CRITICAL true");
+    assertEquals(handler.messages[9], "CRITICAL false");
 
-  // undefined
-  const data11: undefined = logger.debug(undefined);
-  assertEquals(data11, undefined);
-  const data12: undefined = logger.debug(undefined, 1);
-  assertEquals(data12, undefined);
-  assertEquals(handler.messages[10], "DEBUG undefined");
-  assertEquals(handler.messages[11], "DEBUG undefined");
+    // undefined
+    const data11: undefined = logger.debug(undefined);
+    assertEquals(data11, undefined);
+    const data12: undefined = logger.debug(undefined, 1);
+    assertEquals(data12, undefined);
+    assertEquals(handler.messages[10], "DEBUG undefined");
+    assertEquals(handler.messages[11], "DEBUG undefined");
 
-  // symbol
-  const data13: symbol = logger.info(sym);
-  assertEquals(data13, sym);
-  const data14: symbol = logger.info(syma, 1);
-  assertEquals(data14, syma);
-  assertEquals(handler.messages[12], "INFO Symbol()");
-  assertEquals(handler.messages[13], "INFO Symbol(a)");
+    // symbol
+    const data13: symbol = logger.info(sym);
+    assertEquals(data13, sym);
+    const data14: symbol = logger.info(syma, 1);
+    assertEquals(data14, syma);
+    assertEquals(handler.messages[12], "INFO Symbol()");
+    assertEquals(handler.messages[13], "INFO Symbol(a)");
 
-  // function
-  const data15: string | undefined = logger.warning(fn);
-  assertEquals(data15, "abc");
-  const data16: string | undefined = logger.warning(fn, 1);
-  assertEquals(data16, "abc");
-  assertEquals(handler.messages[14], "WARNING abc");
-  assertEquals(handler.messages[15], "WARNING abc");
+    // function
+    const data15: string | undefined = logger.warning(fn);
+    assertEquals(data15, "abc");
+    const data16: string | undefined = logger.warning(fn, 1);
+    assertEquals(data16, "abc");
+    assertEquals(handler.messages[14], "WARNING abc");
+    assertEquals(handler.messages[15], "WARNING abc");
 
-  // object
-  const data17: { payload: string; other: number } = logger.error({
-    payload: "data",
-    other: 123,
-  });
-  assertEquals(data17, {
-    payload: "data",
-    other: 123,
-  });
-  const data18: { payload: string; other: number } = logger.error(
-    { payload: "data", other: 123 },
-    1
-  );
-  assertEquals(data18, {
-    payload: "data",
-    other: 123,
-  });
-  assertEquals(handler.messages[16], 'ERROR {"payload":"data","other":123}');
-  assertEquals(handler.messages[17], 'ERROR {"payload":"data","other":123}');
-});
+    // object
+    const data17: { payload: string; other: number } = logger.error({
+      payload: "data",
+      other: 123,
+    });
+    assertEquals(data17, {
+      payload: "data",
+      other: 123,
+    });
+    const data18: { payload: string; other: number } = logger.error(
+      { payload: "data", other: 123 },
+      1
+    );
+    assertEquals(data18, {
+      payload: "data",
+      other: 123,
+    });
+    assertEquals(handler.messages[16], 'ERROR {"payload":"data","other":123}');
+    assertEquals(handler.messages[17], 'ERROR {"payload":"data","other":123}');
+  }
+);
