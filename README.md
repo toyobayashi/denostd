@@ -34,14 +34,14 @@ Full version:
 <script src="https://cdn.jsdelivr.net/npm/@tybys/denostd/dist/browser/denostd.min.js"></script>
 <script>
 console.log(denostd);
-denostd.fmt.printf('%s', 'yo');
+denostd.fmt.printf.printf('%s', 'yo');
 </script>
 ```
 
 Standalone:
 
 ``` html
-<script src="https://cdn.jsdelivr.net/npm/@tybys/denostd/dist/browser/fmt/fmt.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tybys/denostd/dist/browser/fmt/printf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@tybys/denostd/dist/browser/node/buffer.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@tybys/denostd/dist/browser/node/events.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@tybys/denostd/dist/browser/node/path.min.js"></script>
@@ -58,14 +58,14 @@ Full version:
 
 ``` js
 const denostd = require('@tybys/denostd')
-denostd.fmt.printf('%s', 'yo')
+denostd.fmt.printf.printf('%s', 'yo')
 ```
 
 Standalone:
 
 ``` js
-const fmt = require('@tybys/denostd/dist/cjs/std/fmt/printf.js')
-fmt.printf('%s', 'yo')
+const printf = require('@tybys/denostd/dist/cjs/std/fmt/printf.js')
+printf.printf('%s', 'yo')
 ```
 
 ### Webpack
@@ -129,7 +129,9 @@ import * as path from '@tybys/denostd/dist/esm/std/path/mod'
 
 * fmt
 
-    * print
+    * colors
+
+    * printf
 
 * hash
 

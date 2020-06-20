@@ -1,3 +1,5 @@
+const isNode = '(typeof process !== "undefined" && (process as any).browser === undefined)'
+
 module.exports = [
   {
     path: 'std/bytes/mod.ts',
@@ -23,8 +25,8 @@ module.exports = [
     opts: [
       {
         type: 'replace',
-        test: 'const { noColor } = Deno;',
-        value: `const noColor = true;`
+        test: /Deno\.noColor/g,
+        value: `(!${isNode})`
       }
     ]
   },
@@ -49,12 +51,22 @@ module.exports = [
     ]
   },
   {
+    path: 'std/fmt/colors.ts',
+    opts: [
+      {
+        type: 'replace',
+        test: /const\s+noColor\s+=.+;/g,
+        value: `const noColor = (!${isNode});`
+      }
+    ]
+  },
+  {
     path: 'std/fmt/printf.ts',
     opts: [
       {
         type: 'replace',
         test: 'Deno.stdout.writeSync(new TextEncoder().encode(s));',
-        value: 'typeof process !== "undefined" ? process.stdout.write(new TextEncoder().encode(s)) : console.log(s);'
+        value: '(typeof process !== "undefined" && typeof process.stdout !== "undefined") ? process.stdout.write(new TextEncoder().encode(s)) : console.log(s);'
       },
       {
         type: 'insert',
@@ -104,7 +116,7 @@ module.exports = [
       {
         type: 'replace',
         test: /let isWindows = false.*(\r?\n.*)*.*includes\("Win"\);\r?\n\}/g,
-        value: 'const isWindows = (typeof process !== "undefined" ? (process.platform === "win32") : navigator.appVersion.includes("Win"));'
+        value: `const isWindows = (${isNode} ? (process.platform === "win32") : navigator.appVersion.includes("Win"));`
       }
     ]
   },
@@ -114,7 +126,7 @@ module.exports = [
       {
         type: 'replace',
         test: /Deno\.cwd\(\)/g,
-        value: '(typeof process !== "undefined" ? process.cwd() : "/")'
+        value: `(${isNode} ? process.cwd() : "/")`
       },
       {
         type: 'replace',
@@ -129,12 +141,12 @@ module.exports = [
       {
         type: 'replace',
         test: /Deno\.cwd\(\)/g,
-        value: '(typeof process !== "undefined" ? process.cwd() : "C:\\\\")'
+        value: `(${isNode} ? process.cwd() : "C:\\\\")`
       },
       {
         type: 'replace',
         test: /Deno\.env\.get\(`=\$\{resolvedDevice\}`\)/g,
-        value: '(typeof process !== "undefined" ? process.env[`=${resolvedDevice}`] : "C:\\\\")'
+        value: `(${isNode} ? process.env[\`=\$\{resolvedDevice\}\`] : "C:\\\\")`
       },
       {
         type: 'replace',
@@ -179,7 +191,7 @@ module.exports = [
       {
         type: 'replace',
         test: /const isWindows = Deno\.build.+?;/g,
-        value: 'const isWindows = (typeof process !== "undefined" ? (process.platform === "win32") : navigator.appVersion.includes("Win"));'
+        value: `const isWindows = (${isNode} ? (process.platform === "win32") : navigator.appVersion.includes("Win"));`
       }
     ]
   }

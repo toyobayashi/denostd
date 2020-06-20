@@ -26,7 +26,8 @@ const browserlist = [
   ...createConfig('encoding', 'hex.js', 'hex', 'encoding.hex'),
   ...createConfig('encoding', 'toml.js', 'toml', 'encoding.toml'),
   ...createConfig('encoding', 'utf8.js', 'utf8', 'encoding.utf8'),
-  ...createConfig('fmt', 'printf.js', 'fmt'),
+  ...createConfig('fmt', 'printf.js', 'printf', 'fmt.printf'),
+  ...createConfig('fmt', 'colors.js', 'colors', 'fmt.colors'),
   ...createConfig('hash', 'fnv.js', 'fnv', 'hash.fnv'),
   ...createConfig('hash', 'md5.js', 'md5', 'hash.md5'),
   ...createConfig('hash', 'sha1.js', 'sha1', 'hash.sha1'),
@@ -71,7 +72,8 @@ function extractApis () {
   extractApi('encoding', 'hex', 'hex', 'encoding.hex')
   extractApi('encoding', 'toml', 'toml', 'encoding.toml')
   extractApi('encoding', 'utf8', 'utf8', 'encoding.utf8')
-  extractApi('fmt', 'printf', 'fmt')
+  extractApi('fmt', 'printf', 'printf', 'fmt.printf')
+  extractApi('fmt', 'colors', 'colors', 'fmt.colors')
   extractApi('hash', 'fnv', 'fnv', 'hash.fnv')
   extractApi('hash', 'md5', 'md5', 'hash.md5')
   extractApi('hash', 'sha1', 'sha1', 'hash.sha1')

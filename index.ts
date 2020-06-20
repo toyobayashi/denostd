@@ -13,8 +13,9 @@ import * as utf8 from "./std/encoding/utf8.ts";
 
 export const encoding = { base32, base64, base64url, hex, toml, utf8 };
 
-import * as fmt from "./std/fmt/printf.ts";
-export { fmt };
+import * as colors from "./std/fmt/colors.ts";
+import * as printf from "./std/fmt/printf.ts";
+export const fmt = { colors, printf };
 
 import * as fnv from "./std/hash/fnv.ts";
 import * as md5 from "./std/hash/md5.ts";
