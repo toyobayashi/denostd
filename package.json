@@ -1,6 +1,6 @@
 {
   "name": "@tybys/denostd",
-  "version": "0.58.10000",
+  "version": "0.59.10000",
   "description": "Deno standard library porting for Node.js and browser",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
@@ -30,6 +30,7 @@
     "@tybys/cross-zip": "^3.0.4",
     "@tybys/find-npm-prefix": "^2.0.0",
     "@types/node": "^12.12.47",
+    "fs-extra": "^9.0.1",
     "node-fetch": "^2.6.0",
     "rimraf": "^3.0.2",
     "rollup": "2.18.1",
