@@ -2,6 +2,7 @@ const path = require('path')
 /** @type {typeof import('fs-extra')} */
 const fs = require('fs-extra')
 const got = require('got').default
+const { unzipSync } = require('@tybys/cross-zip')
 
 ;(async function main (args) {
   const version = args[0]
@@ -44,9 +45,9 @@ const got = require('got').default
     fs.renameSync(target + '.tmp', target)
     unzipSync(target, path.join(__dirname, `../temp/${version}`))
     fs.removeSync(path.join(__dirname, `../cli/js`))
-    fs.copySync(path.join(__dirname, `../temp/${version}/cli/js`), path.join(__dirname, `../cli/js`))
+    fs.copySync(path.join(__dirname, `../temp/${version}/deno-std-${version}/cli/js`), path.join(__dirname, `../cli/js`))
     fs.removeSync(path.join(__dirname, `../std`))
-    fs.copySync(path.join(__dirname, `../temp/${version}/std`), path.join(__dirname, `../std`))
+    fs.copySync(path.join(__dirname, `../temp/${version}/deno-std-${version}/std`), path.join(__dirname, `../std`))
     fs.removeSync(tmpDir)
   })
   stream.pipe(dest)
