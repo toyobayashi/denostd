@@ -31,7 +31,7 @@
     "@tybys/find-npm-prefix": "^2.0.0",
     "@types/node": "^12.12.47",
     "fs-extra": "^9.0.1",
-    "node-fetch": "^2.6.0",
+    "got": "^11.3.0",
     "rimraf": "^3.0.2",
     "rollup": "2.18.1",
     "rollup-plugin-terser": "6.1.0",
