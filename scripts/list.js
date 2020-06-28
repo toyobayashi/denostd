@@ -185,5 +185,20 @@ module.exports = [
         value: `if (typeof (globalThis as any).Buffer !== "function") $1`
       }
     ]
+  },
+  {
+    path: 'std/encoding/base64.ts',
+    opts: [
+      {
+        type: 'replace',
+        test: /window\.btoa\((.+?)\)/g,
+        value: `(typeof window !== "undefined" ? window.btoa($1) : Buffer.from($1).toString("base64"))`
+      },
+      {
+        type: 'replace',
+        test: /window\.atob\((.+?)\)/g,
+        value: `(typeof window !== "undefined" ? window.atob($1) : Buffer.from($1, "base64").toString())`
+      }
+    ]
   }
 ]
