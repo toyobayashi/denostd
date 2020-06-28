@@ -2,25 +2,6 @@ const isNode = '(typeof process !== "undefined" && (process as any).browser === 
 
 module.exports = [
   {
-    path: 'std/bytes/mod.ts',
-    opts: [
-      {
-        type: 'replace',
-        test: 'import { copyBytes } from "../io/util.ts";',
-        value:
-`function copyBytes(src: Uint8Array, dst: Uint8Array, off = 0): number {
-  off = Math.max(0, Math.min(off, dst.byteLength));
-  const dstBytesAvailable = dst.byteLength - off;
-  if (src.byteLength > dstBytesAvailable) {
-    src = src.subarray(0, dstBytesAvailable);
-  }
-  dst.set(src, off);
-  return src.byteLength;
-}`
-      }
-    ]
-  },
-  {
     path: 'std/testing/bench.ts',
     opts: [
       {
@@ -192,6 +173,31 @@ module.exports = [
         type: 'replace',
         test: /const isWindows = Deno\.build.+?;/g,
         value: `const isWindows = (${isNode} ? (process.platform === "win32") : navigator.appVersion.includes("Win"));`
+      }
+    ]
+  },
+  {
+    path: 'std/node/buffer.ts',
+    opts: [
+      {
+        type: 'replace',
+        test: /(Object\.defineProperty\(globalThis,\s*"Buffer",\s*\{(.*\r?\n)*\}\);)/g,
+        value: `if (typeof (globalThis as any).Buffer !== "function") $1`
+      }
+    ]
+  },
+  {
+    path: 'std/encoding/base64.ts',
+    opts: [
+      {
+        type: 'replace',
+        test: /window\.btoa\((.+?)\)/g,
+        value: `(typeof window !== "undefined" ? window.btoa($1) : Buffer.from($1).toString("base64"))`
+      },
+      {
+        type: 'replace',
+        test: /window\.atob\((.+?)\)/g,
+        value: `(typeof window !== "undefined" ? window.atob($1) : Buffer.from($1, "base64").toString())`
       }
     ]
   }

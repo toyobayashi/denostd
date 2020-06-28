@@ -14,3 +14,4 @@ tsconf*.json
 api-extractor.json
 /index.ts
 .github
+/temp

@@ -79,10 +79,15 @@ function compile (tsconfig, opts) {
             resolvedFileName: getPath('node_modules/@types/node', request + '.d.ts'),
             isExternalLibraryImport: true
           }
+        } else if (existsSync(getPath('node_modules/@types', request))) {
+          return {
+            resolvedFileName: getPath('node_modules/@types', request, 'index.d.ts'),
+            isExternalLibraryImport: true
+          }
         }
         throw new Error('Not support node_modules')
       }
-      
+
       const targetPath = join(dirname(containingFile), request)
 
       if ((['.ts', '.tsx']).includes(ext)) {
