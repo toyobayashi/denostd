@@ -175,5 +175,15 @@ module.exports = [
         value: `const isWindows = (${isNode} ? (process.platform === "win32") : navigator.appVersion.includes("Win"));`
       }
     ]
+  },
+  {
+    path: 'std/node/buffer.ts',
+    opts: [
+      {
+        type: 'replace',
+        test: /(Object\.defineProperty\(globalThis,\s*"Buffer",\s*\{(.*\r?\n)*\}\);)/g,
+        value: `if (typeof (globalThis as any).Buffer !== "function") $1`
+      }
+    ]
   }
 ]
