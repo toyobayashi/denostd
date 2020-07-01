@@ -1,19 +1,97 @@
-// declare global {
-//   const __webpack_modules__: any
-//   const __tybys_get_native_require__: any
-//   const __non_webpack_require__: any
-// }
+declare const __webpack_modules__: any;
+declare const __tybys_get_native_require__: any;
+declare const __non_webpack_require__: any;
 
-// let nativeRequire;
+export const nativeRequire: ((id: string) => any) | undefined = (function getRequireFunction (parentModule?: any): any {
+  let nativeRequire: any;
 
-// if (typeof __webpack_modules__ !== 'undefined') {
-//   nativeRequire = typeof __tybys_get_native_require__ === 'function' ? __tybys_get_native_require__() : (function () {
-//     return typeof __non_webpack_require__ !== 'undefined' ? __non_webpack_require__ : undefined;
-//   })();
-// } else {
-//   nativeRequire = (function () {
-//     return typeof __webpack_modules__ !== 'undefined' ? (typeof __non_webpack_require__ !== 'undefined' ? __non_webpack_require__ : undefined) : (typeof require !== 'undefined' ? require : undefined);
-//   })();
-// }
+  if (typeof __webpack_modules__ !== 'undefined') {
+    nativeRequire = typeof __tybys_get_native_require__ === 'function' ? __tybys_get_native_require__() : (function () {
+      return typeof __non_webpack_require__ !== 'undefined' ? __non_webpack_require__ : undefined;
+    })();
+  } else {
+    nativeRequire = (function () {
+      return typeof __webpack_modules__ !== 'undefined' ? (typeof __non_webpack_require__ !== 'undefined' ? __non_webpack_require__ : undefined) : (typeof require !== 'undefined' ? require : undefined);
+    })();
+  }
 
-// export { nativeRequire };
+  if (typeof nativeRequire === 'function') {
+    const g = (function (defaultValue) {
+      let g: any;
+      g = (function () { return this; })(); // non-strict mode
+
+      try {
+        g = g || new Function('return this')(); // allow eval
+      } catch (_) {
+        if (typeof globalThis !== 'undefined') return globalThis;
+        if (typeof __webpack_modules__ === 'undefined') {
+          if (typeof global !== 'undefined') return global;
+        }
+        if (typeof window !== 'undefined') return window;
+        if (typeof self !== 'undefined') return self;
+      }
+    
+      return g || defaultValue;
+    })();
+    if (!(g && g.process && g.process.versions && typeof g.process.versions.node === 'string')) {
+      return nativeRequire;
+    }
+
+    if (nativeRequire === g.require) {
+      return nativeRequire;
+    }
+
+    let Module: any;
+    try {
+      Module = nativeRequire('module');
+    } catch (_) {
+      return nativeRequire;
+    }
+
+    Module = Module || Module.Module;
+    if (!Module || !(parentModule instanceof Module)) {
+      return nativeRequire;
+    }
+
+    if (typeof Module.createRequire === 'function') {
+      return Module.createRequire(parentModule.filename);
+    }
+
+    if (typeof Module.createRequireFromPath === 'function') {
+      return Module.createRequireFromPath(parentModule.filename);
+    }
+
+    return (function makeRequireFunction (mod: any, main: any): any {
+      var Module = mod.constructor;
+      function require (path: any): any {
+        return mod.require(path);
+      };
+
+      function validateString (value: any, name: any) {
+        if (typeof value !== 'string') throw new TypeError('The "' + name + '" argument must be of type string. Received type ' + typeof value);
+      }
+
+      function resolve (request: any, opts?: any): any {
+        validateString(request, 'request');
+        return Module._resolveFilename(request, mod, false, opts);
+      }
+
+      require.resolve = resolve;
+
+      function paths (request: any): any {
+        validateString(request, 'request');
+        return Module._resolveLookupPaths(request, mod);
+      }
+
+      resolve.paths = paths;
+
+      require.main = main;
+      require.extensions = Module._extensions;
+      require.cache = Module._cache;
+
+      return require;
+    })(parentModule, (g.process.mainModule instanceof Module) ? g.process.mainModule : undefined);
+  }
+
+  return nativeRequire;
+})();

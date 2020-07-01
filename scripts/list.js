@@ -200,5 +200,25 @@ module.exports = [
         value: `(typeof window !== "undefined" ? window.atob($1) : Buffer.from($1, "base64").toString())`
       }
     ]
+  },
+  {
+    path: 'std/uuid/v1.ts',
+    opts: [
+      {
+        type: 'replace',
+        test: /(crypto\.getRandomValues\(new\sUint8Array\((.+?)\)\))/g,
+        value: `(${isNode} ? new Uint8Array((process as any).mainModule.require("crypto").randomBytes($2)) : $1)`
+      }
+    ]
+  },
+  {
+    path: 'std/uuid/v4.ts',
+    opts: [
+      {
+        type: 'replace',
+        test: /(crypto\.getRandomValues\(new\sUint8Array\((.+?)\)\))/g,
+        value: `(${isNode} ? new Uint8Array((process as any).mainModule.require("crypto").randomBytes($2)) : $1)`
+      }
+    ]
   }
 ]
