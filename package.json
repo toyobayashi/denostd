@@ -22,9 +22,9 @@
     "access": "public"
   },
   "devDependencies": {
-    "@babel/core": "7.10.3",
-    "@babel/preset-env": "7.10.3",
-    "@microsoft/api-extractor": "7.8.15",
+    "@babel/core": "7.10.4",
+    "@babel/preset-env": "7.10.4",
+    "@microsoft/api-extractor": "7.9.1",
     "@rollup/plugin-babel": "^5.0.4",
     "@rollup/plugin-json": "^4.1.0",
     "@tybys/cross-zip": "^3.0.4",
@@ -33,8 +33,8 @@
     "fs-extra": "^9.0.1",
     "got": "^11.3.0",
     "rimraf": "^3.0.2",
-    "rollup": "2.18.1",
+    "rollup": "2.19.0",
     "rollup-plugin-terser": "6.1.0",
-    "typescript": "3.9.5"
+    "typescript": "3.9.6"
   }
 }
