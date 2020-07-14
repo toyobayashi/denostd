@@ -63,6 +63,11 @@ module.exports = [
         type: 'replace',
         test: 'const [state, result] = Deno.core.getPromiseDetails(value);',
         value: 'const [state, result] = [-1, "[Not Implemented]", value];'
+      },
+      {
+        type: 'replace',
+        test: /(s\S)\.description/g,
+        value: '($1 as any).description'
       }
     ]
   },
@@ -71,8 +76,8 @@ module.exports = [
     opts: [
       {
         type: 'replace',
-        test: 'let string = globalThis.Deno ? Deno.inspect(v) : String(v);',
-        value: 'let string = globalThis.Deno ? globalThis.Deno.inspect(v) : String(v);'
+        test: 'Deno.inspect',
+        value: 'globalThis.Deno.inspect'
       }
     ]
   },
