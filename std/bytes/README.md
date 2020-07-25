@@ -15,7 +15,7 @@ import { findIndex } from "https://deno.land/std/bytes/mod.ts";
 
 findIndex(
   new Uint8Array([1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 3]),
-  new Uint8Array([0, 1, 2])
+  new Uint8Array([0, 1, 2]),
 );
 
 // => returns 2
@@ -30,7 +30,7 @@ import { findLastIndex } from "https://deno.land/std/bytes/mod.ts";
 
 findLastIndex(
   new Uint8Array([0, 1, 2, 0, 1, 2, 0, 1, 3]),
-  new Uint8Array([0, 1, 2])
+  new Uint8Array([0, 1, 2]),
 );
 
 // => returns 3
@@ -83,7 +83,7 @@ concat(new Uint8Array([1, 2]), new Uint8Array([3, 4])); // returns Uint8Array(4)
 Copy bytes from one binary array to another.
 
 ```typescript
-import { concat } from "https://deno.land/std/bytes/mod.ts";
+import { copyBytes } from "https://deno.land/std/bytes/mod.ts";
 
 const dst = new Uint8Array(4);
 const src = Uint8Array.of(1, 2, 3, 4);

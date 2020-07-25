@@ -39,7 +39,7 @@ export interface GlobToRegExpOptions extends GlobOptions {
  */
 export function globToRegExp(
   glob: string,
-  { extended = false, globstar = true }: GlobToRegExpOptions = {}
+  { extended = false, globstar = true }: GlobToRegExpOptions = {},
 ): RegExp {
   const result = globrex(glob, {
     extended,
@@ -55,7 +55,8 @@ export function globToRegExp(
 export function isGlob(str: string): boolean {
   const chars: Record<string, string> = { "{": "}", "(": ")", "[": "]" };
   /* eslint-disable-next-line max-len */
-  const regex = /\\(.)|(^!|\*|[\].+)]\?|\[[^\\\]]+\]|\{[^\\}]+\}|\(\?[:!=][^\\)]+\)|\([^|]+\|[^\\)]+\))/;
+  const regex =
+    /\\(.)|(^!|\*|[\].+)]\?|\[[^\\\]]+\]|\{[^\\}]+\}|\(\?[:!=][^\\)]+\)|\([^|]+\|[^\\)]+\))/;
 
   if (str === "") {
     return false;

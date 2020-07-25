@@ -13,6 +13,7 @@
     "std/async/mod.ts",
     "std/bytes/mod.ts",
     "std/datetime/mod.ts",
+    "std/encoding/ascii85.ts",
     "std/encoding/base32.ts",
     "std/encoding/base64.ts",
     "std/encoding/base64url.ts",

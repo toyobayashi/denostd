@@ -4,6 +4,7 @@ import * as datetime from "./std/datetime/mod.ts";
 
 export { async, bytes, datetime };
 
+import * as ascii85 from "./std/encoding/ascii85.ts";
 import * as base32 from "./std/encoding/base32.ts";
 import * as base64 from "./std/encoding/base64.ts";
 import * as base64url from "./std/encoding/base64url.ts";
@@ -11,7 +12,7 @@ import * as hex from "./std/encoding/hex.ts";
 import * as toml from "./std/encoding/toml.ts";
 import * as utf8 from "./std/encoding/utf8.ts";
 
-export const encoding = { base32, base64, base64url, hex, toml, utf8 };
+export const encoding = { ascii85, base32, base64, base64url, hex, toml, utf8 };
 
 import * as colors from "./std/fmt/colors.ts";
 import * as printf from "./std/fmt/printf.ts";

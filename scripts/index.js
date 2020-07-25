@@ -20,6 +20,7 @@ const browserlist = [
   ...createConfig('async'),
   ...createConfig('bytes'),
   ...createConfig('datetime'),
+  ...createConfig('encoding', 'ascii85.js', 'ascii85', 'encoding.ascii85'),
   ...createConfig('encoding', 'base32.js', 'base32', 'encoding.base32'),
   ...createConfig('encoding', 'base64.js', 'base64', 'encoding.base64'),
   ...createConfig('encoding', 'base64url.js', 'base64url', 'encoding.base64url'),
@@ -66,6 +67,7 @@ function extractApis () {
   extractApi('async')
   extractApi('bytes')
   extractApi('datetime')
+  extractApi('encoding', 'ascii85', 'ascii85', 'encoding.ascii85')
   extractApi('encoding', 'base32', 'base32', 'encoding.base32')
   extractApi('encoding', 'base64', 'base64', 'encoding.base64')
   extractApi('encoding', 'base64url', 'base64url', 'encoding.base64url')
