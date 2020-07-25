@@ -1,6 +1,6 @@
 {
   "name": "@tybys/denostd",
-  "version": "0.61.10000",
+  "version": "0.62.10000",
   "description": "Deno standard library porting for Node.js and browser",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
@@ -33,8 +33,8 @@
     "fs-extra": "^9.0.1",
     "got": "^11.3.0",
     "rimraf": "^3.0.2",
-    "rollup": "2.21.0",
+    "rollup": "2.23.0",
     "rollup-plugin-terser": "6.1.0",
-    "typescript": "3.9.6"
+    "typescript": "3.9.7"
   }
 }

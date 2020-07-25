@@ -1,4 +1,4 @@
-import { inspect } from "../cli/js/web/console.ts";
-import { errors } from '../cli/js/errors.ts'
+import { inspect } from "./console.js";
+import { errors } from './errors.js'
 
 export { inspect, errors };
