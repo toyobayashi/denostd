@@ -57,42 +57,12 @@ module.exports = [
     ]
   },
   {
-    path: 'cli/js/web/console.ts',
-    opts: [
-      {
-        type: 'replace',
-        test: 'const [state, result] = Deno.core.getPromiseDetails(value);',
-        value: 'const [state, result] = [-1, "[Not Implemented]", value];'
-      },
-      {
-        type: 'replace',
-        test: /(s\S)\.description/g,
-        value: '($1 as any).description'
-      }
-    ]
-  },
-  {
     path: 'std/testing/asserts.ts',
     opts: [
       {
         type: 'replace',
         test: 'Deno.inspect',
         value: 'globalThis.Deno.inspect'
-      }
-    ]
-  },
-  {
-    path: 'cli/js/web/util.ts',
-    opts: [
-      {
-        type: 'replace',
-        test: /import\s+.+?\s+from\s+".\/dom_exception\.ts";/g,
-        value: ''
-      },
-      {
-        type: 'replace',
-        test: /throw new DOMException\((.+?),\s*(.+?)\)/g,
-        value: 'throw new Error($1)'
       }
     ]
   },
