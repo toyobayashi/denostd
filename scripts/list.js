@@ -195,5 +195,15 @@ module.exports = [
         value: `(${isNode} ? new Uint8Array((process as any).mainModule.require("crypto").randomBytes($2)) : $1)`
       }
     ]
+  },
+  {
+    path: 'std/node/_util/_util_promisify.ts',
+    opts: [
+      {
+        type: 'replace',
+        test: /\/\/ @ts-expect-error.*/g,
+        value: `// @ts-ignore`
+      }
+    ]
   }
 ]
