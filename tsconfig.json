@@ -8,6 +8,7 @@
     "outDir": "./dist/cjs"
   },
   "include": [
+    "polyfill/api.d.ts",
     "index.ts",
     "std/async/mod.ts",
     "std/bytes/mod.ts",

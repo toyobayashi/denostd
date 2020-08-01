@@ -46,7 +46,7 @@ const ErrorKind = {
   Busy: 23,
 };
 
-function getErrorClass(kind) {
+function getErrorClass(kind): { new (msg?: string ) } | undefined {
   switch (kind) {
     case ErrorKind.TypeError:
       return TypeError;
@@ -90,6 +90,7 @@ function getErrorClass(kind) {
       return Http;
     case ErrorKind.Busy:
       return Busy;
+    default: return undefined;
   }
 }
 
