@@ -115,6 +115,8 @@ import * as path from '@tybys/denostd/dist/esm/std/path/mod'
 
 * encoding
 
+    * ascii85
+
     * base32
     
     * base64
