@@ -26,6 +26,7 @@
     "@babel/preset-env": "7.10.4",
     "@microsoft/api-extractor": "7.9.2",
     "@rollup/plugin-babel": "^5.1.0",
+    "@rollup/plugin-inject": "^4.0.2",
     "@rollup/plugin-json": "^4.1.0",
     "@rollup/plugin-node-resolve": "^8.4.0",
     "@tybys/cross-zip": "^3.0.4",

@@ -17,6 +17,7 @@ function getRollupConfig (opts) {
   // const rollupReplace = require('@rollup/plugin-replace')
   const rollupNodeResolve = require('@rollup/plugin-node-resolve').default
   const rollupBabel = require('@rollup/plugin-babel').default
+  const rollupInject = require('@rollup/plugin-inject')
 
   const outputFilename = minify ? getPath(outputPrefix, `${output}.min.js`) : getPath(outputPrefix, `${output}.js`)
   const format = 'iife'
@@ -30,6 +31,13 @@ function getRollupConfig (opts) {
         //   tsconfig: getPath('tsconfig.prod.json')
         // }),
         rollupJSON(),
+
+        // https://github.com/microsoft/TypeScript/issues/36841#issuecomment-669014853
+        rollupInject({
+          '__classPrivateFieldGet': ['tslib', '__classPrivateFieldGet'],
+          '__classPrivateFieldSet': ['tslib', '__classPrivateFieldSet'],
+        }),
+
         // rollupReplace({
         //   'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV)
         // }),
