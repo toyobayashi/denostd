@@ -44,7 +44,10 @@ function compile (tsconfig, opts) {
       ...compilerOptions.options,
       ...opts.compilerOptions
     }
-    compilerOptions.fileNames = [getPath(opts.entry)]
+    compilerOptions.fileNames = [
+      getPath('polyfill/api.d.ts'),
+      getPath(opts.entry)
+    ]
   }
 
   if (compilerOptions.errors.length) {
@@ -84,8 +87,13 @@ function compile (tsconfig, opts) {
             resolvedFileName: getPath('node_modules/@types', request, 'index.d.ts'),
             isExternalLibraryImport: true
           }
+        } else if (request === 'tslib') {
+          return {
+            resolvedFileName: getPath('node_modules', request, 'tslib.d.ts'),
+            isExternalLibraryImport: true
+          }
         }
-        throw new Error('Not support node_modules')
+        throw new Error('Not support node_modules: ' + request)
       }
 
       const targetPath = join(dirname(containingFile), request)

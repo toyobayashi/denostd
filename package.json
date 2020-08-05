@@ -1,6 +1,6 @@
 {
   "name": "@tybys/denostd",
-  "version": "0.63.10000",
+  "version": "0.63.10001",
   "description": "Deno standard library porting for Node.js and browser",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
@@ -27,6 +27,7 @@
     "@microsoft/api-extractor": "7.9.2",
     "@rollup/plugin-babel": "^5.1.0",
     "@rollup/plugin-json": "^4.1.0",
+    "@rollup/plugin-node-resolve": "^8.4.0",
     "@tybys/cross-zip": "^3.0.4",
     "@tybys/find-npm-prefix": "^2.0.0",
     "@types/node": "^12.12.47",
@@ -35,6 +36,7 @@
     "rimraf": "^3.0.2",
     "rollup": "2.23.0",
     "rollup-plugin-terser": "6.1.0",
+    "tslib": "2.0.0",
     "typescript": "3.9.7"
   }
 }

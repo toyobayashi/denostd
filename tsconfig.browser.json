@@ -6,6 +6,7 @@
     "declaration": false,
     "sourceMap": false,
     "downlevelIteration": true,
+    "importHelpers": true,
     "outDir": "./dist/_esm"
   },
   "include": [

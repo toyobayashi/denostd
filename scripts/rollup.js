@@ -15,7 +15,7 @@ function getRollupConfig (opts) {
   const rollupJSON = require('@rollup/plugin-json')
   // const rollupCommonJS = require('@rollup/plugin-commonjs')
   // const rollupReplace = require('@rollup/plugin-replace')
-  // const rollupNodeResolve = require('@rollup/plugin-node-resolve').default
+  const rollupNodeResolve = require('@rollup/plugin-node-resolve').default
   const rollupBabel = require('@rollup/plugin-babel').default
 
   const outputFilename = minify ? getPath(outputPrefix, `${output}.min.js`) : getPath(outputPrefix, `${output}.js`)
@@ -25,7 +25,7 @@ function getRollupConfig (opts) {
       input: getPath(entry),
       plugins: [
         // nativeRequireRollupPlugin(),
-        // rollupNodeResolve(),
+        rollupNodeResolve(),
         // rollupTypescript({
         //   tsconfig: getPath('tsconfig.prod.json')
         // }),
