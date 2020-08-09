@@ -71,8 +71,21 @@ module.exports = [
     opts: [
       {
         type: 'replace',
-        test: /let isWindows = false.*(\r?\n.*)*.*includes\("Win"\);\r?\n\}/g,
-        value: `const isWindows = (${isNode} ? (process.platform === "win32") : navigator.appVersion.includes("Win"));`
+        test: /let NATIVE_OS.*(.*(\r?\n))*export const isWindows = NATIVE_OS == "windows";/g,
+        value: `
+let NATIVE_OS: "linux" | "darwin" | "windows" = "linux";
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const navigator = (globalThis as any).navigator;
+if (globalThis.Deno != null) {
+  NATIVE_OS = globalThis.Deno.build.os;
+} else if (navigator?.appVersion?.includes?.("Win") ?? false) {
+  NATIVE_OS = "windows";
+} else if (${isNode}) {
+  NATIVE_OS = (process.platform === "win32") ? "windows" : (process.platform as any);
+}
+// TODO(nayeemrmn): Improve OS detection in browsers beyond Windows.
+
+export const isWindows = NATIVE_OS == "windows";`
       }
     ]
   },
