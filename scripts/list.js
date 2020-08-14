@@ -218,5 +218,15 @@ export const isWindows = NATIVE_OS == "windows";`
         value: `// @ts-ignore`
       }
     ]
+  },
+  {
+    path: 'std/node/util.ts',
+    opts: [
+      {
+        type: 'insert',
+        line: 0,
+        value: `import * as Deno from "../../polyfill/deno.ts";`
+      }
+    ]
   }
 ]
