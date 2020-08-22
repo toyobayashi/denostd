@@ -2,9 +2,11 @@
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
     "module": "commonjs",
-    "target": "es2019",
+    "target": "es2018",
     "declaration": true,
     "sourceMap": false,
+    "noEmitHelpers": true,
+    "importHelpers": true,
     "outDir": "./dist/cjs"
   },
   "include": [
@@ -28,6 +30,7 @@
     "std/hash/sha3.ts",
     "std/hash/sha256.ts",
     "std/hash/sha512.ts",
+    "std/node/assert.ts",
     "std/node/buffer.ts",
     "std/node/events.ts",
     "std/node/path.ts",

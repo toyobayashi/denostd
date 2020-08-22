@@ -128,7 +128,9 @@ function compile (tsconfig, opts) {
     .getPreEmitDiagnostics(program)
     .concat(emitResult.diagnostics)
 
+  const ignoreErrors = [18028]
   allDiagnostics.forEach(diagnostic => {
+    if (ignoreErrors.indexOf(diagnostic.code) !== -1) return
     if (diagnostic.file) {
       let { line, character } = diagnostic.file.getLineAndCharacterOfPosition(diagnostic.start)
       let message = ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n")

@@ -20,18 +20,18 @@ $ npm run build
 
 Output:
 
-* `dist/cjs` - Module: `CommonJS`, Target: `ES2019`
+* `dist/cjs` - Module: `CommonJS`, Target: `ES2018`
 
-* `dist/esm` - Module: `ESNext`, Target: `ES2019`
+* `dist/esm` - Module: `ESNext`, Target: `ES5` (Need polyfills for `Promise`, `Symbol`, `WeakMap`, `TypedArray`, `globalThis`, etc in old browsers)
 
-* `dist/browser` - Module: `UMD`, Target: `ES5` but need polyfills for `Promise`, `Symbol`, `WeakMap`, `TypedArray`, `globalThis`, etc in old browser
+* `dist/umd` - Module: `UMD`, Target: `ES5` (Need polyfills for `Promise`, `Symbol`, `WeakMap`, `TypedArray`, `globalThis`, etc in old browsers)
 
 ### Browser
 
 Full version:
 
 ``` html
-<script src="https://cdn.jsdelivr.net/npm/@tybys/denostd/dist/browser/denostd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tybys/denostd/dist/umd/denostd.min.js"></script>
 <script>
 console.log(denostd);
 denostd.fmt.printf.printf('%s', 'yo');
@@ -41,10 +41,10 @@ denostd.fmt.printf.printf('%s', 'yo');
 Standalone:
 
 ``` html
-<script src="https://cdn.jsdelivr.net/npm/@tybys/denostd/dist/browser/fmt/printf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tybys/denostd/dist/browser/node/buffer.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tybys/denostd/dist/browser/node/events.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tybys/denostd/dist/browser/node/path.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tybys/denostd/dist/umd/fmt/printf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tybys/denostd/dist/umd/node/buffer.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tybys/denostd/dist/umd/node/events.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tybys/denostd/dist/umd/node/path.min.js"></script>
 <script>
 console.log(denostd.fmt);
 console.log(denostd.node);
@@ -150,6 +150,8 @@ import * as path from '@tybys/denostd/dist/esm/std/path/mod'
     * sha512
 
 * node
+
+    * assert
 
     * buffer
 

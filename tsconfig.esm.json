@@ -2,9 +2,12 @@
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
     "module": "esnext",
-    "target": "es2019",
+    "target": "es5",
     "declaration": true,
     "sourceMap": false,
+    "downlevelIteration": true,
+    "importHelpers": true,
+    "noEmitHelpers": true,
     "outDir": "./dist/esm"
   },
   "include": [
@@ -28,6 +31,7 @@
     "std/hash/sha3.ts",
     "std/hash/sha256.ts",
     "std/hash/sha512.ts",
+    "std/node/assert.ts",
     "std/node/buffer.ts",
     "std/node/events.ts",
     "std/node/path.ts",

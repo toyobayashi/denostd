@@ -6,15 +6,15 @@ const { extractApi, extractEntryApi } = require('./apiex.js')
 const ts = require('typescript')
 const { copyFileSync, readFileSync, writeFileSync } = require('fs')
 const { EOL } = require('os')
-const rm = require('rimraf').sync
+// const rm = require('fs-extra').removeSync
 
 const list = require('./list.js')
 
-const recompileEntries = [
+/* const recompileEntries = [
   { entry: 'std/async/mod.ts', compilerOptions: { target: ts.ScriptTarget.ES5, downlevelIteration: true, outDir: getPath(`${inputPrefix}/std/async`) } },
   { entry: 'std/testing/asserts.ts', compilerOptions: { target: ts.ScriptTarget.ES5, downlevelIteration: true, outDir: getPath(`${inputPrefix}/std`) } },
   { entry: 'std/testing/bench.ts', compilerOptions: { target: ts.ScriptTarget.ES5, downlevelIteration: true, outDir: getPath(`${inputPrefix}/std`) } }
-]
+] */
 
 const browserlist = [
   ...createConfig('async'),
@@ -35,6 +35,7 @@ const browserlist = [
   ...createConfig('hash', 'sha3.js', 'sha3', 'hash.sha3'),
   ...createConfig('hash', 'sha256.js', 'sha256', 'hash.sha256'),
   ...createConfig('hash', 'sha512.js', 'sha512', 'hash.sha512'),
+  ...createConfig('node', 'assert.js', 'assert', 'node.assert'),
   ...createConfig('node', 'buffer.js', 'buffer', 'node.buffer'),
   ...createConfig('node', 'events.js', 'events', 'node.events'),
   ...createConfig('node', 'path.js', 'path', 'node.path'),
@@ -83,8 +84,9 @@ function extractApis () {
   extractApi('hash', 'sha256', 'sha256', 'hash.sha256')
   extractApi('hash', 'sha512', 'sha512', 'hash.sha512')
 
+  extractApi('node', 'assert', 'assert', 'node.assert')
   extractApi('node', 'buffer', 'buffer', 'node.buffer')
-  writeFileSync(getPath('dist/browser/node/buffer.d.ts'), readFileSync(getPath('dist/browser/node/buffer.d.ts'), 'utf8') + `${EOL}declare const Buffer: typeof denostd.node.buffer.Buffer;${EOL}`, 'utf8')
+  writeFileSync(getPath(outputPrefix, 'node/buffer.d.ts'), readFileSync(getPath(outputPrefix, 'node/buffer.d.ts'), 'utf8') + `${EOL}declare const Buffer: typeof denostd.node.buffer.Buffer;${EOL}`, 'utf8')
   const globalBuffer = `declare type _Buffer = typeof Buffer;
 declare global {
     export const Buffer: _Buffer;
@@ -128,11 +130,11 @@ declare global {
   extractApi('uuid')
 }
 
-function avoidRegeneratorRuntime (tsEntries) {
+/* function avoidRegeneratorRuntime (tsEntries) {
   for (let i = 0; i < tsEntries.length; i++) {
     compile(getPath('tsconfig.browser.json'), tsEntries[i])
   }
-}
+} */
 
 async function main () {
   await srcUtil.changeSource(list)
@@ -141,12 +143,12 @@ async function main () {
     compile(getPath('tsconfig.json'))
     console.log('Output dist/esm ...')
     compile(getPath('tsconfig.esm.json'))
-    console.log('Output dist/browser ...')
-    compile(getPath('tsconfig.browser.json'))
-    avoidRegeneratorRuntime(recompileEntries)
+    // console.log('Output dist/umd ...')
+    // compile(getPath('tsconfig.browser.json'))
+    // avoidRegeneratorRuntime(recompileEntries)
     // console.log('Output browser code ...')
     await bundle(browserlist)
-    rm(getPath(inputPrefix))
+    // rm(getPath(inputPrefix))
   } catch (err) {
     await srcUtil.restoreSource(list)
     throw err
