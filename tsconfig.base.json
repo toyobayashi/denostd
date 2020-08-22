@@ -6,7 +6,7 @@
     "noUnusedParameters": true,
     "noImplicitAny": false,
     "noImplicitThis": true,
-    "noImplicitReturns": true,
+    "noImplicitReturns": false,
     "strictNullChecks": false,
     "moduleResolution": "node",
     "resolveJsonModule": true,

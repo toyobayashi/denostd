@@ -1,7 +1,8 @@
 const { getPath } = require('./path.js')
 
-const inputPrefix = 'dist/_esm'
-const outputPrefix = getPath('dist/browser')
+// const inputPrefix = 'dist/_esm'
+const inputPrefix = 'dist/esm'
+const outputPrefix = getPath('dist/umd')
 
 /**
  * @param {{ entry: string; output: string; ns: string; minify?: boolean; terserOptions?: import('rollup-plugin-terser').Options }} opts 
@@ -16,11 +17,11 @@ function getRollupConfig (opts) {
   // const rollupCommonJS = require('@rollup/plugin-commonjs')
   // const rollupReplace = require('@rollup/plugin-replace')
   const rollupNodeResolve = require('@rollup/plugin-node-resolve').default
-  const rollupBabel = require('@rollup/plugin-babel').default
+  // const rollupBabel = require('@rollup/plugin-babel').default
   const rollupInject = require('@rollup/plugin-inject')
 
   const outputFilename = minify ? getPath(outputPrefix, `${output}.min.js`) : getPath(outputPrefix, `${output}.js`)
-  const format = 'iife'
+  const format = 'umd'
   return {
     input: {
       input: getPath(entry),
@@ -44,9 +45,9 @@ function getRollupConfig (opts) {
         /* rollupCommonJS({
           extensions: ['.js', 'jsx', '.ts', '.tsx']
         }), */
-        rollupBabel({
-          babelHelpers: 'bundled'
-        }),
+        // rollupBabel({
+        //   babelHelpers: 'bundled'
+        // }),
         ...(minify ? [rollupTerser({
           output: {
             comments: false,
