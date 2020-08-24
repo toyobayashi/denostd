@@ -1,4 +1,4 @@
-const { dirname, basename, extname, join } = require('path')
+const { dirname, basename, extname, join, relative, sep } = require('path')
 const { existsSync } = require('fs')
 const { builtinModules } = require('module')
 const { getPath } = require('./path.js')
@@ -16,14 +16,14 @@ class TSError extends Error {
   }
 }
 
-function compile (tsconfig, opts) {
+function compile (tsconfig, opts = {}) {
   const parseConfigHost = {
     fileExists: ts.sys.fileExists,
     readFile: ts.sys.readFile,
     readDirectory: ts.sys.readDirectory,
     useCaseSensitiveFileNames: true
   }
-  
+
   const configFileName = ts.findConfigFile(
     dirname(tsconfig),
     ts.sys.fileExists,
@@ -39,30 +39,52 @@ function compile (tsconfig, opts) {
     dirname(tsconfig)
   )
 
-  if (opts !== undefined) {
+  if (opts.compilerOptions) {
     compilerOptions.options = {
       ...compilerOptions.options,
-      ...opts.compilerOptions
+      ...opts.compilerOptions || {}
     }
+  }
+  if (opts.entry) {
     compilerOptions.fileNames = [
       getPath('polyfill/api.d.ts'),
       getPath(opts.entry)
     ]
   }
 
+  const suffix = opts.removeSuffix !== true
+
   if (compilerOptions.errors.length) {
     throw new TSError(compilerOptions.errors[0].messageText, compilerOptions.errors[0].code)
   }
 
   const compilerHost = ts.createCompilerHost(compilerOptions.options)
-
+  // ts.externalHelpersModuleNameText
   const oldWriteFile = compilerHost.writeFile
   compilerHost.writeFile = function (fileName, data, writeByteOrderMark, onError, sourceFiles) {
-    // console.log(fileName)
-    let newData = data.replace(/((import|export)\s+.+?\s+from\s+)['"](.+)\.tsx?['"]/g, '$1"$3"')
-      .replace(/(import\s+)['"](.+)\.tsx?['"]/g, '$1"$2"')
-      .replace(/import\(['"](.+)\.tsx?['"]\)/g, 'import("$1")')
-      .replace(/require\(['"](.+)\.tsx?['"]\)/g, 'require("$1")')
+    let moduleRequest = relative(dirname(fileName.replace(/\//g, sep)), join(compilerOptions.options.outDir, 'polyfill/tslib')).replace(/\\/g, '/')
+    if (moduleRequest.charAt(0) !== '.') {
+      moduleRequest = `./${moduleRequest}`
+    }
+    let newData
+    if (suffix && !fileName.endsWith('.d.ts')) {
+      newData = data
+        .replace(/((import|export)\s+.+?\s+from\s+)['"]tslib['"]/g, `$1"${moduleRequest}.js"`)
+        .replace(/require\(['"]tslib['"]\)/g, `require("${moduleRequest}.js")`)
+        .replace(/((import|export)\s+.+?\s+from\s+)['"](.+)\.t(sx?)['"]/g, '$1"$3.j$4"')
+        .replace(/(import\s+)['"](.+)\.t(sx?)['"]/g, '$1"$2.j$3"')
+        .replace(/import\(['"](.+)\.t(sx?)['"]\)/g, 'import("$1.j$2")')
+        .replace(/require\(['"](.+)\.t(sx?)['"]\)/g, 'require("$1.j$2")')
+    } else {
+      newData = data
+        .replace(/((import|export)\s+.+?\s+from\s+)['"]tslib['"]/g, `$1"${moduleRequest}"`)
+        .replace(/require\(['"]tslib['"]\)/g, `require("${moduleRequest}")`)
+        .replace(/((import|export)\s+.+?\s+from\s+)['"](.+)\.tsx?['"]/g, '$1"$3"')
+        .replace(/(import\s+)['"](.+)\.tsx?['"]/g, '$1"$2"')
+        .replace(/import\(['"](.+)\.tsx?['"]\)/g, 'import("$1")')
+        .replace(/require\(['"](.+)\.tsx?['"]\)/g, 'require("$1")')
+    }
+
     // if (!compilerOptions.options.module || compilerOptions.options.module === ts.ModuleKind.CommonJS) {
 
     // } else if (compilerOptions.options.module >= ts.ModuleKind.ES2015) {
@@ -128,7 +150,10 @@ function compile (tsconfig, opts) {
     .getPreEmitDiagnostics(program)
     .concat(emitResult.diagnostics)
 
-  const ignoreErrors = [18028]
+  const ignoreErrors = [
+    2354, // This syntax requires an imported helper but module '{0}' cannot be found.
+    18028 // Private identifiers are only available when targeting ECMAScript 2015 and higher.
+  ]
   allDiagnostics.forEach(diagnostic => {
     if (ignoreErrors.indexOf(diagnostic.code) !== -1) return
     if (diagnostic.file) {

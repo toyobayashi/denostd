@@ -1,17 +1,18 @@
 {
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "module": "esnext",
+    "module": "commonjs",
     "target": "es5",
-    "declaration": false,
+    "declaration": true,
     "sourceMap": false,
     "downlevelIteration": true,
-    "importHelpers": true,
     "noEmitHelpers": true,
-    "outDir": "./dist/_esm"
+    "importHelpers": true,
+    "outDir": "./dist/cjs"
   },
   "include": [
-    "polyfill/api.d.ts",
+    "polyfill/**/*.ts",
+    "polyfill/**/*.js",
     "index.ts",
     "std/async/mod.ts",
     "std/bytes/mod.ts",

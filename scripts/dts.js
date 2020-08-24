@@ -113,15 +113,17 @@ exports.revertChange = revertChange
 
 function resolveDeclarationFile (dtsPath, ns, format = 'umd') {
   const dts = fs.readFileSync(dtsPath, 'utf8')
+  const p = path.parse(dtsPath)
+  const outputPath = path.dirname(dtsPath) + path.sep + p.name.split('.')[0] + '.global.d' + p.ext
   if (format === 'umd') {
     const umddts = `${dts}${EOL}export as namespace ${ns}${EOL}`
-    fs.writeFileSync(dtsPath, umddts, 'utf8')
+    fs.writeFileSync(outputPath, umddts, 'utf8')
   } else if (format === 'cjs') {
     let cjsDts = dts.replace(/declare\s/g, '')
     cjsDts = cjsDts.replace(/export default (\S+);/g, 'export { $1 as default }')
     cjsDts = `declare namespace ${ns} {${EOL}${cjsDts}`
     cjsDts += `${EOL}}${EOL}export = ${ns}${EOL}`
-    fs.writeFileSync(dtsPath, cjsDts, 'utf8')
+    fs.writeFileSync(outputPath, cjsDts, 'utf8')
   } else if (format === 'iife') {
     let globalDts = dts.replace(/declare\s/g, '')/* .replace(/export \{ \}/g, '') */
     globalDts = globalDts.replace(/export default (\S+);/g, 'export { $1 as default }')
@@ -131,7 +133,7 @@ function resolveDeclarationFile (dtsPath, ns, format = 'umd') {
     
     const suffix = ns.indexOf('.') === -1 ? `${EOL}}${EOL}}${EOL}` : `${EOL}}${EOL}}${EOL}}${EOL}`
     globalDts = `${prefix}${globalDts}${suffix}`
-    fs.writeFileSync(dtsPath, globalDts, 'utf8')
+    fs.writeFileSync(outputPath, globalDts, 'utf8')
   } else {
     throw new TypeError('Format: umd | cjs | iife')
   }

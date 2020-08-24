@@ -11,7 +11,8 @@
     "outDir": "./dist/esm"
   },
   "include": [
-    "polyfill/api.d.ts",
+    "polyfill/**/*.ts",
+    "polyfill/**/*.js",
     "index.ts",
     "std/async/mod.ts",
     "std/bytes/mod.ts",

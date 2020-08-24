@@ -6,25 +6,31 @@
 
 ### Install
 
-With npm:
-
 ``` bash
 $ npm install @tybys/denostd
 ```
 
-Build from source:
+Or repository and build from source:
 
 ``` bash
+$ git clone https://github.com/toyobayashi/denostd.git
+$ cd denostd
 $ npm run build
 ```
 
 Output:
 
-* `dist/cjs` - Module: `CommonJS`, Target: `ES2018`
+* `dist/cjs` - Module: `CommonJS`, Target: `ES5`
 
-* `dist/esm` - Module: `ESNext`, Target: `ES5` (Need polyfills for `Promise`, `Symbol`, `WeakMap`, `TypedArray`, `globalThis`, etc in old browsers)
+* `dist/cjs-modern` - Module: `CommonJS`, Target: `ES2018` (Node.js environment default entry)
 
-* `dist/umd` - Module: `UMD`, Target: `ES5` (Need polyfills for `Promise`, `Symbol`, `WeakMap`, `TypedArray`, `globalThis`, etc in old browsers)
+* `dist/esm` - Module: `ESNext`, Target: `ES5` (Webpack web target default entry)
+
+* `dist/esm-modern` - Module: `ESNext`, Target: `ES2018` (Webpack non-web target default entry)
+
+* `dist/umd` - Module: `UMD`, Target: `ES5`
+
+Need polyfills for `Promise`, `Symbol`, `WeakMap`, `TypedArray`, `globalThis`, etc.
 
 ### Browser
 
@@ -52,6 +58,17 @@ console.log(Buffer);
 </script>
 ```
 
+ES Module:
+
+``` html
+<script type="module">
+import { hash } from "https://cdn.jsdelivr.net/npm/@tybys/denostd/dist/esm-modern/index.js";
+const md5 = new hash.md5.Md5();
+const buffer = Buffer.from(md5.digest());
+console.log(buffer.toString('hex'));
+</script>
+```
+
 ### Node.js
 
 Full version:
@@ -64,7 +81,7 @@ denostd.fmt.printf.printf('%s', 'yo')
 Standalone:
 
 ``` js
-const printf = require('@tybys/denostd/dist/cjs/std/fmt/printf.js')
+const printf = require('@tybys/denostd/dist/cjs-modern/std/fmt/printf.js')
 printf.printf('%s', 'yo')
 ```
 

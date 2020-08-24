@@ -105,6 +105,16 @@ export const isWindows = NATIVE_OS == "windows";`
     ]
   },
   {
+    path: 'std/path/glob.ts',
+    opts: [
+      {
+        type: 'replace',
+        test: /os\?: typeof Deno\.build\.os/g,
+        value: `os?: "darwin" | "linux" | "windows"`
+      },
+    ]
+  },
+  {
     path: 'std/path/win32.ts',
     opts: [
       {

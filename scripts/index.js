@@ -4,7 +4,7 @@ const { getPath } = require('./path.js')
 const { bundle, createConfig, getRollupConfig, outputPrefix, inputPrefix } = require('./rollup.js')
 const { extractApi, extractEntryApi } = require('./apiex.js')
 const ts = require('typescript')
-const { copyFileSync, readFileSync, writeFileSync } = require('fs')
+const { copyFileSync, readFileSync, writeFileSync, fstat } = require('fs')
 const { EOL } = require('os')
 // const rm = require('fs-extra').removeSync
 
@@ -92,8 +92,9 @@ declare global {
     export const Buffer: _Buffer;
 }
 `
-  writeFileSync(getPath('dist/cjs/std/node/buffer.d.ts'), readFileSync(getPath('dist/cjs/std/node/buffer.d.ts'), 'utf8') + `${EOL}${globalBuffer}`, 'utf8')
+  writeFileSync(getPath('dist/cjs-modern/std/node/buffer.d.ts'), readFileSync(getPath('dist/cjs-modern/std/node/buffer.d.ts'), 'utf8') + `${EOL}${globalBuffer}`, 'utf8')
   writeFileSync(getPath('dist/esm/std/node/buffer.d.ts'), readFileSync(getPath('dist/esm/std/node/buffer.d.ts'), 'utf8') + `${EOL}${globalBuffer}`, 'utf8')
+  writeFileSync(getPath('dist/esm-modern/std/node/buffer.d.ts'), readFileSync(getPath('dist/esm-modern/std/node/buffer.d.ts'), 'utf8') + `${EOL}${globalBuffer}`, 'utf8')
 
   extractApi('node', 'events', 'events', 'node.events')
 
@@ -130,6 +131,12 @@ declare global {
   extractApi('uuid')
 }
 
+function replaceBufferConstructor (file) {
+  const re = /function\s+Buffer\s*\((.*?)\)\s*\{[\s\S]*?(\r?\n)?\}/
+  const code = readFileSync(file, 'utf8').replace(re, 'function Buffer(a, b, c) { var r = new Uint8Array(a, b, c); Object.setPrototypeOf(r, Buffer.prototype); return r; }')
+  writeFileSync(file, code, 'utf8')
+}
+
 /* function avoidRegeneratorRuntime (tsEntries) {
   for (let i = 0; i < tsEntries.length; i++) {
     compile(getPath('tsconfig.browser.json'), tsEntries[i])
@@ -140,10 +147,19 @@ async function main () {
   await srcUtil.changeSource(list)
   try {
     console.log('Output dist/cjs ...')
+    compile(getPath('tsconfig.legacy.json'))
+
+    console.log('Output dist/cjs-modern ...')
     compile(getPath('tsconfig.json'))
+
     console.log('Output dist/esm ...')
     compile(getPath('tsconfig.esm.json'))
-    // console.log('Output dist/umd ...')
+    replaceBufferConstructor(getPath('dist/esm/std/node/buffer.js'))
+
+    console.log('Output dist/esm-modern ...')
+    compile(getPath('tsconfig.modern.json'))
+
+    console.log('Output dist/umd ...')
     // compile(getPath('tsconfig.browser.json'))
     // avoidRegeneratorRuntime(recompileEntries)
     // console.log('Output browser code ...')

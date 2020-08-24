@@ -1,13 +1,13 @@
 {
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "module": "commonjs",
+    "module": "esnext",
     "target": "es2018",
     "declaration": true,
     "sourceMap": false,
     "noEmitHelpers": true,
     "importHelpers": true,
-    "outDir": "./dist/cjs-modern"
+    "outDir": "./dist/esm-modern"
   },
   "include": [
     "polyfill/**/*.ts",
