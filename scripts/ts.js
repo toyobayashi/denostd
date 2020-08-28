@@ -71,18 +71,18 @@ function compile (tsconfig, opts = {}) {
       newData = data
         .replace(/((import|export)\s+.+?\s+from\s+)['"]tslib['"]/g, `$1"${moduleRequest}.js"`)
         .replace(/require\(['"]tslib['"]\)/g, `require("${moduleRequest}.js")`)
-        .replace(/((import|export)\s+.+?\s+from\s+)['"](.+)\.t(sx?)['"]/g, '$1"$3.j$4"')
-        .replace(/(import\s+)['"](.+)\.t(sx?)['"]/g, '$1"$2.j$3"')
-        .replace(/import\(['"](.+)\.t(sx?)['"]\)/g, 'import("$1.j$2")')
-        .replace(/require\(['"](.+)\.t(sx?)['"]\)/g, 'require("$1.j$2")')
+        // .replace(/((import|export)\s+.+?\s+from\s+)['"](.+)\.t(sx?)['"]/g, '$1"$3.j$4"')
+        // .replace(/(import\s+)['"](.+)\.t(sx?)['"]/g, '$1"$2.j$3"')
+        // .replace(/import\(['"](.+)\.t(sx?)['"]\)/g, 'import("$1.j$2")')
+        // .replace(/require\(['"](.+)\.t(sx?)['"]\)/g, 'require("$1.j$2")')
     } else {
       newData = data
         .replace(/((import|export)\s+.+?\s+from\s+)['"]tslib['"]/g, `$1"${moduleRequest}"`)
         .replace(/require\(['"]tslib['"]\)/g, `require("${moduleRequest}")`)
-        .replace(/((import|export)\s+.+?\s+from\s+)['"](.+)\.tsx?['"]/g, '$1"$3"')
-        .replace(/(import\s+)['"](.+)\.tsx?['"]/g, '$1"$2"')
-        .replace(/import\(['"](.+)\.tsx?['"]\)/g, 'import("$1")')
-        .replace(/require\(['"](.+)\.tsx?['"]\)/g, 'require("$1")')
+        // .replace(/((import|export)\s+.+?\s+from\s+)['"](.+)\.tsx?['"]/g, '$1"$3"')
+        // .replace(/(import\s+)['"](.+)\.tsx?['"]/g, '$1"$2"')
+        // .replace(/import\(['"](.+)\.tsx?['"]\)/g, 'import("$1")')
+        // .replace(/require\(['"](.+)\.tsx?['"]\)/g, 'require("$1")')
     }
 
     // if (!compilerOptions.options.module || compilerOptions.options.module === ts.ModuleKind.CommonJS) {
@@ -144,7 +144,10 @@ function compile (tsconfig, opts = {}) {
   }
 
   let program = ts.createProgram(compilerOptions.fileNames, compilerOptions.options, compilerHost)
-  let emitResult = program.emit()
+  let emitResult = program.emit(undefined, undefined, undefined, false, {
+    after: [createTransformer(false)],
+    afterDeclarations: [createTransformer(true)]
+  })
 
   let allDiagnostics = ts
     .getPreEmitDiagnostics(program)
@@ -171,3 +174,101 @@ function compile (tsconfig, opts = {}) {
 }
 
 exports.compile = compile
+
+function createTransformer (isDeclarationFile) {
+  let currentSourceFile = ''
+  return (
+    /** @type {import('typescript').TransformationContext} */
+    context
+  ) => {
+    /** @type {import('typescript').Visitor} */
+    const visitor = (node) => {
+      if (ts.isSourceFile(node)) {
+        currentSourceFile = node.fileName
+        return ts.visitEachChild(node, visitor, context)
+      }
+
+      if (ts.isImportDeclaration(node)) {
+        return context.factory.createImportDeclaration(node.decorators, node.modifiers, node.importClause, replaceModuleSpecifier(node.moduleSpecifier, context, isDeclarationFile, currentSourceFile))
+      }
+
+      if (ts.isImportEqualsDeclaration(node)) {
+        return context.factory.createImportEqualsDeclaration(node.decorators, node.modifiers, node.name, context.factory.createExternalModuleReference(replaceModuleSpecifier(node.moduleReference.expression, context, isDeclarationFile, currentSourceFile)))
+      }
+
+      if (ts.isExportDeclaration(node) && node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier)) {
+        return context.factory.createExportDeclaration(node.decorators, node.modifiers, node.isTypeOnly, node.exportClause, replaceModuleSpecifier(node.moduleSpecifier, context, isDeclarationFile, currentSourceFile))
+      }
+
+      if (ts.isVariableStatement(node)) {
+        if (node.declarationList) {
+          const list = []
+          for (const d of node.declarationList.declarations) {
+            const n = d.initializer
+            if (n && ts.isCallExpression(n) && n.expression && n.expression.escapedText === 'require' && n.arguments.length === 1 && ts.isStringLiteral(n.arguments[0])) {
+              list.push(context.factory.createVariableDeclaration(d.name, d.exclamationToken, d.type,
+                context.factory.createCallExpression(n.expression, n.typeArguments, [replaceModuleSpecifier(n.arguments[0], context, isDeclarationFile, currentSourceFile)])))
+            } else {
+              list.push(d)
+            }
+          }
+
+          return context.factory.createVariableStatement(node.modifiers, list)
+        }
+      }
+
+      if (ts.isCallExpression(node)
+        && node.expression
+        && node.expression.escapedText === 'require'
+        && node.arguments.length === 1
+        && ts.isStringLiteral(node.arguments[0])
+      ) {
+        return context.factory.createCallExpression(node.expression, node.typeArguments, [replaceModuleSpecifier(node.arguments[0], context, isDeclarationFile, currentSourceFile)])
+      }
+
+      if (ts.isImportTypeNode(node)) {
+        return context.factory.createImportTypeNode(
+          context.factory.createLiteralTypeNode(replaceModuleSpecifier(node.argument.literal, context, isDeclarationFile, currentSourceFile)),
+          node.qualifier,
+          node.typeArguments,
+          node.isTypeOf
+        )
+      }
+
+      let hasChildren
+      try {
+        hasChildren = node.getChildCount() !== 0
+      } catch (_) {
+        return node
+      } 
+      if (hasChildren) {
+        return ts.visitEachChild(node, visitor, context)
+      } else {
+        return node
+      }
+    }
+    return (node) => ts.visitNode(node, visitor)
+  }
+}
+
+function replaceModuleSpecifier (node, context, isDeclarationFile, currentSourceFile) {
+  if (node.text.charAt(0) !== '.') {
+    return node
+  }
+  return isDeclarationFile
+    ? context.factory.createStringLiteral(removeSuffix(node.text))
+    : context.factory.createStringLiteral(removeSuffix(node.text) + '.js')
+}
+
+function endsWith(str, suffix) {
+  var expectedPos = str.length - suffix.length;
+  return expectedPos >= 0 && str.indexOf(suffix, expectedPos) === expectedPos;
+}
+
+function removeSuffix(str, suffix) {
+  if (suffix == null) {
+    const dot = str.lastIndexOf('.')
+    return dot !== -1 ? str.slice(0, dot) : str
+  }
+  return endsWith(str, suffix) ? str.slice(0, str.length - suffix.length) : str;
+}
