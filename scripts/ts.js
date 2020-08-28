@@ -60,7 +60,7 @@ function compile (tsconfig, opts = {}) {
 
   const compilerHost = ts.createCompilerHost(compilerOptions.options)
   // ts.externalHelpersModuleNameText
-  const oldWriteFile = compilerHost.writeFile
+  /* const oldWriteFile = compilerHost.writeFile
   compilerHost.writeFile = function (fileName, data, writeByteOrderMark, onError, sourceFiles) {
     let moduleRequest = relative(dirname(fileName.replace(/\//g, sep)), join(compilerOptions.options.outDir, 'polyfill/tslib')).replace(/\\/g, '/')
     if (moduleRequest.charAt(0) !== '.') {
@@ -69,16 +69,16 @@ function compile (tsconfig, opts = {}) {
     let newData
     if (suffix && !fileName.endsWith('.d.ts')) {
       newData = data
-        .replace(/((import|export)\s+.+?\s+from\s+)['"]tslib['"]/g, `$1"${moduleRequest}.js"`)
-        .replace(/require\(['"]tslib['"]\)/g, `require("${moduleRequest}.js")`)
+        // .replace(/((import|export)\s+.+?\s+from\s+)['"]tslib['"]/g, `$1"${moduleRequest}.js"`)
+        // .replace(/require\(['"]tslib['"]\)/g, `require("${moduleRequest}.js")`)
         // .replace(/((import|export)\s+.+?\s+from\s+)['"](.+)\.t(sx?)['"]/g, '$1"$3.j$4"')
         // .replace(/(import\s+)['"](.+)\.t(sx?)['"]/g, '$1"$2.j$3"')
         // .replace(/import\(['"](.+)\.t(sx?)['"]\)/g, 'import("$1.j$2")')
         // .replace(/require\(['"](.+)\.t(sx?)['"]\)/g, 'require("$1.j$2")')
     } else {
       newData = data
-        .replace(/((import|export)\s+.+?\s+from\s+)['"]tslib['"]/g, `$1"${moduleRequest}"`)
-        .replace(/require\(['"]tslib['"]\)/g, `require("${moduleRequest}")`)
+        // .replace(/((import|export)\s+.+?\s+from\s+)['"]tslib['"]/g, `$1"${moduleRequest}"`)
+        // .replace(/require\(['"]tslib['"]\)/g, `require("${moduleRequest}")`)
         // .replace(/((import|export)\s+.+?\s+from\s+)['"](.+)\.tsx?['"]/g, '$1"$3"')
         // .replace(/(import\s+)['"](.+)\.tsx?['"]/g, '$1"$2"')
         // .replace(/import\(['"](.+)\.tsx?['"]\)/g, 'import("$1")')
@@ -91,7 +91,7 @@ function compile (tsconfig, opts = {}) {
 
     // }
     return oldWriteFile.call(this, fileName, newData, writeByteOrderMark, onError, sourceFiles)
-  }
+  } */
 
   compilerHost.resolveModuleNames = function (moduleNames, containingFile/* , reusedNames, redirectedReference, options */) {
 
@@ -145,8 +145,8 @@ function compile (tsconfig, opts = {}) {
 
   let program = ts.createProgram(compilerOptions.fileNames, compilerOptions.options, compilerHost)
   let emitResult = program.emit(undefined, undefined, undefined, false, {
-    after: [createTransformer(false)],
-    afterDeclarations: [createTransformer(true)]
+    after: [createTransformer(false, suffix, compilerOptions)],
+    afterDeclarations: [createTransformer(true, suffix, compilerOptions)]
   })
 
   let allDiagnostics = ts
@@ -175,7 +175,7 @@ function compile (tsconfig, opts = {}) {
 
 exports.compile = compile
 
-function createTransformer (isDeclarationFile) {
+function createTransformer (isDeclarationFile, suffix) {
   let currentSourceFile = ''
   return (
     /** @type {import('typescript').TransformationContext} */
@@ -189,75 +189,66 @@ function createTransformer (isDeclarationFile) {
       }
 
       if (ts.isImportDeclaration(node)) {
-        return context.factory.createImportDeclaration(node.decorators, node.modifiers, node.importClause, replaceModuleSpecifier(node.moduleSpecifier, context, isDeclarationFile, currentSourceFile))
+        return context.factory.createImportDeclaration(node.decorators, node.modifiers, node.importClause, replaceModuleSpecifier(node.moduleSpecifier, context, isDeclarationFile, currentSourceFile, suffix))
       }
 
       if (ts.isImportEqualsDeclaration(node)) {
-        return context.factory.createImportEqualsDeclaration(node.decorators, node.modifiers, node.name, context.factory.createExternalModuleReference(replaceModuleSpecifier(node.moduleReference.expression, context, isDeclarationFile, currentSourceFile)))
+        return context.factory.createImportEqualsDeclaration(node.decorators, node.modifiers, node.name, context.factory.createExternalModuleReference(replaceModuleSpecifier(node.moduleReference.expression, context, isDeclarationFile, currentSourceFile, suffix)))
       }
 
       if (ts.isExportDeclaration(node) && node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier)) {
-        return context.factory.createExportDeclaration(node.decorators, node.modifiers, node.isTypeOnly, node.exportClause, replaceModuleSpecifier(node.moduleSpecifier, context, isDeclarationFile, currentSourceFile))
-      }
-
-      if (ts.isVariableStatement(node)) {
-        if (node.declarationList) {
-          const list = []
-          for (const d of node.declarationList.declarations) {
-            const n = d.initializer
-            if (n && ts.isCallExpression(n) && n.expression && n.expression.escapedText === 'require' && n.arguments.length === 1 && ts.isStringLiteral(n.arguments[0])) {
-              list.push(context.factory.createVariableDeclaration(d.name, d.exclamationToken, d.type,
-                context.factory.createCallExpression(n.expression, n.typeArguments, [replaceModuleSpecifier(n.arguments[0], context, isDeclarationFile, currentSourceFile)])))
-            } else {
-              list.push(d)
-            }
-          }
-
-          return context.factory.createVariableStatement(node.modifiers, list)
-        }
+        return context.factory.createExportDeclaration(node.decorators, node.modifiers, node.isTypeOnly, node.exportClause, replaceModuleSpecifier(node.moduleSpecifier, context, isDeclarationFile, currentSourceFile, suffix))
       }
 
       if (ts.isCallExpression(node)
         && node.expression
-        && node.expression.escapedText === 'require'
+        && ((ts.isIdentifier(node.expression) && node.expression.escapedText === 'require') || node.expression.kind === ts.SyntaxKind.ImportKeyword)
         && node.arguments.length === 1
         && ts.isStringLiteral(node.arguments[0])
       ) {
-        return context.factory.createCallExpression(node.expression, node.typeArguments, [replaceModuleSpecifier(node.arguments[0], context, isDeclarationFile, currentSourceFile)])
+        return context.factory.createCallExpression(node.expression, node.typeArguments, [replaceModuleSpecifier(node.arguments[0], context, isDeclarationFile, currentSourceFile, suffix)])
       }
 
       if (ts.isImportTypeNode(node)) {
         return context.factory.createImportTypeNode(
-          context.factory.createLiteralTypeNode(replaceModuleSpecifier(node.argument.literal, context, isDeclarationFile, currentSourceFile)),
+          context.factory.createLiteralTypeNode(replaceModuleSpecifier(node.argument.literal, context, isDeclarationFile, currentSourceFile, suffix)),
           node.qualifier,
           node.typeArguments,
           node.isTypeOf
         )
       }
 
-      let hasChildren
-      try {
-        hasChildren = node.getChildCount() !== 0
-      } catch (_) {
-        return node
-      } 
-      if (hasChildren) {
-        return ts.visitEachChild(node, visitor, context)
-      } else {
-        return node
-      }
+      return ts.visitEachChild(node, visitor, context)
     }
     return (node) => ts.visitNode(node, visitor)
   }
 }
 
-function replaceModuleSpecifier (node, context, isDeclarationFile, currentSourceFile) {
+/**
+ * @param {import('typescript').StringLiteral} node 
+ * @param {import('typescript').TransformationContext} context 
+ * @param {boolean} isDeclarationFile 
+ * @param {string} currentSourceFile 
+ * @param {boolean} suffix 
+ * @returns {import('typescript').StringLiteral}
+ */
+function replaceModuleSpecifier (node, context, isDeclarationFile, currentSourceFile, suffix) {
+  if (node.text === 'tslib') {
+    const fileName = currentSourceFile
+    let moduleRequest = relative(dirname(fileName.replace(/\//g, sep)), getPath('polyfill/tslib')).replace(/\\/g, '/')
+    if (moduleRequest.charAt(0) !== '.') {
+      moduleRequest = `./${moduleRequest}`
+    }
+    return (!isDeclarationFile && suffix)
+      ? context.factory.createStringLiteral(moduleRequest + '.js')
+      : context.factory.createStringLiteral(moduleRequest)
+  }
   if (node.text.charAt(0) !== '.') {
     return node
   }
-  return isDeclarationFile
-    ? context.factory.createStringLiteral(removeSuffix(node.text))
-    : context.factory.createStringLiteral(removeSuffix(node.text) + '.js')
+  return (!isDeclarationFile && suffix)
+    ? context.factory.createStringLiteral(removeSuffix(node.text) + '.js')
+    : context.factory.createStringLiteral(removeSuffix(node.text))
 }
 
 function endsWith(str, suffix) {
