@@ -157,16 +157,16 @@ function compile (tsconfig, opts = {}) {
     2354, // This syntax requires an imported helper but module '{0}' cannot be found.
     18028 // Private identifiers are only available when targeting ECMAScript 2015 and higher.
   ]
-  allDiagnostics.forEach(diagnostic => {
-    if (ignoreErrors.indexOf(diagnostic.code) !== -1) return
-    if (diagnostic.file) {
-      let { line, character } = diagnostic.file.getLineAndCharacterOfPosition(diagnostic.start)
-      let message = ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n")
-      console.log(`${diagnostic.file.fileName} (${line + 1},${character + 1}): ${message}`)
-    } else {
-      console.log(ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n"))
+
+  const diagnostics = allDiagnostics.filter(d => !ignoreErrors.includes(d.code))
+  if (diagnostics.length) {
+    const host = {
+      getCurrentDirectory: ts.sys.getCurrentDirectory,
+      getCanonicalFileName: createGetCanonicalFileName(true),
+      getNewLine: function () { return ts.sys.newLine }
     }
-  })
+    console.error(ts.formatDiagnosticsWithColorAndContext(diagnostics, host))
+  }
 
   if (emitResult.emitSkipped) {
     throw new Error('TypeScript compile failed.')
@@ -174,6 +174,22 @@ function compile (tsconfig, opts = {}) {
 }
 
 exports.compile = compile
+
+function identity (x) { return x }
+
+function toLowerCase (x) { return x.toLowerCase() }
+
+const fileNameLowerCaseRegExp = /[^\u0130\u0131\u00DFa-z0-9\\/:\-_\. ]+/g
+
+function toFileNameLowerCase (x) {
+  return fileNameLowerCaseRegExp.test(x)
+    ? x.replace(fileNameLowerCaseRegExp, toLowerCase)
+    : x
+}
+
+function createGetCanonicalFileName (useCaseSensitiveFileNames) {
+  return useCaseSensitiveFileNames ? identity : toFileNameLowerCase
+}
 
 function createTransformer (isDeclarationFile, suffix) {
   let currentSourceFile = ''
@@ -251,15 +267,15 @@ function replaceModuleSpecifier (node, context, isDeclarationFile, currentSource
     : context.factory.createStringLiteral(removeSuffix(node.text))
 }
 
-function endsWith(str, suffix) {
-  var expectedPos = str.length - suffix.length;
-  return expectedPos >= 0 && str.indexOf(suffix, expectedPos) === expectedPos;
+function endsWith (str, suffix) {
+  var expectedPos = str.length - suffix.length
+  return expectedPos >= 0 && str.indexOf(suffix, expectedPos) === expectedPos
 }
 
-function removeSuffix(str, suffix) {
+function removeSuffix (str, suffix) {
   if (suffix == null) {
     const dot = str.lastIndexOf('.')
     return dot !== -1 ? str.slice(0, dot) : str
   }
-  return endsWith(str, suffix) ? str.slice(0, str.length - suffix.length) : str;
+  return endsWith(str, suffix) ? str.slice(0, str.length - suffix.length) : str
 }
