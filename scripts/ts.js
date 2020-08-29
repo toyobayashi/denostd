@@ -4,6 +4,9 @@ const { builtinModules } = require('module')
 const { getPath } = require('./path.js')
 
 const ts = require('typescript')
+// fix typescript < 4.0
+ts.classPrivateFieldGetHelper.importName = ts.classPrivateFieldGetHelper.importName || '__classPrivateFieldGet'
+ts.classPrivateFieldSetHelper.importName = ts.classPrivateFieldSetHelper.importName || '__classPrivateFieldSet'
 
 class TSError extends Error {
   constructor (msg, code) {
