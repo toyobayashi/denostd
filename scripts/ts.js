@@ -8,6 +8,18 @@ const ts = require('typescript')
 ts.classPrivateFieldGetHelper.importName = ts.classPrivateFieldGetHelper.importName || '__classPrivateFieldGet'
 ts.classPrivateFieldSetHelper.importName = ts.classPrivateFieldSetHelper.importName || '__classPrivateFieldSet'
 
+console.log(`TypeScript Version: ${ts.version}`)
+const tsLessThanV4 = !ts.versionMajorMinor || Number(ts.versionMajorMinor.charAt(0)) < 4
+
+/**
+ * @param {ts.TransformationContext=} context 
+ * @returns {typeof ts | import('typescript').NodeFactory}
+ */
+function getAstNodeFactory (context) {
+  if (!context) return ts.factory ? ts.factory : ts
+  return context.factory ? context.factory : getAstNodeFactory()
+}
+
 class TSError extends Error {
   constructor (msg, code) {
     super(msg)
@@ -197,10 +209,16 @@ function createGetCanonicalFileName (useCaseSensitiveFileNames) {
 function createTransformer (isDeclarationFile, suffix) {
   let currentSourceFile = ''
   return (
-    /** @type {import('typescript').TransformationContext} */
+    /** @type {ts.TransformationContext} */
     context
   ) => {
-    /** @type {import('typescript').Visitor} */
+    /** @type {typeof ts | import('typescript').NodeFactory} */
+    const factory = getAstNodeFactory(context)
+
+    /** @type {typeof ts.createCall} */
+    const createCallExpression = typeof factory.createCallExpression === 'function' ? factory.createCallExpression.bind(factory) : factory.createCall.bind(factory)
+
+    /** @type {ts.Visitor} */
     const visitor = (node) => {
       if (ts.isSourceFile(node)) {
         currentSourceFile = node.fileName
@@ -208,15 +226,18 @@ function createTransformer (isDeclarationFile, suffix) {
       }
 
       if (ts.isImportDeclaration(node)) {
-        return context.factory.createImportDeclaration(node.decorators, node.modifiers, node.importClause, replaceModuleSpecifier(node.moduleSpecifier, context, isDeclarationFile, currentSourceFile, suffix))
+        return factory.createImportDeclaration(node.decorators, node.modifiers, node.importClause, replaceModuleSpecifier(node.moduleSpecifier, factory, isDeclarationFile, currentSourceFile, suffix))
       }
 
       if (ts.isImportEqualsDeclaration(node)) {
-        return context.factory.createImportEqualsDeclaration(node.decorators, node.modifiers, node.name, context.factory.createExternalModuleReference(replaceModuleSpecifier(node.moduleReference.expression, context, isDeclarationFile, currentSourceFile, suffix)))
+        return factory.createImportEqualsDeclaration(node.decorators, node.modifiers, node.name, factory.createExternalModuleReference(replaceModuleSpecifier(node.moduleReference.expression, factory, isDeclarationFile, currentSourceFile, suffix)))
       }
 
       if (ts.isExportDeclaration(node) && node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier)) {
-        return context.factory.createExportDeclaration(node.decorators, node.modifiers, node.isTypeOnly, node.exportClause, replaceModuleSpecifier(node.moduleSpecifier, context, isDeclarationFile, currentSourceFile, suffix))
+        if (factory === ts || tsLessThanV4) {
+          return factory.createExportDeclaration(node.decorators, node.modifiers, node.exportClause, replaceModuleSpecifier(node.moduleSpecifier, factory, isDeclarationFile, currentSourceFile, suffix), node.isTypeOnly)
+        }
+        return factory.createExportDeclaration(node.decorators, node.modifiers, node.isTypeOnly, node.exportClause, replaceModuleSpecifier(node.moduleSpecifier, factory, isDeclarationFile, currentSourceFile, suffix))
       }
 
       if (ts.isCallExpression(node)
@@ -225,12 +246,12 @@ function createTransformer (isDeclarationFile, suffix) {
         && node.arguments.length === 1
         && ts.isStringLiteral(node.arguments[0])
       ) {
-        return context.factory.createCallExpression(node.expression, node.typeArguments, [replaceModuleSpecifier(node.arguments[0], context, isDeclarationFile, currentSourceFile, suffix)])
+        return createCallExpression(node.expression, node.typeArguments, [replaceModuleSpecifier(node.arguments[0], factory, isDeclarationFile, currentSourceFile, suffix)])
       }
 
       if (ts.isImportTypeNode(node)) {
-        return context.factory.createImportTypeNode(
-          context.factory.createLiteralTypeNode(replaceModuleSpecifier(node.argument.literal, context, isDeclarationFile, currentSourceFile, suffix)),
+        return factory.createImportTypeNode(
+          factory.createLiteralTypeNode(replaceModuleSpecifier(node.argument.literal, factory, isDeclarationFile, currentSourceFile, suffix)),
           node.qualifier,
           node.typeArguments,
           node.isTypeOf
@@ -244,14 +265,14 @@ function createTransformer (isDeclarationFile, suffix) {
 }
 
 /**
- * @param {import('typescript').StringLiteral} node 
- * @param {import('typescript').TransformationContext} context 
+ * @param {ts.StringLiteral} node 
+ * @param {typeof ts | import('typescript').NodeFactory} factory 
  * @param {boolean} isDeclarationFile 
  * @param {string} currentSourceFile 
  * @param {boolean} suffix 
- * @returns {import('typescript').StringLiteral}
+ * @returns {ts.StringLiteral}
  */
-function replaceModuleSpecifier (node, context, isDeclarationFile, currentSourceFile, suffix) {
+function replaceModuleSpecifier (node, factory, isDeclarationFile, currentSourceFile, suffix) {
   if (node.text === 'tslib') {
     const fileName = currentSourceFile
     let moduleRequest = relative(dirname(fileName.replace(/\//g, sep)), getPath('polyfill/tslib')).replace(/\\/g, '/')
@@ -259,15 +280,15 @@ function replaceModuleSpecifier (node, context, isDeclarationFile, currentSource
       moduleRequest = `./${moduleRequest}`
     }
     return (!isDeclarationFile && suffix)
-      ? context.factory.createStringLiteral(moduleRequest + '.js')
-      : context.factory.createStringLiteral(moduleRequest)
+      ? factory.createStringLiteral(moduleRequest + '.js')
+      : factory.createStringLiteral(moduleRequest)
   }
   if (node.text.charAt(0) !== '.') {
     return node
   }
   return (!isDeclarationFile && suffix)
-    ? context.factory.createStringLiteral(removeSuffix(node.text) + '.js')
-    : context.factory.createStringLiteral(removeSuffix(node.text))
+    ? factory.createStringLiteral(removeSuffix(node.text) + '.js')
+    : factory.createStringLiteral(removeSuffix(node.text))
 }
 
 function endsWith (str, suffix) {
