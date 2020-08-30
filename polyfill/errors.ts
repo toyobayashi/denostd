@@ -124,6 +124,13 @@ class Busy extends Error {
   }
 }
 
+class NotSupported extends Error {
+  constructor(msg) {
+    super(msg);
+    this.name = "NotSupported";
+  }
+}
+
 const errors = {
   NotFound,
   PermissionDenied,
@@ -143,6 +150,7 @@ const errors = {
   BadResource,
   Http,
   Busy,
+  NotSupported,
 };
 
 export { errors };
