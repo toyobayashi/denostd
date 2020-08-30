@@ -298,8 +298,11 @@ function endsWith (str, suffix) {
 
 function removeSuffix (str, suffix) {
   if (suffix == null) {
-    const dot = str.lastIndexOf('.')
-    return dot !== -1 ? str.slice(0, dot) : str
+    const pathList = str.split(/[/\\]/)
+    const last = pathList[pathList.length - 1]
+    const dot = last.lastIndexOf('.')
+    pathList[pathList.length - 1] = dot !== -1 ? last.slice(0, dot) : last
+    return pathList.join('/')
   }
   return endsWith(str, suffix) ? str.slice(0, str.length - suffix.length) : str
 }
