@@ -24,9 +24,9 @@ Output:
 
 * `dist/cjs-modern` - Module: `CommonJS`, Target: `ES2018` (Node.js environment default entry)
 
-* `dist/esm` - Module: `ESNext`, Target: `ES5` (Webpack web target default entry)
+* `dist/esm` - Module: `ESNext`, Target: `ES5` (Webpack / Rollup default entry)
 
-* `dist/esm-modern` - Module: `ESNext`, Target: `ES2018` (Webpack non-web target default entry)
+* `dist/esm-modern` - Module: `ESNext`, Target: `ES2018`
 
 * `dist/umd` - Module: `UMD`, Target: `ES5`
 
