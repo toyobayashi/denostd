@@ -170,7 +170,8 @@ function compile (tsconfig, opts = {}) {
 
   const ignoreErrors = [
     2354, // This syntax requires an imported helper but module '{0}' cannot be found.
-    18028 // Private identifiers are only available when targeting ECMAScript 2015 and higher.
+    18028, // Private identifiers are only available when targeting ECMAScript 2015 and higher.
+    6133 // {0} is declared but its value is never read.
   ]
 
   const diagnostics = allDiagnostics.filter(d => !ignoreErrors.includes(d.code))

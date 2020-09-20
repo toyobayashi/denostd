@@ -236,6 +236,36 @@ export const isWindows = NATIVE_OS == "windows";`
         type: 'insert',
         line: 0,
         value: `import * as Deno from "../../polyfill/deno.ts";`
+      },
+      {
+        type: 'replace',
+        test: /Deno\.customInspect/g,
+        value: 'Symbol("Deno.customInspect")'
+      }
+    ]
+  },
+  {
+    path: 'std/node/assertion_error.ts',
+    opts: [
+      {
+        type: 'replace',
+        test: /return \(Deno as DenoUnstable\)\.consoleSize\?\.\(Deno\.stderr\.rid\)\.columns \?\? 80;/,
+        value: `return (${isNode} && process.stderr.isTTY) ? process.stderr.getWindowSize()[0] : 80;`
+      },
+      {
+        type: 'replace',
+        test: /Deno\.isatty\(Deno\.stderr\.rid\)/g,
+        value: `(${isNode} && process.stderr.isTTY)`
+      },
+      {
+        type: 'replace',
+        test: /Deno\.noColor/g,
+        value: `(!${isNode})`
+      },
+      {
+        type: 'replace',
+        test: /const \{ Error \} = globalThis;/g,
+        value: ''
       }
     ]
   }
