@@ -268,5 +268,25 @@ export const isWindows = NATIVE_OS == "windows";`
         value: ''
       }
     ]
+  },
+  {
+    path: 'std/node/_errors.ts',
+    opts: [
+      {
+        type: 'replace',
+        test: /const \{ os \} = Deno\.build;/g,
+        value: `
+const os = typeof (globalThis as any).Deno !== 'undefined' ? (globalThis as any).Deno.build : ((${isNode}) ? (process.platform === 'win32' ? 'windows' : process.platform) : (
+  (function () {
+    if (typeof navigator === 'undefined') return 'linux';
+    if (navigator.userAgent.indexOf('Win') !== -1) return 'windows';
+    if (navigator.userAgent.indexOf('Linux') !== -1) return 'linux';
+    if (navigator.userAgent.indexOf('Mac') !== -1) return 'darwin';
+    return 'linux';
+  })()
+));
+`
+      }
+    ]
   }
 ]
