@@ -10,22 +10,22 @@ import {
   assert,
   assertEquals,
   assertMatch,
-  assertStringContains,
+  assertStringIncludes,
   assertThrowsAsync,
 } from "../testing/asserts.ts";
 import {
-  Response,
-  ServerRequest,
-  Server,
-  serve,
-  serveTLS,
   _parseAddrFromStr,
+  Response,
+  serve,
+  Server,
+  ServerRequest,
+  serveTLS,
 } from "./server.ts";
 import { BufReader, BufWriter } from "../io/bufio.ts";
 import { delay } from "../async/delay.ts";
-import { encode, decode } from "../encoding/utf8.ts";
+import { decode, encode } from "../encoding/utf8.ts";
 import { mockConn } from "./_mock_conn.ts";
-import { resolve, dirname, join, fromFileUrl } from "../path/mod.ts";
+import { dirname, fromFileUrl, join, resolve } from "../path/mod.ts";
 
 const moduleDir = dirname(fromFileUrl(import.meta.url));
 const testdataDir = resolve(moduleDir, "testdata");
@@ -498,7 +498,7 @@ Deno.test({
     const nread = await conn.read(res);
     assert(nread !== null);
     const resStr = new TextDecoder().decode(res.subarray(0, nread));
-    assertStringContains(resStr, "/hello");
+    assertStringIncludes(resStr, "/hello");
     server.close();
     await p;
     // Client connection should still be open, verify that

@@ -1,7 +1,7 @@
 // Copyright 2018-2020 the Deno authors. All rights reserved. MIT license.
 import * as hex from "../encoding/hex.ts";
 import * as base64 from "../encoding/base64.ts";
-import { notImplemented, normalizeEncoding } from "./_utils.ts";
+import { normalizeEncoding, notImplemented } from "./_utils.ts";
 
 const notImplementedEncodings = [
   "ascii",
@@ -163,10 +163,16 @@ export default class Buffer extends Uint8Array {
       }
     }
 
-    const buffer = new Buffer(totalLength);
+    const buffer = Buffer.allocUnsafe(totalLength);
     let pos = 0;
-    for (const buf of list) {
-      buffer.set(buf, pos);
+    for (const item of list) {
+      let buf: Buffer;
+      if (!(item instanceof Buffer)) {
+        buf = Buffer.from(item);
+      } else {
+        buf = item;
+      }
+      buf.copy(buffer, pos);
       pos += buf.length;
     }
 
@@ -213,7 +219,7 @@ export default class Buffer extends Uint8Array {
     if (typeof value == "string") {
       encoding = checkEncoding(encoding, false);
       if (encoding === "hex") return new Buffer(hex.decodeString(value).buffer);
-      if (encoding === "base64") return new Buffer(base64.decode(value));
+      if (encoding === "base64") return new Buffer(base64.decode(value).buffer);
       return new Buffer(new TextEncoder().encode(value).buffer);
     }
 
@@ -247,7 +253,12 @@ export default class Buffer extends Uint8Array {
     sourceStart = 0,
     sourceEnd = this.length,
   ): number {
-    const sourceBuffer = this.subarray(sourceStart, sourceEnd);
+    const sourceBuffer = this
+      .subarray(sourceStart, sourceEnd)
+      .subarray(0, Math.max(0, targetBuffer.length - targetStart));
+
+    if (sourceBuffer.length === 0) return 0;
+
     targetBuffer.set(sourceBuffer, targetStart);
     return sourceBuffer.length;
   }

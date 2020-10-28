@@ -3,18 +3,18 @@ import { decode } from "../encoding/utf8.ts";
 import {
   assert,
   assertEquals,
-  assertStringContains,
+  assertStringIncludes,
 } from "../testing/asserts.ts";
 import {
+  fromFileUrl,
   join,
   joinGlobs,
   normalize,
   relative,
-  fromFileUrl,
 } from "../path/mod.ts";
 import {
-  ExpandGlobOptions,
   expandGlob,
+  ExpandGlobOptions,
   expandGlobSync,
 } from "./expand_glob.ts";
 
@@ -126,7 +126,7 @@ Deno.test("expandGlobPermError", async function (): Promise<void> {
   });
   assertEquals(await p.status(), { code: 1, success: false });
   assertEquals(decode(await p.output()), "");
-  assertStringContains(
+  assertStringIncludes(
     decode(await p.stderrOutput()),
     "Uncaught PermissionDenied",
   );

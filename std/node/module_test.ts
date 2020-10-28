@@ -1,9 +1,9 @@
 // Copyright 2018-2020 the Deno authors. All rights reserved. MIT license.
 /* eslint-disable @typescript-eslint/no-var-requires */
 import {
-  assertEquals,
   assert,
-  assertStringContains,
+  assertEquals,
+  assertStringIncludes,
 } from "../testing/asserts.ts";
 
 import * as path from "../path/mod.ts";
@@ -67,6 +67,6 @@ Deno.test("requireStack", function () {
   try {
     hello();
   } catch (e) {
-    assertStringContains(e.stack, "/tests/cjs/cjs_throw.js");
+    assertStringIncludes(e.stack, "/tests/cjs/cjs_throw.js");
   }
 });
