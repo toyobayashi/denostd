@@ -42,9 +42,9 @@ export { path };
 
 import * as asserts from "./std/testing/asserts.ts";
 import * as bench from "./std/testing/bench.ts";
-import * as diff from "./std/testing/diff.ts";
+// import * as diff from "./std/testing/diff.ts";
 
-export const testing = { asserts, bench, diff };
+export const testing = { asserts, bench };
 
 import * as uuid from "./std/uuid/mod.ts";
 export { uuid };

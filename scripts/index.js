@@ -46,7 +46,7 @@ const browserlist = [
   ...createConfig('path'),
   ...createConfig('testing', 'asserts.js', 'asserts', 'testing.asserts'),
   ...createConfig('testing', 'bench.js', 'bench', 'testing.bench'),
-  ...createConfig('testing', 'diff.js', 'diff', 'testing.diff'),
+  // ...createConfig('testing', 'diff.js', 'diff', 'testing.diff'),
   ...createConfig('uuid'),
   ...([
     getRollupConfig({
@@ -127,7 +127,7 @@ declare global {
 
   extractApi('testing', 'asserts', 'asserts', 'testing.asserts')
   extractApi('testing', 'bench', 'bench', 'testing.bench')
-  extractApi('testing', 'diff', 'diff', 'testing.diff')
+  // extractApi('testing', 'diff', 'diff', 'testing.diff')
   extractApi('uuid')
 }
 
