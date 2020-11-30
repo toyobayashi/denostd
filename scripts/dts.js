@@ -85,11 +85,13 @@ function applyChange (outDir) {
 
     lines = [...importLines, ...lines]
     code = lines.join(EOL)
+    dts[key].changedCode = code
     fs.writeFileSync(key, code, 'utf8')
   }
+  const dtsKeys = Object.keys(dts)
   for (const key in user) {
     // user[key].code = readFileSync(key, 'utf8')
-    let code = user[key].code
+    let code = dtsKeys.includes(key) ? dts[key].changedCode : user[key].code
     for (const d in dts) {
       code = code.replace(new RegExp(`import \\* as (\\S+) from (['"]\\S+\\/${path.basename(d).split('.')[0]}['"])`, 'g'), 'import $1 from $2')
     }

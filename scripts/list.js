@@ -32,6 +32,16 @@ module.exports = [
     ]
   },
   {
+    path: 'std/_util/os.ts',
+    opts: [
+      {
+        type: 'replace',
+        test: /Deno\.build\.os/,
+        value: 'globalThis.Deno.build.os'
+      }
+    ]
+  },
+  {
     path: 'std/fmt/colors.ts',
     opts: [
       {
@@ -230,7 +240,7 @@ export const isWindows = NATIVE_OS == "windows";`
     ]
   },
   {
-    path: 'std/node/util.ts',
+    path: 'std/node/_util.ts',
     opts: [
       {
         type: 'insert',

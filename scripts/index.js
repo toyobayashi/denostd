@@ -105,7 +105,7 @@ declare global {
   extractApi('node', 'timers', 'timers', 'node.timers')
   extractApi('node', 'url', 'url', 'node.url')
 
-  const dtspath = getPath('dist/esm/std/node/util.d.ts')
+  const dtspath = getPath('dist/esm/std/node/_util.d.ts')
   const utildts = readFileSync(dtspath, 'utf8')
   let newCode = utildts.replace(/import\("\.\/_utils"\)\._Text(\S{2})coder/g, 'typeof globalThis.Text$1coder.prototype')
   writeFileSync(dtspath, newCode, 'utf8')
