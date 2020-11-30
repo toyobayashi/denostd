@@ -10,7 +10,7 @@
   <script src="../dist/umd/denostd.min.js"></script>
   <script>
     const md5 = new denostd.hash.md5.Md5()
-    const buffer = Buffer.from(md5.digest())
+    const buffer = denostd.node.buffer.Buffer.from(md5.digest())
     console.log(buffer.toString('hex'))
   </script>
 </body>

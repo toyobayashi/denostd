@@ -154,7 +154,8 @@ async function main () {
 
     console.log('Output dist/esm ...')
     compile(getPath('tsconfig.esm.json'))
-    replaceBufferConstructor(getPath('dist/esm/std/node/buffer.js'))
+    replaceBufferConstructor(getPath('dist/cjs/std/node/_buffer.js'))
+    replaceBufferConstructor(getPath('dist/esm/std/node/_buffer.js'))
 
     console.log('Output dist/esm-modern ...')
     compile(getPath('tsconfig.modern.json'))

@@ -6,6 +6,7 @@
   "main": "dist/cjs-modern/index.js",
   "typings": "dist/cjs-modern/index.d.ts",
   "scripts": {
+    "test": "node ./test/index.js",
     "build": "node ./scripts/index.js"
   },
   "author": "toyobayashi",
