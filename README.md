@@ -54,7 +54,7 @@ Standalone:
 <script>
 console.log(denostd.fmt);
 console.log(denostd.node);
-console.log(Buffer);
+console.log(denostd.node.buffer.Buffer);
 </script>
 ```
 
@@ -62,9 +62,9 @@ ES Module:
 
 ``` html
 <script type="module">
-import { hash } from "https://cdn.jsdelivr.net/npm/@tybys/denostd/dist/esm-modern/index.js";
+import { hash, node } from "https://cdn.jsdelivr.net/npm/@tybys/denostd/dist/esm-modern/index.js";
 const md5 = new hash.md5.Md5();
-const buffer = Buffer.from(md5.digest());
+const buffer = node.buffer.Buffer.from(md5.digest());
 console.log(buffer.toString('hex'));
 </script>
 ```
@@ -191,7 +191,5 @@ import * as path from '@tybys/denostd/dist/esm/std/path/mod'
     * asserts
 
     * bench
-
-    * diff
 
 * uuid

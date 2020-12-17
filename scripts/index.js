@@ -105,7 +105,7 @@ declare global {
   extractApi('node', 'timers', 'timers', 'node.timers')
   extractApi('node', 'url', 'url', 'node.url')
 
-  const dtspath = getPath('dist/esm/std/node/_util.d.ts')
+  const dtspath = getPath('dist/esm/std/node/util.d.ts')
   const utildts = readFileSync(dtspath, 'utf8')
   let newCode = utildts.replace(/import\("\.\/_utils"\)\._Text(\S{2})coder/g, 'typeof globalThis.Text$1coder.prototype')
   writeFileSync(dtspath, newCode, 'utf8')
@@ -154,8 +154,8 @@ async function main () {
 
     console.log('Output dist/esm ...')
     compile(getPath('tsconfig.esm.json'))
-    replaceBufferConstructor(getPath('dist/cjs/std/node/_buffer.js'))
-    replaceBufferConstructor(getPath('dist/esm/std/node/_buffer.js'))
+    replaceBufferConstructor(getPath('dist/cjs/std/node/buffer.js'))
+    replaceBufferConstructor(getPath('dist/esm/std/node/buffer.js'))
 
     console.log('Output dist/esm-modern ...')
     compile(getPath('tsconfig.modern.json'))

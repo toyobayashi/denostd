@@ -155,7 +155,7 @@ export const isWindows = NATIVE_OS == "windows";`
   //   ]
   // },
   {
-    path: 'std/node/_timers.ts',
+    path: 'std/node/timers.ts',
     opts: [
       {
         type: 'replace',
@@ -240,7 +240,7 @@ export const isWindows = NATIVE_OS == "windows";`
     ]
   },
   {
-    path: 'std/node/_util.ts',
+    path: 'std/node/util.ts',
     opts: [
       {
         type: 'insert',
