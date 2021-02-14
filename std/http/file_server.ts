@@ -1,9 +1,9 @@
 #!/usr/bin/env -S deno run --allow-net --allow-read
-// Copyright 2018-2020 the Deno authors. All rights reserved. MIT license.
+// Copyright 2018-2021 the Deno authors. All rights reserved. MIT license.
 
 // This program serves files in the current directory over HTTP.
-// TODO Stream responses instead of reading them into memory.
-// TODO Add tests like these:
+// TODO(bartlomieju): Stream responses instead of reading them into memory.
+// TODO(bartlomieju): Add tests like these:
 // https://github.com/indexzero/http-server/blob/master/test/http-server-test.js
 
 import { extname, posix } from "../path/mod.ts";
@@ -33,6 +33,7 @@ export interface FileServerArgs {
   cors?: boolean;
   // --no-dir-listing
   "dir-listing"?: boolean;
+  dotfiles?: boolean;
   // --host
   host?: string;
   // -c --cert
@@ -66,6 +67,7 @@ const MEDIA_TYPES: Record<string, string> = {
   ".css": "text/css",
   ".wasm": "application/wasm",
   ".mjs": "application/javascript",
+  ".svg": "image/svg+xml",
 };
 
 /** Returns the content-type based on the extension of a path. */
@@ -141,31 +143,42 @@ export async function serveFile(
   };
 }
 
-// TODO: simplify this after deno.stat and deno.readDir are fixed
+// TODO(bartlomieju): simplify this after deno.stat and deno.readDir are fixed
 async function serveDir(
   req: ServerRequest,
   dirPath: string,
 ): Promise<Response> {
+  const showDotfiles = serverArgs.dotfiles ?? true;
   const dirUrl = `/${posix.relative(target, dirPath)}`;
   const listEntry: EntryInfo[] = [];
+
+  // if ".." makes sense
+  if (dirUrl !== "/") {
+    const prevPath = posix.join(dirPath, "..");
+    const fileInfo = await Deno.stat(prevPath);
+    listEntry.push({
+      mode: modeToString(true, fileInfo.mode),
+      size: "",
+      name: "../",
+      url: posix.join(dirUrl, ".."),
+    });
+  }
+
   for await (const entry of Deno.readDir(dirPath)) {
+    if (!showDotfiles && entry.name[0] === ".") {
+      continue;
+    }
     const filePath = posix.join(dirPath, entry.name);
     const fileUrl = posix.join(dirUrl, entry.name);
     if (entry.name === "index.html" && entry.isFile) {
       // in case index.html as dir...
       return serveFile(req, filePath);
     }
-    // Yuck!
-    let fileInfo = null;
-    try {
-      fileInfo = await Deno.stat(filePath);
-    } catch (e) {
-      // Pass
-    }
+    const fileInfo = await Deno.stat(filePath);
     listEntry.push({
-      mode: modeToString(entry.isDirectory, fileInfo?.mode ?? null),
-      size: entry.isFile ? fileLenToString(fileInfo?.size ?? 0) : "",
-      name: entry.name,
+      mode: modeToString(entry.isDirectory, fileInfo.mode),
+      size: entry.isFile ? fileLenToString(fileInfo.size ?? 0) : "",
+      name: `${entry.name}${entry.isDirectory ? "/" : ""}`,
       url: fileUrl,
     });
   }
@@ -397,6 +410,7 @@ function main(): void {
     -c, --cert <FILE>   TLS certificate file (enables TLS)
     -k, --key  <FILE>   TLS key file (enables TLS)
     --no-dir-listing    Disable directory listing
+    --no-dotfiles       Do not show dotfiles
 
     All TLS options are required when one is provided.`);
     Deno.exit();

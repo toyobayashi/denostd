@@ -1,4 +1,4 @@
-// Copyright 2018-2020 the Deno authors. All rights reserved. MIT license.
+// Copyright 2018-2021 the Deno authors. All rights reserved. MIT license.
 
 /** Create dummy Deno.Conn object with given base properties */
 export function mockConn(base: Partial<Deno.Conn> = {}): Deno.Conn {
@@ -14,7 +14,9 @@ export function mockConn(base: Partial<Deno.Conn> = {}): Deno.Conn {
       port: 0,
     },
     rid: -1,
-    closeWrite: (): void => {},
+    closeWrite: (): Promise<void> => {
+      return Promise.resolve();
+    },
     read: (): Promise<number | null> => {
       return Promise.resolve(0);
     },

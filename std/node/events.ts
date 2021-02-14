@@ -1,4 +1,4 @@
-// Copyright 2018-2020 the Deno authors. All rights reserved. MIT license.
+// Copyright 2018-2021 the Deno authors. All rights reserved. MIT license.
 // Copyright (c) 2019 Denolibs authors. All rights reserved. MIT license.
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -174,6 +174,13 @@ export default class EventEmitter {
     } else {
       return 0;
     }
+  }
+
+  static listenerCount(
+    emitter: EventEmitter,
+    eventName: string | symbol,
+  ): number {
+    return emitter.listenerCount(eventName);
   }
 
   private _listeners(
@@ -552,7 +559,8 @@ export default class EventEmitter {
 }
 
 export { EventEmitter };
-export const once = EventEmitter.once;
-export const on = EventEmitter.on;
 export const captureRejectionSymbol = EventEmitter.captureRejectionSymbol;
 export const errorMonitor = EventEmitter.errorMonitor;
+export const listenerCount = EventEmitter.listenerCount;
+export const on = EventEmitter.on;
+export const once = EventEmitter.once;

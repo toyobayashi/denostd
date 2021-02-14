@@ -1,16 +1,16 @@
-// Copyright 2018-2020 the Deno authors. All rights reserved. MIT license.
-/** A module to print ANSI terminal colors. Inspired by chalk, kleur, and colors
- * on npm.
- *
- * ```
- * import { bgBlue, red, bold } from "https://deno.land/std/fmt/colors.ts";
- * console.log(bgBlue(red(bold("Hello world!"))));
- * ```
- *
- * This module supports `NO_COLOR` environmental variable disabling any coloring
- * if `NO_COLOR` is set.
- *
- * This module is browser compatible. */
+// Copyright 2018-2021 the Deno authors. All rights reserved. MIT license.
+// A module to print ANSI terminal colors. Inspired by chalk, kleur, and colors
+// on npm.
+//
+// ```
+// import { bgBlue, red, bold } from "https://deno.land/std/fmt/colors.ts";
+// console.log(bgBlue(red(bold("Hello world!"))));
+// ```
+//
+// This module supports `NO_COLOR` environmental variable disabling any coloring
+// if `NO_COLOR` is set.
+//
+// This module is browser compatible.
 
 const noColor = globalThis.Deno?.noColor ?? true;
 
@@ -437,8 +437,8 @@ export function bgRgb8(str: string, color: number): string {
  *
  * To produce the color magenta:
  *
- *      rgba24("foo", 0xff00ff);
- *      rgba24("foo", {r: 255, g: 0, b: 255});
+ *      rgb24("foo", 0xff00ff);
+ *      rgb24("foo", {r: 255, g: 0, b: 255});
  * @param str text color to apply 24bit rgb to
  * @param color code
  */
@@ -474,8 +474,8 @@ export function rgb24(str: string, color: number | Rgb): string {
  *
  * To produce the color magenta:
  *
- *      bgRgba24("foo", 0xff00ff);
- *      bgRgba24("foo", {r: 255, g: 0, b: 255});
+ *      bgRgb24("foo", 0xff00ff);
+ *      bgRgb24("foo", {r: 255, g: 0, b: 255});
  * @param str text color to apply 24bit rgb to
  * @param color code
  */

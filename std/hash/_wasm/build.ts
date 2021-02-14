@@ -1,4 +1,4 @@
-// Copyright 2018-2020 the Deno authors. All rights reserved. MIT license.
+// Copyright 2018-2021 the Deno authors. All rights reserved. MIT license.
 
 import { encode as base64Encode } from "../../encoding/base64.ts";
 
@@ -31,8 +31,7 @@ async function encodeWasm(wasmPath: string): Promise<string> {
 // 3. generate script
 async function generate(wasm: string, output: string): Promise<void> {
   const initScript = await Deno.readTextFile(`${output}/deno_hash.js`);
-  const denoHashScript =
-    "// deno-lint-ignore-file\n" +
+  const denoHashScript = "// deno-lint-ignore-file\n" +
     "//deno-fmt-ignore-file\n" +
     "//deno-lint-ignore-file\n" +
     `import * as base64 from "../../encoding/base64.ts";` +

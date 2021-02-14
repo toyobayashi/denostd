@@ -1,4 +1,4 @@
-// Copyright 2018-2020 the Deno authors. All rights reserved. MIT license.
+// Copyright 2018-2021 the Deno authors. All rights reserved. MIT license.
 import {
   assert,
   assertEquals,
@@ -21,6 +21,7 @@ async function startFileServer({
   target = ".",
   port = 4507,
   "dir-listing": dirListing = true,
+  dotfiles = true,
 }: FileServerCfg = {}): Promise<void> {
   fileServer = Deno.run({
     cmd: [
@@ -35,6 +36,7 @@ async function startFileServer({
       "-p",
       `${port}`,
       `${dirListing ? "" : "--no-dir-listing"}`,
+      `${dotfiles ? "" : "--no-dotfiles"}`,
     ],
     cwd: moduleDir,
     stdout: "piped",
@@ -201,7 +203,7 @@ Deno.test("serveDirectory", async function (): Promise<void> {
     assert(page.includes("README.md"));
 
     // `Deno.FileInfo` is not completely compatible with Windows yet
-    // TODO: `mode` should work correctly in the future.
+    // TODO(bartlomieju): `mode` should work correctly in the future.
     // Correct this test case accordingly.
     Deno.build.os !== "windows" &&
       assert(/<td class="mode">(\s)*\([a-zA-Z-]{10}\)(\s)*<\/td>/.test(page));
@@ -459,6 +461,37 @@ Deno.test("file_server disable dir listings", async function (): Promise<void> {
     assert(res.headers.has("access-control-allow-headers"));
     assertEquals(res.status, 404);
     const _ = await res.text();
+  } finally {
+    await killFileServer();
+  }
+});
+
+Deno.test("file_server do not show dotfiles", async function (): Promise<void> {
+  await startFileServer({ target: "./testdata", dotfiles: false });
+  try {
+    let res = await fetch("http://localhost:4507/");
+    assert(!(await res.text()).includes(".dotfile"));
+
+    res = await fetch("http://localhost:4507/.dotfile");
+    assertEquals((await res.text()), "dotfile");
+  } finally {
+    await killFileServer();
+  }
+});
+
+Deno.test("file_server should show .. if it makes sense", async function (): Promise<
+  void
+> {
+  await startFileServer();
+  try {
+    let res = await fetch("http://localhost:4507/");
+    let page = await res.text();
+    assert(!page.includes("../"));
+    assert(page.includes("testdata/"));
+
+    res = await fetch("http://localhost:4507/testdata/");
+    page = await res.text();
+    assert(page.includes("../"));
   } finally {
     await killFileServer();
   }

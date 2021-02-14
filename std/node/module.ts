@@ -21,8 +21,9 @@
 
 import "./global.ts";
 
+import * as nodeAssert from "./assert.ts";
 import * as nodeBuffer from "./buffer.ts";
-import * as nodeEvents from "./events.ts";
+import nodeEvents from "./events.ts";
 import * as nodeFS from "./fs.ts";
 import * as nodeOs from "./os.ts";
 import * as nodePath from "./path.ts";
@@ -389,7 +390,7 @@ class Module {
     const module = new Module(filename, parent);
 
     if (isMain) {
-      // TODO: set process info
+      // TODO(bartlomieju): set process info
       // process.mainModule = module;
       module.id = ".";
     }
@@ -595,6 +596,7 @@ function createNativeModule(id: string, exports: any): Module {
   return mod;
 }
 
+nativeModulePolyfill.set("assert", createNativeModule("assert", nodeAssert));
 nativeModulePolyfill.set("buffer", createNativeModule("buffer", nodeBuffer));
 nativeModulePolyfill.set("events", createNativeModule("events", nodeEvents));
 nativeModulePolyfill.set("fs", createNativeModule("fs", nodeFS));
@@ -764,16 +766,7 @@ function tryFile(requestPath: string, _isMain: boolean): string | false {
 }
 
 function toRealPath(requestPath: string): string {
-  // Deno does not have realpath implemented yet.
-  let fullPath = requestPath;
-  while (true) {
-    try {
-      fullPath = Deno.readLinkSync(fullPath);
-    } catch {
-      break;
-    }
-  }
-  return path.resolve(requestPath);
+  return Deno.realPathSync(requestPath);
 }
 
 // Given a path, check if the file exists with any of the set extensions
@@ -1030,7 +1023,7 @@ const CircularRequirePrototypeWarningProxy = new Proxy(
 
 // Object.prototype and ObjectProtoype refer to our 'primordials' versions
 // and are not identical to the versions on the global object.
-const PublicObjectPrototype = window.Object.prototype;
+const PublicObjectPrototype = globalThis.Object.prototype;
 
 // deno-lint-ignore no-explicit-any
 function getExportsForCircularRequire(module: Module): any {
@@ -1061,7 +1054,7 @@ type RequireWrapper = (
 ) => void;
 
 function wrapSafe(filename: string, content: string): RequireWrapper {
-  // TODO: fix this
+  // TODO(bartlomieju): fix this
   const wrapper = Module.wrap(content);
   // deno-lint-ignore no-explicit-any
   const [f, err] = (Deno as any).core.evalContext(wrapper, filename);
@@ -1144,7 +1137,7 @@ function makeRequireFunction(mod: Module): RequireFunction {
   }
 
   resolve.paths = paths;
-  // TODO: set main
+  // TODO(bartlomieju): set main
   // require.main = process.mainModule;
 
   // Enable support to add extra extension types.
