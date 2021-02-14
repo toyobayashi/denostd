@@ -129,6 +129,11 @@ function compile (tsconfig, opts = {}) {
             resolvedFileName: getPath('node_modules', request, 'tslib.d.ts'),
             isExternalLibraryImport: true
           }
+        } else if (request.startsWith('node:')) {
+          return {
+            resolvedFileName: getPath('node_modules/@types/node', request.substring(5) + '.d.ts'),
+            isExternalLibraryImport: true
+          }
         }
         throw new Error('Not support node_modules: ' + request)
       }
