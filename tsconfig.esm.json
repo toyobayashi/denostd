@@ -8,7 +8,12 @@
     "downlevelIteration": true,
     "importHelpers": true,
     "noEmitHelpers": true,
-    "outDir": "./dist/esm"
+    "outDir": "./dist/esm",
+    "lib": [
+      "DOM",
+      "ES2020",
+      "ESNext.Promise"
+    ]
   },
   "include": [
     "polyfill/**/*.ts",

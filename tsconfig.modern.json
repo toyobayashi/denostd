@@ -7,7 +7,12 @@
     "sourceMap": false,
     "noEmitHelpers": true,
     "importHelpers": true,
-    "outDir": "./dist/esm-modern"
+    "outDir": "./dist/esm-modern",
+    "lib": [
+      "DOM",
+      "ES2020",
+      "ESNext.Promise"
+    ]
   },
   "include": [
     "polyfill/**/*.ts",

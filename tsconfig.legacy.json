@@ -8,7 +8,12 @@
     "downlevelIteration": true,
     "noEmitHelpers": true,
     "importHelpers": true,
-    "outDir": "./dist/cjs"
+    "outDir": "./dist/cjs",
+    "lib": [
+      "DOM",
+      "ES2020",
+      "ESNext.Promise"
+    ]
   },
   "include": [
     "polyfill/**/*.ts",

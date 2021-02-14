@@ -7,7 +7,12 @@
     "sourceMap": false,
     "noEmitHelpers": true,
     "importHelpers": true,
-    "outDir": "./dist/cjs-modern"
+    "outDir": "./dist/cjs-modern",
+    "lib": [
+      "DOM",
+      "ES2020",
+      "ESNext.Promise",
+    ]
   },
   "include": [
     "polyfill/**/*.ts",
