@@ -1,8 +1,9 @@
 import * as async from "./std/async/mod.ts";
 import * as bytes from "./std/bytes/mod.ts";
 import * as datetime from "./std/datetime/mod.ts";
+import * as flags from "./std/flags/mod.ts";
 
-export { async, bytes, datetime };
+export { async, bytes, datetime, flags };
 
 import * as ascii85 from "./std/encoding/ascii85.ts";
 import * as base32 from "./std/encoding/base32.ts";
@@ -10,9 +11,8 @@ import * as base64 from "./std/encoding/base64.ts";
 import * as base64url from "./std/encoding/base64url.ts";
 import * as hex from "./std/encoding/hex.ts";
 import * as toml from "./std/encoding/toml.ts";
-import * as utf8 from "./std/encoding/utf8.ts";
 
-export const encoding = { ascii85, base32, base64, base64url, hex, toml, utf8 };
+export const encoding = { ascii85, base32, base64, base64url, hex, toml };
 
 import * as colors from "./std/fmt/colors.ts";
 import * as printf from "./std/fmt/printf.ts";
@@ -32,11 +32,12 @@ import * as buffer from "./std/node/buffer.ts";
 import * as events from "./std/node/events.ts";
 import * as path from "./std/path/mod.ts";
 import * as querystring from "./std/node/querystring.ts";
+import * as string_decoder from "./std/node/string_decoder.ts";
 import * as timers from "./std/node/timers.ts";
 import * as url from "./std/node/url.ts";
 import * as util from "./std/node/util.ts";
 
-export const node = { assert, buffer, events, path, querystring, timers, url, util };
+export const node = { assert, buffer, events, path, querystring, string_decoder, timers, url, util };
 
 export { path };
 

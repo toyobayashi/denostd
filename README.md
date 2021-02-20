@@ -143,8 +143,8 @@ import * as path from '@tybys/denostd/dist/esm/std/path/mod'
     * hex
     
     * toml
-    
-    * utf8
+
+* flags
 
 * fmt
 
@@ -177,6 +177,8 @@ import * as path from '@tybys/denostd/dist/esm/std/path/mod'
     * path (the same as `std/path`)
 
     * querystring
+
+    * string_decoders
 
     * timers
 

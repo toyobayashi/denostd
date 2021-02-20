@@ -207,7 +207,7 @@ export function mustCall<T extends unknown[]>(
 }
 /** Asserts that an error thrown in a callback will not be wrongly caught. */
 export async function assertCallbackErrorUncaught(
-  { prelude, invocation, cleanup }: {
+  _: {
     /** Any code which needs to run before the actual invocation (notably, any import statements). */
     prelude?: string;
     /** 
