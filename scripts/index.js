@@ -26,7 +26,7 @@ const browserlist = [
   ...createConfig('encoding', 'base64url.js', 'base64url', 'encoding.base64url'),
   ...createConfig('encoding', 'hex.js', 'hex', 'encoding.hex'),
   ...createConfig('encoding', 'toml.js', 'toml', 'encoding.toml'),
-  ...createConfig('encoding', 'utf8.js', 'utf8', 'encoding.utf8'),
+  ...createConfig('flags'),
   ...createConfig('fmt', 'printf.js', 'printf', 'fmt.printf'),
   ...createConfig('fmt', 'colors.js', 'colors', 'fmt.colors'),
   ...createConfig('hash', 'fnv.js', 'fnv', 'hash.fnv'),
@@ -37,9 +37,11 @@ const browserlist = [
   ...createConfig('hash', 'sha512.js', 'sha512', 'hash.sha512'),
   ...createConfig('node', 'assert.js', 'assert', 'node.assert'),
   ...createConfig('node', 'buffer.js', 'buffer', 'node.buffer'),
+  ...createConfig('node', 'crypto.js', 'crypto', 'node.crypto'),
   ...createConfig('node', 'events.js', 'events', 'node.events'),
   ...createConfig('node', 'path.js', 'path', 'node.path'),
   ...createConfig('node', 'querystring.js', 'querystring', 'node.querystring'),
+  ...createConfig('node', 'string_decoder.js', 'string_decoder', 'node.string_decoder'),
   ...createConfig('node', 'timers.js', 'timers', 'node.timers'),
   ...createConfig('node', 'url.js', 'url', 'node.url'),
   ...createConfig('node', 'util.js', 'util', 'node.util'),
@@ -74,7 +76,7 @@ function extractApis () {
   extractApi('encoding', 'base64url', 'base64url', 'encoding.base64url')
   extractApi('encoding', 'hex', 'hex', 'encoding.hex')
   extractApi('encoding', 'toml', 'toml', 'encoding.toml')
-  extractApi('encoding', 'utf8', 'utf8', 'encoding.utf8')
+  extractApi('flags')
   extractApi('fmt', 'printf', 'printf', 'fmt.printf')
   extractApi('fmt', 'colors', 'colors', 'fmt.colors')
   extractApi('hash', 'fnv', 'fnv', 'hash.fnv')
@@ -86,6 +88,7 @@ function extractApis () {
 
   extractApi('node', 'assert', 'assert', 'node.assert')
   extractApi('node', 'buffer', 'buffer', 'node.buffer')
+  extractApi('node', 'crypto', 'crypto', 'node.crypto')
   writeFileSync(getPath(outputPrefix, 'node/buffer.d.ts'), readFileSync(getPath(outputPrefix, 'node/buffer.d.ts'), 'utf8') + `${EOL}declare const Buffer: typeof denostd.node.buffer.Buffer;${EOL}`, 'utf8')
   const globalBuffer = `declare type _Buffer = typeof Buffer;
 declare global {
@@ -102,6 +105,7 @@ declare global {
   // extractApi('node', 'path', 'path', 'node.path')
 
   extractApi('node', 'querystring', 'querystring', 'node.querystring')
+  extractApi('node', 'string_decoder', 'string_decoder', 'node.string_decoder')
   extractApi('node', 'timers', 'timers', 'node.timers')
   extractApi('node', 'url', 'url', 'node.url')
 
