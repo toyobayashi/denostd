@@ -1,6 +1,6 @@
 {
   "name": "@tybys/denostd",
-  "version": "0.88.10000",
+  "version": "0.88.10001",
   "description": "Deno standard library porting for Node.js and browser",
   "module": "dist/esm/index.js",
   "main": "dist/cjs-modern/index.js",

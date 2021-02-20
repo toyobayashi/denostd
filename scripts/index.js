@@ -121,11 +121,13 @@ declare global {
 
   extractApi('path')
   const dest = getPath(outputPrefix, 'node/path.d.ts')
+  const dest2 = getPath(outputPrefix, 'node/path.global.d.ts')
   copyFileSync(getPath(outputPrefix, 'path/path.d.ts'), dest)
-  const code = readFileSync(dest, 'utf8').split(/\r?\n/)
+  copyFileSync(getPath(outputPrefix, 'path/path.global.d.ts'), dest2)
+  const code = readFileSync(dest2, 'utf8').split(/\r?\n/)
   code.splice(1, 0, 'export namespace node {')
   code.push('}')
-  writeFileSync(dest, code.join(EOL), 'utf8')
+  writeFileSync(dest2, code.join(EOL), 'utf8')
 
   extractApi('testing', 'asserts', 'asserts', 'testing.asserts')
   extractApi('testing', 'bench', 'bench', 'testing.bench')
