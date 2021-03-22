@@ -1,4 +1,5 @@
 const { getPath } = require('./path.js')
+const { normalize } = require('path')
 
 // const inputPrefix = 'dist/_esm'
 const inputPrefix = 'dist/esm'
@@ -22,6 +23,11 @@ function getRollupConfig (opts) {
 
   const outputFilename = minify ? getPath(outputPrefix, `${output}.min.js`) : getPath(outputPrefix, `${output}.js`)
   const format = 'umd'
+
+  const ignoreCircularWarning = [
+    normalize('dist/esm/std/node/util.js')
+  ]
+
   return {
     input: {
       input: getPath(entry),
@@ -61,6 +67,9 @@ function getRollupConfig (opts) {
       onwarn(warning, warn) {
         // suppress eval warnings
         if (warning.code === 'EVAL') return
+        if (warning.code === 'CIRCULAR_DEPENDENCY') {
+          if (ignoreCircularWarning.some(w => warning.importer.includes(w))) return;
+        }
         warn(warning)
       }
     },
