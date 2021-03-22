@@ -9,7 +9,17 @@ function download (url, name) {
     const stream = got.stream(url, {
       headers: {
         'User-Agent': 'denostd'
-      }
+      },
+      ...(process.env.DENOPROXY ? {
+        agent: {
+          https: require('tunnel').httpsOverHttp({
+            proxy: {
+              host: 'localhost',
+              port: 10809
+            }
+          })
+        }
+      } : {})
     })
 
     stream.on('downloadProgress', (progress) => {
