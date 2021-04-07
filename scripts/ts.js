@@ -108,6 +108,12 @@ function compile (tsconfig, opts = {}) {
     return oldWriteFile.call(this, fileName, newData, writeByteOrderMark, onError, sourceFiles)
   } */
 
+  const oldWriteFile = compilerHost.writeFile
+  compilerHost.writeFile = function (fileName, data, writeByteOrderMark, onError, sourceFiles) {
+    data = data.replace(/\/\*\* @class \*\/ \(function/g, '\/*#__PURE__*\/ (function')
+    return oldWriteFile.call(this, fileName, data, writeByteOrderMark, onError, sourceFiles)
+  }
+
   compilerHost.resolveModuleNames = function (moduleNames, containingFile/* , reusedNames, redirectedReference, options */) {
 
     const tryExt = ['.ts', '.tsx', '.d.ts', '.json', '.js', '.jsx']
