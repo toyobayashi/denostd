@@ -1,3 +1,24 @@
+### 0.93.0 / 2021.04.13
+
+- feat: add iter and iterSync to io/util (#843)
+- feat(node/fs): add fdatasync and fdatasyncSync (#841)
+- feat(node/fs): add fsync and fsyncSync (#840)
+- feat(node/fs): add ftruncate and ftruncateSync (#829)
+- feat(node/fs): add futimes and futimesSync (#830)
+- fix(testing): Function signature of assertObjectEquals() does not accept
+  interfaces (#763)
+
+### 0.92.0 / 2021.04.02
+
+- feat: make bufio compatible to Deno Deploy (#831)
+- feat: add symlink adn symlinkSync to node/fs (#825)
+- feat: add format and improve deprecate in node/util (#693)
+- feat: add io/buffer and io/util module (#808) …
+- fix: handle upstream type changes (#834)
+- refactor: `Promise<void>` return types are unnecessary boilerplate in
+  encoding. (#818)
+- chore: remove unused import in http (#817)
+
 ### 0.91.0 / 2021.03.21
 
 - chore(codecov): ignore coverage of examples (#798)
