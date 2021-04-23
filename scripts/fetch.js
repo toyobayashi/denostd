@@ -1,53 +1,85 @@
 const path = require('path')
 /** @type {typeof import('fs-extra')} */
 const fs = require('fs-extra')
-const got = require('got').default
+const { Downloader } = require('@tybys/downloader')
 const { unzipSync } = require('@tybys/cross-zip')
 
 function download (url, name) {
-  return new Promise((resolve, reject) => {
-    const stream = got.stream(url, {
-      headers: {
-        'User-Agent': 'denostd'
-      },
-      ...(process.env.DENOPROXY ? {
-        agent: {
-          https: require('tunnel').httpsOverHttp({
-            proxy: {
-              host: 'localhost',
-              port: 10809
-            }
-          })
-        }
-      } : {})
-    })
 
-    stream.on('downloadProgress', (progress) => {
-      const l = progress.transferred
-      const percent = progress.percent
-      if (progress.total != null) {
-        process.stdout.write(`\x1b[666D\x1b[0KDownload ${name}: ${l} / ${progress.total} ${(Math.floor(percent * 10000) / 100).toFixed(2)}%`)
-      } else {
-        process.stdout.write(`\x1b[666D\x1b[0KDownload ${name}: ${l} / Unknown`)
+  const d = Downloader.download(url, {
+    dir: path.join(__dirname, '../temp'),
+    out: name,
+    headers: {
+      'User-Agent': 'denostd'
+    },
+    ...(process.env.DENOPROXY ? {
+      agent: {
+        https: require('tunnel').httpsOverHttp({
+          proxy: {
+            host: 'localhost',
+            port: 10809
+          }
+        })
       }
-    })
-
-    stream.on('error', (err) => {
-      reject(err)
-    })
-
-    const target = path.join(__dirname, `../temp/${name}`)
-    const dest = fs.createWriteStream(target + '.tmp')
-    dest.on('error', (err) => {
-      reject(err)
-    })
-    dest.on('close', () => {
-      console.log('\nDone.')
-      fs.renameSync(target + '.tmp', target)
-      resolve(target)
-    })
-    stream.pipe(dest)
+    } : {})
   })
+
+  d.on('progress', (progress) => {
+    const l = progress.completedLength
+    const percent = progress.percent
+    if (progress.totalLength > 0) {
+      process.stderr.write(`\x1b[666D\x1b[0KDownload ${name}: ${l} / ${progress.totalLength} ${(Math.floor(percent * 100) / 100).toFixed(2)}%`)
+    } else {
+      process.stderr.write(`\x1b[666D\x1b[0KDownload ${name}: ${l} / Unknown`)
+    }
+  })
+
+  return d.whenStopped()
+
+  // return new Promise((resolve, reject) => {
+
+  //   const stream = got.stream(url, {
+  //     headers: {
+  //       'User-Agent': 'denostd'
+  //     },
+  //     ...(process.env.DENOPROXY ? {
+  //       agent: {
+  //         https: require('tunnel').httpsOverHttp({
+  //           proxy: {
+  //             host: 'localhost',
+  //             port: 10809
+  //           }
+  //         })
+  //       }
+  //     } : {})
+  //   })
+
+  //   stream.on('downloadProgress', (progress) => {
+  //     const l = progress.transferred
+  //     const percent = progress.percent
+  //     if (progress.total != null) {
+  //       process.stdout.write(`\x1b[666D\x1b[0KDownload ${name}: ${l} / ${progress.total} ${(Math.floor(percent * 10000) / 100).toFixed(2)}%`)
+  //     } else {
+  //       process.stdout.write(`\x1b[666D\x1b[0KDownload ${name}: ${l} / Unknown`)
+  //     }
+  //   })
+
+  //   stream.on('error', (err) => {
+  //     reject(err)
+  //   })
+
+  //   const target = path.join(__dirname, `../temp/${name}`)
+  //   const dest = fs.createWriteStream(target + '.tmp')
+  //   dest.on('error', (err) => {
+  //     reject(err)
+  //   })
+  //   dest.on('close', () => {
+  //     console.log('\nDone.')
+  //     fs.renameSync(target + '.tmp', target)
+  //     resolve(target)
+  //   })
+  //   stream.pipe(dest)
+  // })
 }
 
 ;(async function main (args) {
