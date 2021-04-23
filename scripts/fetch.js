@@ -5,7 +5,6 @@ const { Downloader } = require('@tybys/downloader')
 const { unzipSync } = require('@tybys/cross-zip')
 
 function download (url, name) {
-
   const d = Downloader.download(url, {
     dir: path.join(__dirname, '../temp'),
     out: name,
@@ -34,7 +33,9 @@ function download (url, name) {
     }
   })
 
-  return d.whenStopped()
+  return d.whenStopped().then(() => {
+    return d.path
+  })
 
   // return new Promise((resolve, reject) => {
 
