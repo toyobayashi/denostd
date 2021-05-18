@@ -98,7 +98,15 @@ declare global {
   writeFileSync(getPath('dist/esm/std/node/buffer.d.ts'), readFileSync(getPath('dist/esm/std/node/buffer.d.ts'), 'utf8') + `${EOL}${globalBuffer}`, 'utf8')
   writeFileSync(getPath('dist/esm-modern/std/node/buffer.d.ts'), readFileSync(getPath('dist/esm-modern/std/node/buffer.d.ts'), 'utf8') + `${EOL}${globalBuffer}`, 'utf8')
 
+  const consoledts = readFileSync(getPath('dist/esm/std/node/console.d.ts'), 'utf8')
+  const consoledtsChanged = consoledts
+    .replace(/export default console;/, `declare const _default: typeof console;
+export default _default;`)
+    .replace(/import\("util"\)\.InspectOptions/, 'NodeJS.InspectOptions')
+  writeFileSync(getPath('dist/esm/std/node/console.d.ts'), consoledtsChanged, 'utf8')
   extractApi('node', 'console', 'console', 'node.console')
+  writeFileSync(getPath('dist/esm/std/node/console.d.ts'), consoledts, 'utf8')
+
   extractApi('node', 'events', 'events', 'node.events')
 
   // just copy std/path
