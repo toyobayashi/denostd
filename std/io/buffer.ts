@@ -1,5 +1,7 @@
+// Copyright 2018-2021 the Deno authors. All rights reserved. MIT license.
 import { assert } from "../_util/assert.ts";
 import { copy } from "../bytes/mod.ts";
+import type { Reader, ReaderSync } from "./types.d.ts";
 
 // MIN_READ is the minimum ArrayBuffer size passed to a read call by
 // buffer.ReadFrom. As long as the Buffer has at least MIN_READ bytes beyond
@@ -27,12 +29,8 @@ export class Buffer {
   #buf: Uint8Array; // contents are the bytes buf[off : len(buf)]
   #off = 0; // read at buf[off], write at buf[buf.byteLength]
 
-  constructor(ab?: ArrayBuffer) {
-    if (ab === undefined) {
-      this.#buf = new Uint8Array(0);
-      return;
-    }
-    this.#buf = new Uint8Array(ab);
+  constructor(ab?: ArrayBufferLike | ArrayLike<number>) {
+    this.#buf = ab === undefined ? new Uint8Array(0) : new Uint8Array(ab);
   }
 
   /** Returns a slice holding the unread portion of the buffer.
@@ -193,7 +191,7 @@ export class Buffer {
    *
    * Based on Go Lang's
    * [Buffer.ReadFrom](https://golang.org/pkg/bytes/#Buffer.ReadFrom). */
-  async readFrom(r: Deno.Reader): Promise<number> {
+  async readFrom(r: Reader): Promise<number> {
     let n = 0;
     const tmp = new Uint8Array(MIN_READ);
     while (true) {
@@ -223,7 +221,7 @@ export class Buffer {
    *
    * Based on Go Lang's
    * [Buffer.ReadFrom](https://golang.org/pkg/bytes/#Buffer.ReadFrom). */
-  readFromSync(r: Deno.ReaderSync): number {
+  readFromSync(r: ReaderSync): number {
     let n = 0;
     const tmp = new Uint8Array(MIN_READ);
     while (true) {

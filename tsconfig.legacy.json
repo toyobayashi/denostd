@@ -39,6 +39,7 @@
     "std/hash/sha512.ts",
     "std/node/assert.ts",
     "std/node/buffer.ts",
+    "std/node/console.ts",
     "std/node/events.ts",
     "std/node/path.ts",
     "std/node/querystring.ts",

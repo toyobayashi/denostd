@@ -1,3 +1,28 @@
+### 0.97.0 / 2021.05.17
+
+- fix(io/buffer): make Buffer compatible with Deploy (#912)
+- fix(io/bufio): readDelim returns wrong result if delim strides over chunks
+  (#877)
+- fix(node/events): accept only functions as listener arguments (#916)
+- fix(testing): support array values in assertObjectMatch (#906)
+
+### 0.96.0 / 2021.05.11
+
+- feat(fs/walk): show path in walk error (#875)
+- feat(http): allow custom response code (#855)
+- feat(io): add readRange, readRangeSync (#884)
+- feat(mime/multipart): add options to readForm (#895)
+- feat(node): add console module (#892)
+- feat(node/assert): add rejects and doesNotReject (#894)
+- feat(std/node): add implementation of os.homedir() (#873)
+- fix(http/file_server): keep url and name consistent (#908)
+- fix(io): Improve readDelims() performance (#867)
+- fix(io/streams): don't use a byte ReadableStream (#891)
+- fix(node/assert): enable test-assert-fail.js and align assert.fail to it
+  (#874)
+- fix(node/child_process): Try to fix flaky tests (#876)
+- fix(node/stream): make `Stream` the default export (#901)
+
 ### 0.95.0 / 2021.04.23
 
 - feat(node): add basic support for child_process.spawn (#785)

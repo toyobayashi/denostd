@@ -37,6 +37,7 @@ const browserlist = [
   ...createConfig('hash', 'sha512.js', 'sha512', 'hash.sha512'),
   ...createConfig('node', 'assert.js', 'assert', 'node.assert'),
   ...createConfig('node', 'buffer.js', 'buffer', 'node.buffer'),
+  ...createConfig('node', 'console.js', 'console', 'node.console'),
   ...createConfig('node', 'events.js', 'events', 'node.events'),
   ...createConfig('node', 'path.js', 'path', 'node.path'),
   ...createConfig('node', 'querystring.js', 'querystring', 'node.querystring'),
@@ -97,6 +98,7 @@ declare global {
   writeFileSync(getPath('dist/esm/std/node/buffer.d.ts'), readFileSync(getPath('dist/esm/std/node/buffer.d.ts'), 'utf8') + `${EOL}${globalBuffer}`, 'utf8')
   writeFileSync(getPath('dist/esm-modern/std/node/buffer.d.ts'), readFileSync(getPath('dist/esm-modern/std/node/buffer.d.ts'), 'utf8') + `${EOL}${globalBuffer}`, 'utf8')
 
+  extractApi('node', 'console', 'console', 'node.console')
   extractApi('node', 'events', 'events', 'node.events')
 
   // just copy std/path
