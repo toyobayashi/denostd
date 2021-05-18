@@ -29,6 +29,7 @@ export const hash = { fnv, md5, sha1, sha3, sha256, sha512 };
 
 import * as assert from "./std/node/assert.ts";
 import * as buffer from "./std/node/buffer.ts";
+import * as console from "./std/node/console.ts";
 import * as events from "./std/node/events.ts";
 import * as path from "./std/path/mod.ts";
 import * as querystring from "./std/node/querystring.ts";
@@ -37,7 +38,7 @@ import * as timers from "./std/node/timers.ts";
 import * as url from "./std/node/url.ts";
 import * as util from "./std/node/util.ts";
 
-export const node = { assert, buffer, events, path, querystring, string_decoder, timers, url, util };
+export const node = { assert, buffer, console, events, path, querystring, string_decoder, timers, url, util };
 
 export { path };
 
