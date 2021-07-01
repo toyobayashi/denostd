@@ -182,7 +182,8 @@ function compile (tsconfig, opts = {}) {
   const ignoreErrors = [
     2354, // This syntax requires an imported helper but module '{0}' cannot be found.
     18028, // Private identifiers are only available when targeting ECMAScript 2015 and higher.
-    6133 // {0} is declared but its value is never read.
+    6133, // {0} is declared but its value is never read.
+    2376 // A 'super' call must be the first statement in the constructor when a class contains initialized properties, parameter properties, or private identifiers.
   ]
 
   const diagnostics = allDiagnostics.filter(d => !ignoreErrors.includes(d.code))

@@ -223,7 +223,7 @@ export class EventEmitter {
   private unwrapListener(
     listener: GenericFunction | WrappedFunction,
   ): GenericFunction {
-    return (listener as WrappedFunction)["listener"] ?? listener;
+    return (listener as WrappedFunction)["listener"] ?? listener as GenericFunction;
   }
 
   /** Returns a copy of the array of listeners for the event named eventName.*/

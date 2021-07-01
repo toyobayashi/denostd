@@ -92,3 +92,8 @@ declare namespace Deno {
     }
   }
 }
+
+declare class WeakRef<T extends object> {
+  constructor (value: T)
+  deref (): T | undefined
+}
