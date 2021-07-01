@@ -12,14 +12,7 @@ function download (url, name) {
       'User-Agent': 'denostd'
     },
     ...(process.env.DENOPROXY ? {
-      agent: {
-        https: require('tunnel').httpsOverHttp({
-          proxy: {
-            host: 'localhost',
-            port: 10809
-          }
-        })
-      }
+      agent: 'http://127.0.0.1:10809'
     } : {})
   })
 

@@ -1,3 +1,33 @@
+### 0.100.0 / 2021.06.29
+
+- feat(testing/asserts): improved strings diff (#948)
+- feat(testing/asserts): use assertion signature for "assertExists" (#969)
+- fix(node/events): align EventEmitter#addListener with native node tests (#976)
+- fix(path): fix type error in glob.ts with noImplicitAny: false config (#977)
+
+### 0.99.0 / 2021.06.15
+
+- feat(mime): make createPart of MultipartWriter public (#960)
+- feat(node/util): add inherits (#958)
+- fix(node/events): fix EventEmitter#removeAllListeners (#968)
+- fix(node/process): make process.env enumerable (#957)
+- fix(node/util): fix util.inherits (#959)
+
+### 0.98.0 / 2021.06.08
+
+- feat(async): add async/tee (#919)
+- feat(async/mux): take AsyncIterable as source iterator (#923)
+- feat(io/bufio): add encoding options to `readLines` and `readStringDelim`
+  (#921)
+- feat(node/perf_hooks): add perf_hooks module (#945)
+- fix(encoding/binary): allow getNBytes to read until EOF (#932)
+- fix(encoding/binary): respect non 0 byte offsets (#826)
+- fix(node/events): fix EventEmitter#once to pass native node tests (#935)
+- fix(node/events): fix getMaxListeners and setMaxListeners to pass native node
+  tests (#928)
+- fix(node/fs): fix type error in fs.watch impl (#947)
+- fix(testing/asserts): fix handling of Weak* objects (#951)
+
 ### 0.97.0 / 2021.05.17
 
 - fix(io/buffer): make Buffer compatible with Deploy (#912)
