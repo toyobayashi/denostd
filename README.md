@@ -172,6 +172,8 @@ import * as path from '@tybys/denostd/dist/esm/std/path/mod'
 
     * buffer
 
+    * console
+
     * events
 
     * path (the same as `std/path`)
