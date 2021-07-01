@@ -21,7 +21,8 @@ function invokeApiExtractor (entry, output) {
     const configObject = ExtractorConfig.loadFile(configObjectFullPath)
     // configObject.projectFolder = getPath()
     configObject.mainEntryPointFilePath = entry
-    configObject.dtsRollup.untrimmedFilePath = output
+    configObject.dtsRollup.untrimmedFilePath = ''
+    configObject.dtsRollup.publicTrimmedFilePath = output
     extractorConfig = ExtractorConfig.prepare({
       configObject,
       configObjectFullPath: apiExtractorJsonPath, // fake path
@@ -47,27 +48,27 @@ function invokeApiExtractor (entry, output) {
 function extractApi (mod, entry, out, ns) {
   const prefix = 'dist/esm/std'
   const dtsPath = getPath(outputPrefix, mod, (out || mod) + '.d.ts')
-  let info = dtsHack.applyChange(getPath(prefix, mod))
-  try {
+  // let info = dtsHack.applyChange(getPath(prefix, mod))
+  // try {
     invokeApiExtractor(getPath(prefix, mod, (entry || 'mod') + '.d.ts'), dtsPath)
-  } catch (err) {
-    dtsHack.revertChange(info)
-    throw err
-  }
-  dtsHack.revertChange(info)
+  // } catch (err) {
+    // dtsHack.revertChange(info)
+    // throw err
+  // }
+  // dtsHack.revertChange(info)
   dtsHack.resolveDeclarationFile(dtsPath, ns || mod, 'iife')
 }
 
 function extractEntryApi () {
   const dtsPath = getPath(outputPrefix, 'denostd.d.ts')
-  let info = dtsHack.applyChange(getPath('dist/esm'))
-  try {
+  // let info = dtsHack.applyChange(getPath('dist/esm'))
+  // try {
     invokeApiExtractor(getPath('dist/esm/index.d.ts'), dtsPath)
-  } catch (err) {
-    dtsHack.revertChange(info)
-    throw err
-  }
-  dtsHack.revertChange(info)
+  // } catch (err) {
+    // dtsHack.revertChange(info)
+    // throw err
+  // }
+  // dtsHack.revertChange(info)
   const dts = fs.readFileSync(dtsPath, 'utf8')
   let globalDts = dts.replace(/declare\s/g, '')
   globalDts = globalDts.replace(/export default (\S+);/g, 'export { $1 as default }')

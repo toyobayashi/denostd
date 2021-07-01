@@ -88,7 +88,7 @@ function extractApis () {
 
   extractApi('node', 'assert', 'assert', 'node.assert')
   extractApi('node', 'buffer', 'buffer', 'node.buffer')
-  writeFileSync(getPath(outputPrefix, 'node/buffer.d.ts'), readFileSync(getPath(outputPrefix, 'node/buffer.d.ts'), 'utf8') + `${EOL}declare const Buffer: typeof denostd.node.buffer.Buffer;${EOL}`, 'utf8')
+  // writeFileSync(getPath(outputPrefix, 'node/buffer.d.ts'), readFileSync(getPath(outputPrefix, 'node/buffer.d.ts'), 'utf8') + `${EOL}declare const Buffer: typeof denostd.node.buffer.Buffer;${EOL}`, 'utf8')
   const globalBuffer = `declare type _Buffer = typeof Buffer;
 declare global {
     export const Buffer: _Buffer;
