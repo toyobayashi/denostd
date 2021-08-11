@@ -97,3 +97,7 @@ declare class WeakRef<T extends object> {
   constructor (value: T)
   deref (): T | undefined
 }
+
+declare interface Crypto {
+  randomUUID (): string
+}

@@ -42,6 +42,7 @@ const browserlist = [
   ...createConfig('node', 'path.js', 'path', 'node.path'),
   ...createConfig('node', 'querystring.js', 'querystring', 'node.querystring'),
   ...createConfig('node', 'string_decoder.js', 'string_decoder', 'node.string_decoder'),
+  ...createConfig('node', 'sys.js', 'sys', 'node.sys'),
   ...createConfig('node', 'timers.js', 'timers', 'node.timers'),
   ...createConfig('node', 'url.js', 'url', 'node.url'),
   ...createConfig('node', 'util.js', 'util', 'node.util'),
@@ -117,7 +118,7 @@ export default _default;`)
   extractApi('node', 'timers', 'timers', 'node.timers')
   extractApi('node', 'url', 'url', 'node.url')
 
-  const dtspath = getPath('dist/esm/std/node/util.d.ts')
+  /* const dtspath = getPath('dist/esm/std/node/util.d.ts')
   const utildts = readFileSync(dtspath, 'utf8')
   let newCode = utildts.replace(/import\("\.\/_utils"\)\._Text(\S{2})coder/g, 'typeof globalThis.Text$1coder.prototype')
   writeFileSync(dtspath, newCode, 'utf8')
@@ -127,7 +128,7 @@ export default _default;`)
     writeFileSync(dtspath, utildts, 'utf8')
     throw err
   }
-  writeFileSync(dtspath, utildts, 'utf8')
+  writeFileSync(dtspath, utildts, 'utf8') */
 
   extractApi('path')
   const dest = getPath(outputPrefix, 'node/path.d.ts')

@@ -34,11 +34,12 @@ import * as events from "./std/node/events.ts";
 import * as path from "./std/path/mod.ts";
 import * as querystring from "./std/node/querystring.ts";
 import * as string_decoder from "./std/node/string_decoder.ts";
+import * as sys from "./std/node/sys.ts";
 import * as timers from "./std/node/timers.ts";
 import * as url from "./std/node/url.ts";
 import * as util from "./std/node/util.ts";
 
-export const node = { assert, buffer, console, events, path, querystring, string_decoder, timers, url, util };
+export const node = { assert, buffer, console, events, path, querystring, string_decoder, sys, timers, url, util };
 
 export { path };
 

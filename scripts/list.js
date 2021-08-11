@@ -22,6 +22,16 @@ module.exports = [
     ]
   },
   {
+    path: 'std/async/debounce.ts',
+    opts: [
+      {
+        type: 'replace',
+        test: 'setTimeout(flush, wait)',
+        value: 'setTimeout(flush, wait) as any'
+      }
+    ]
+  },
+  {
     path: 'std/_util/deep_assign.ts',
     opts: [
       {
@@ -246,12 +256,12 @@ export const isWindows = NATIVE_OS == "windows";`
         type: 'insert',
         line: 0,
         value: `import * as Deno from "../../polyfill/deno.ts";`
-      },
+      }/* ,
       {
         type: 'replace',
         test: /Deno\.customInspect/g,
         value: 'Symbol("Deno.customInspect")'
-      }
+      } */
     ]
   },
   {

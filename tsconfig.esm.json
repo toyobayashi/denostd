@@ -44,6 +44,7 @@
     "std/node/path.ts",
     "std/node/querystring.ts",
     "std/node/string_decoder.ts",
+    "std/node/sys.ts",
     "std/node/timers.ts",
     "std/node/url.ts",
     "std/node/util.ts",
