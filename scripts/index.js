@@ -19,6 +19,32 @@ const list = require('./list.js')
 const browserlist = [
   ...createConfig('async'),
   ...createConfig('bytes'),
+
+  ...createConfig('collections'),
+  ...createConfig('collections', 'associate_by.js', 'associate_by', 'collections.associate_by'),
+  ...createConfig('collections', 'chunked.js', 'chunked', 'collections.chunked'),
+  ...createConfig('collections', 'deep_merge.js', 'deep_merge', 'collections.deep_merge'),
+  ...createConfig('collections', 'distinct_by.js', 'distinct_by', 'collections.distinct_by'),
+  ...createConfig('collections', 'distinct.js', 'distinct', 'collections.distinct'),
+  ...createConfig('collections', 'filter_entries.js', 'filter_entries', 'collections.filter_entries'),
+  ...createConfig('collections', 'filter_keys.js', 'filter_keys', 'collections.filter_keys'),
+  ...createConfig('collections', 'filter_values.js', 'filter_values', 'collections.filter_values'),
+  ...createConfig('collections', 'find_last_index.js', 'find_last_index', 'collections.find_last_index'),
+  ...createConfig('collections', 'find_last.js', 'find_last', 'collections.find_last'),
+  ...createConfig('collections', 'group_by.js', 'group_by', 'collections.group_by'),
+  ...createConfig('collections', 'intersect.js', 'intersect', 'collections.intersect'),
+  ...createConfig('collections', 'map_entries.js', 'map_entries', 'collections.map_entries'),
+  ...createConfig('collections', 'map_keys.js', 'map_keys', 'collections.map_keys'),
+  ...createConfig('collections', 'map_not_nullish.js', 'map_not_nullish', 'collections.map_not_nullish'),
+  ...createConfig('collections', 'map_values.js', 'map_values', 'collections.map_values'),
+  ...createConfig('collections', 'partition.js', 'partition', 'collections.partition'),
+  ...createConfig('collections', 'permutations.js', 'permutations', 'collections.permutations'),
+  ...createConfig('collections', 'sort_by.js', 'sort_by', 'collections.sort_by'),
+  ...createConfig('collections', 'sum_of.js', 'sum_of', 'collections.sum_of'),
+  ...createConfig('collections', 'union.js', 'union', 'collections.union'),
+  ...createConfig('collections', 'unzip.js', 'unzip', 'collections.unzip'),
+  ...createConfig('collections', 'zip.js', 'zip', 'collections.zip'),
+
   ...createConfig('datetime'),
   ...createConfig('encoding', 'ascii85.js', 'ascii85', 'encoding.ascii85'),
   ...createConfig('encoding', 'base32.js', 'base32', 'encoding.base32'),
@@ -70,6 +96,32 @@ const browserlist = [
 function extractApis () {
   extractApi('async')
   extractApi('bytes')
+
+  extractApi('collections'),
+  extractApi('collections', 'associate_by', 'associate_by', 'collections.associate_by'),
+  extractApi('collections', 'chunked', 'chunked', 'collections.chunked'),
+  extractApi('collections', 'deep_merge', 'deep_merge', 'collections.deep_merge'),
+  extractApi('collections', 'distinct_by', 'distinct_by', 'collections.distinct_by'),
+  extractApi('collections', 'distinct', 'distinct', 'collections.distinct'),
+  extractApi('collections', 'filter_entries', 'filter_entries', 'collections.filter_entries'),
+  extractApi('collections', 'filter_keys', 'filter_keys', 'collections.filter_keys'),
+  extractApi('collections', 'filter_values', 'filter_values', 'collections.filter_values'),
+  extractApi('collections', 'find_last_index', 'find_last_index', 'collections.find_last_index'),
+  extractApi('collections', 'find_last', 'find_last', 'collections.find_last'),
+  extractApi('collections', 'group_by', 'group_by', 'collections.group_by'),
+  extractApi('collections', 'intersect', 'intersect', 'collections.intersect'),
+  extractApi('collections', 'map_entries', 'map_entries', 'collections.map_entries'),
+  extractApi('collections', 'map_keys', 'map_keys', 'collections.map_keys'),
+  extractApi('collections', 'map_not_nullish', 'map_not_nullish', 'collections.map_not_nullish'),
+  extractApi('collections', 'map_values', 'map_values', 'collections.map_values'),
+  extractApi('collections', 'partition', 'partition', 'collections.partition'),
+  extractApi('collections', 'permutations', 'permutations', 'collections.permutations'),
+  extractApi('collections', 'sort_by', 'sort_by', 'collections.sort_by'),
+  extractApi('collections', 'sum_of', 'sum_of', 'collections.sum_of'),
+  extractApi('collections', 'union', 'union', 'collections.union'),
+  extractApi('collections', 'unzip', 'unzip', 'collections.unzip'),
+  extractApi('collections', 'zip', 'zip', 'collections.zip'),
+
   extractApi('datetime')
   extractApi('encoding', 'ascii85', 'ascii85', 'encoding.ascii85')
   extractApi('encoding', 'base32', 'base32', 'encoding.base32')

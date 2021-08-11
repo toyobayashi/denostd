@@ -1,9 +1,10 @@
 import * as async from "./std/async/mod.ts";
 import * as bytes from "./std/bytes/mod.ts";
+import * as collections from "./std/collections/mod.ts";
 import * as datetime from "./std/datetime/mod.ts";
 import * as flags from "./std/flags/mod.ts";
 
-export { async, bytes, datetime, flags };
+export { async, bytes, collections, datetime, flags };
 
 import * as ascii85 from "./std/encoding/ascii85.ts";
 import * as base32 from "./std/encoding/base32.ts";

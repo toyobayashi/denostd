@@ -20,6 +20,7 @@
     "index.ts",
     "std/async/mod.ts",
     "std/bytes/mod.ts",
+    "std/collections/mod.ts",
     "std/datetime/mod.ts",
     "std/encoding/ascii85.ts",
     "std/encoding/base32.ts",
