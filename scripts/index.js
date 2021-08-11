@@ -52,6 +52,7 @@ const browserlist = [
   ...createConfig('encoding', 'base64url.js', 'base64url', 'encoding.base64url'),
   ...createConfig('encoding', 'hex.js', 'hex', 'encoding.hex'),
   ...createConfig('encoding', 'toml.js', 'toml', 'encoding.toml'),
+  ...createConfig('encoding', 'yaml.js', 'yaml', 'encoding.yaml'),
   ...createConfig('flags'),
   ...createConfig('fmt', 'printf.js', 'printf', 'fmt.printf'),
   ...createConfig('fmt', 'colors.js', 'colors', 'fmt.colors'),
@@ -129,6 +130,7 @@ function extractApis () {
   extractApi('encoding', 'base64url', 'base64url', 'encoding.base64url')
   extractApi('encoding', 'hex', 'hex', 'encoding.hex')
   extractApi('encoding', 'toml', 'toml', 'encoding.toml')
+  extractApi('encoding', 'yaml', 'yaml', 'encoding.yaml')
   extractApi('flags')
   extractApi('fmt', 'printf', 'printf', 'fmt.printf')
   extractApi('fmt', 'colors', 'colors', 'fmt.colors')

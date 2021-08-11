@@ -12,8 +12,9 @@ import * as base64 from "./std/encoding/base64.ts";
 import * as base64url from "./std/encoding/base64url.ts";
 import * as hex from "./std/encoding/hex.ts";
 import * as toml from "./std/encoding/toml.ts";
+import * as yaml from "./std/encoding/yaml.ts";
 
-export const encoding = { ascii85, base32, base64, base64url, hex, toml };
+export const encoding = { ascii85, base32, base64, base64url, hex, toml, yaml };
 
 import * as colors from "./std/fmt/colors.ts";
 import * as printf from "./std/fmt/printf.ts";
