@@ -125,75 +125,42 @@ import * as path from '@tybys/denostd/dist/esm/std/path/mod'
 ## Available modules:
 
 * async
-
 * bytes
-
+* collections
 * datetime
-
 * encoding
-
     * ascii85
-
     * base32
-    
     * base64
-    
     * base64url
-    
     * hex
-    
     * toml
-
+    * yaml
 * flags
-
 * fmt
-
     * colors
-
     * printf
-
 * hash
-
     * fnv
-
     * md5
-
     * sha1
-
     * sha3
-
     * sha256
-
     * sha512
-
 * node
-
     * assert
-
     * buffer
-
     * console
-
     * events
-
     * path (the same as `std/path`)
-
     * querystring
-
     * string_decoders
-
+    * sys
     * timers
-
     * url
-
     * util
-
 * path
-
 * testing
-
     * asserts
-
     * bench
-
 * uuid
