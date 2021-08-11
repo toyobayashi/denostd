@@ -10,7 +10,8 @@ import {
   writerFromStreamWriter,
 } from "./streams.ts";
 import { Buffer } from "./buffer.ts";
-import { concat, copy } from "../bytes/mod.ts";
+import { concat, copy as copyBytes } from "../bytes/mod.ts";
+import { copy } from "./util.ts";
 
 function repeat(c: string, bytes: number): Uint8Array {
   assertEquals(c.length, 1);
@@ -122,7 +123,7 @@ Deno.test("[io] readerFromStreamReader() big chunks", async function () {
   });
 
   const reader = readerFromStreamReader(readableStream.getReader());
-  const n = await Deno.copy(reader, writer, { bufSize });
+  const n = await copy(reader, writer, { bufSize });
 
   const expectedWritten = chunkSize * expected.length;
   assertEquals(n, chunkSize * expected.length);
@@ -158,10 +159,29 @@ Deno.test("[io] readerFromStreamReader() irregular chunks", async function () {
 
   const reader = readerFromStreamReader(readableStream.getReader());
 
-  const n = await Deno.copy(reader, writer, { bufSize });
+  const n = await copy(reader, writer, { bufSize });
   assertEquals(n, expected.length);
   assertEquals(expected, writer.bytes());
 });
+
+class MockWriterCloser implements Deno.Writer, Deno.Closer {
+  chunks: Uint8Array[] = [];
+  closeCall = 0;
+
+  write(p: Uint8Array): Promise<number> {
+    if (this.closeCall) {
+      throw new Error("already closed");
+    }
+    if (p.length) {
+      this.chunks.push(p);
+    }
+    return Promise.resolve(p.length);
+  }
+
+  close() {
+    this.closeCall++;
+  }
+}
 
 Deno.test("[io] writableStreamFromWriter()", async function () {
   const written: string[] = [];
@@ -183,6 +203,75 @@ Deno.test("[io] writableStreamFromWriter()", async function () {
   }
 
   assertEquals(written, chunks);
+});
+
+Deno.test("[io] writableStreamFromWriter() - calls close on close", async function () {
+  const written: string[] = [];
+  const chunks: string[] = ["hello", "deno", "land"];
+  const decoder = new TextDecoder();
+
+  const writer = new MockWriterCloser();
+  const writableStream = writableStreamFromWriter(writer);
+
+  const encoder = new TextEncoder();
+  const streamWriter = writableStream.getWriter();
+  for (const chunk of chunks) {
+    await streamWriter.write(encoder.encode(chunk));
+  }
+  await streamWriter.close();
+
+  for (const chunk of writer.chunks) {
+    written.push(decoder.decode(chunk));
+  }
+
+  assertEquals(written, chunks);
+  assertEquals(writer.closeCall, 1);
+});
+
+Deno.test("[io] writableStreamFromWriter() - calls close on abort", async function () {
+  const written: string[] = [];
+  const chunks: string[] = ["hello", "deno", "land"];
+  const decoder = new TextDecoder();
+
+  const writer = new MockWriterCloser();
+  const writableStream = writableStreamFromWriter(writer);
+
+  const encoder = new TextEncoder();
+  const streamWriter = writableStream.getWriter();
+  for (const chunk of chunks) {
+    await streamWriter.write(encoder.encode(chunk));
+  }
+  await streamWriter.abort();
+
+  for (const chunk of writer.chunks) {
+    written.push(decoder.decode(chunk));
+  }
+
+  assertEquals(written, chunks);
+  assertEquals(writer.closeCall, 1);
+});
+
+Deno.test("[io] writableStreamFromWriter() - doesn't call close with autoClose false", async function () {
+  const written: string[] = [];
+  const chunks: string[] = ["hello", "deno", "land"];
+  const decoder = new TextDecoder();
+
+  const writer = new MockWriterCloser();
+  const writableStream = writableStreamFromWriter(writer, { autoClose: false });
+
+  const encoder = new TextEncoder();
+  const streamWriter = writableStream.getWriter();
+  for (const chunk of chunks) {
+    await streamWriter.write(encoder.encode(chunk));
+  }
+  await streamWriter.close();
+
+  for (const chunk of writer.chunks) {
+    written.push(decoder.decode(chunk));
+  }
+
+  assertEquals(written, chunks);
+  assertEquals(writer.closeCall, 0);
 });
 
 Deno.test("[io] readableStreamFromIterable() array", async function () {
@@ -232,7 +321,7 @@ class MockReaderCloser implements Deno.Reader, Deno.Closer {
     }
     const chunk = this.chunks.shift();
     if (chunk) {
-      const copied = copy(chunk, p);
+      const copied = copyBytes(chunk, p);
       if (copied < chunk.length) {
         this.chunks.unshift(chunk.subarray(copied));
       }

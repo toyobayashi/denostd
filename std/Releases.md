@@ -1,3 +1,74 @@
+### 0.104.0 / 2021.08.10
+
+- feat: Add `collections` module (#993, #1075, #1103, #1062, #1062, #1109,
+  #1108, #1071, #1069, #1104, #1097, #1110, #1116)
+- feat(crypto): add std/crypto wrapping and extending runtime WebCrypto (#1025)
+- feat(http/file_server): return code 304 based on If-Modified-Since Header
+  (#1078)
+- feat(node): add remaining Node.js builtin aliases (#1085)
+- feat(node): add shim for perf_hooks (#1088)
+- feat(node): assert/strict alias (#1084)
+- feat(node): fs/promises implementation (#1083)
+- feat(testing): add `assertRejects`, deprecate `assertThrowsAsync` (#1101)
+- fix(async): make it so exception of `deadline` can be caught (#1105)
+- fix(http/file_server): fix flaky 'file_server sets Date header correctly' test
+  case (#1095)
+- fix(node): assert/strict, fs/promises, perf_hooks modules could not be
+  required (#1107)
+- fix(node/events): optimize listener management (#1113)
+- fix(testing): change `assertThrows` and `assertThrowsAsync` return type to
+  `void` and `Promise<void>` (#1052)
+
+### 0.103.0 / 2021.07.26
+
+- feat(async): add status to deferred promises (#1047)
+- feat(http): add range request and etag support to `file_server.ts` (#1028)
+- fix(async/deferred): rename .status -> .state (#1055)
+- fix(encoding/base64url): throw TypeError in case of invalid base64url string
+  (#1040)
+- fix(encoding/toml): fix inline table and nested array (#1042)
+- fix(encoding/yaml): fix `parseAll` type definition by using overloads (#1048)
+- fix(testing): `assertThrowsAsync` always reporting `Error` instead of actual
+  error class (#1051)
+- fix(testing/asserts): cater for different class constructor functions (#1000)
+
+### 0.102.0 / 2021.07.19
+
+- feat: Add std/collections (#993)
+- fix(encoding/toml): fix comment line starting with whitespaces (#1017)
+- fix(encoding/toml): parse keys correctly (#1019)
+- fix(hash): fix handling of non-byte-sized TypedArray views (#1012)
+- fix(testing): Don't merge diff when it's not spaces even if it's surrounded by
+  word-diff (#1032)
+
+### 0.101.0 / 2021.07.13
+
+- BREAKING(encoding/hex): remove encodedLen, encodeToString, decodedLen,
+  decodeString, errInvalidByte, errLength (#733)
+- BREAKING(mime/multipart): return array for multiple values with same form name
+  (#722)
+- BREAKING(std/uuid): rework v4 and v5 module (#971)
+- feat(async): add `deadline` to async module (#1022)
+- feat(async): add debounce method to async module (#1006)
+- feat(encoding/toml): fix bad string format. Improve coverage (#991)
+- feat(hash): add BLAKE3 hash support (#994)
+- feat(http): Add Cookie domain validation (#1009)
+- feat(http): Allow passing path and domain attributes while removing cookies
+  (#1005)
+- feat(io): add `copy` function (#1016)
+- feat(io/streams): add autoClose option to writableStreamFromWriter (#964)
+- feat(std/node): add writeBuffer of internal binding fs module (#888)
+- fix: improve type safety for browser-compatible modules (#995)
+- fix(encoding/toml): serializes mixed array (#1001)
+- fix(encoding/toml): throws parse error when toml uses invalid whitespaces
+  (#1013)
+- fix(http): `setCookie` with `maxAge` of `0` (#992)
+- fix(http/server): Swallow NotConnected errors from listener.accept() (#761)
+- fix(io/bufio): fix handling of trailing new line (#990)
+- fix(node/module): More descriptive error in "createRequire" (#997)
+- fix(path): Add question mark as a glob indicator (#1024)
+- fix(testing): use return type of never for `fail` (#1002)
+
 ### 0.100.0 / 2021.06.29
 
 - feat(testing/asserts): improved strings diff (#948)

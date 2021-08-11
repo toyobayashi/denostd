@@ -21,7 +21,7 @@ export interface GlobOptions {
   /** Whether globstar should be case insensitive. */
   caseInsensitive?: boolean;
   /** Operating system. Defaults to the native OS. */
-  os?: typeof Deno.build.os;
+  os?: "darwin" | "linux" | "windows";
 }
 
 export type GlobToRegExpOptions = GlobOptions;
@@ -36,6 +36,7 @@ const rangeEscapeChars = ["-", "\\", "]"];
  *
  * Basic glob syntax:
  * - `*` - Matches everything without leaving the path segment.
+ * - `?` - Matches any single character.
  * - `{foo,bar}` - Matches `foo` or `bar`.
  * - `[abcd]` - Matches `a`, `b`, `c` or `d`.
  * - `[a-d]` - Matches `a`, `b`, `c` or `d`.
@@ -327,7 +328,7 @@ export function globToRegExp(
 export function isGlob(str: string): boolean {
   const chars: Record<string, string> = { "{": "}", "(": ")", "[": "]" };
   const regex =
-    /\\(.)|(^!|\*|[\].+)]\?|\[[^\\\]]+\]|\{[^\\}]+\}|\(\?[:!=][^\\)]+\)|\([^|]+\|[^\\)]+\))/;
+    /\\(.)|(^!|\*|\?|[\].+)]\?|\[[^\\\]]+\]|\{[^\\}]+\}|\(\?[:!=][^\\)]+\)|\([^|]+\|[^\\)]+\))/;
 
   if (str === "") {
     return false;

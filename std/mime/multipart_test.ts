@@ -2,8 +2,8 @@
 import {
   assert,
   assertEquals,
+  assertRejects,
   assertThrows,
-  assertThrowsAsync,
 } from "../testing/asserts.ts";
 import * as path from "../path/mod.ts";
 import {
@@ -137,14 +137,14 @@ Deno.test("multipartMultipartWriter3", async function () {
   const mw = new MultipartWriter(w);
   await mw.writeField("foo", "foo");
   await mw.close();
-  await assertThrowsAsync(
+  await assertRejects(
     async () => {
       await mw.close();
     },
     Error,
     "closed",
   );
-  await assertThrowsAsync(
+  await assertRejects(
     async () => {
       // deno-lint-ignore no-explicit-any
       await mw.writeFile("bar", "file", null as any);
@@ -152,7 +152,7 @@ Deno.test("multipartMultipartWriter3", async function () {
     Error,
     "closed",
   );
-  await assertThrowsAsync(
+  await assertRejects(
     async () => {
       await mw.writeField("bar", "bar");
     },
@@ -184,12 +184,13 @@ Deno.test({
       "--------------------------434049563556637648550474",
     );
     const form = await mr.readForm();
-    assertEquals(form.value("foo"), "foo");
-    assertEquals(form.value("bar"), "bar");
-    const file = form.file("file");
+    assertEquals(form.values("foo"), ["foo"]);
+    assertEquals(form.values("bar"), ["bar"]);
+    assertEquals(form.values("baz"), ["str1", "str2"]);
+    const [file] = form.files("file") || [];
     assert(isFormFile(file));
     assert(file.content !== void 0);
-    const file2 = form.file("file2");
+    const [file2] = form.files("file2") || [];
     assert(isFormFile(file2));
     assert(file2.filename === "中文.json");
     assert(file2.content !== void 0);
@@ -227,12 +228,9 @@ Deno.test({
     // use low-memory to write "file" into temp file.
     const form = await mr.readForm({ maxMemory: 20 });
     try {
-      assertEquals(form.value("deno"), "land");
-      assertEquals(form.value("bar"), "bar");
-      let file = form.file("file");
-      if (Array.isArray(file)) {
-        file = file[0];
-      }
+      assertEquals(form.values("deno"), ["land"]);
+      assertEquals(form.values("bar"), ["bar"]);
+      const [file] = form.files("file") || [];
       assert(file != null);
       assert(file.tempfile != null);
       assertEquals(file.size, size);
@@ -256,10 +254,7 @@ Deno.test({
       "--------------------------434049563556637648550474",
     );
     const form = await mr.readForm({ maxMemory: 20 });
-    let file = form.file("file");
-    if (Array.isArray(file)) {
-      file = file[0];
-    }
+    const file = form.files("file")![0];
     assert(file != null);
     const { tempfile, content } = file;
     assert(tempfile != null);
@@ -267,7 +262,7 @@ Deno.test({
     const stat = await Deno.stat(tempfile);
     assertEquals(stat.size, file.size);
     await form.removeAll();
-    await assertThrowsAsync(async () => {
+    await assertRejects(async () => {
       await Deno.stat(tempfile);
     }, Deno.errors.NotFound);
     o.close();
@@ -284,9 +279,10 @@ Deno.test({
     );
     const form = await mr.readForm();
     const map = new Map(form.entries());
-    assertEquals(map.get("foo"), "foo");
-    assertEquals(map.get("bar"), "bar");
-    const file = map.get("file");
+    assertEquals(map.get("foo"), ["foo"]);
+    assertEquals(map.get("bar"), ["bar"]);
+    assertEquals(map.get("baz"), ["str1", "str2"]);
+    const [file] = map.get("file") || [];
     assert(isFormFile(file));
     assertEquals(file.filename, "tsconfig.json");
     o.close();

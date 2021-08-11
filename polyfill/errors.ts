@@ -1,3 +1,17 @@
+class BadResource extends Error {
+  constructor(msg) {
+    super(msg);
+    this.name = "BadResource";
+  }
+}
+
+class Interrupted extends Error {
+  constructor(msg) {
+    super(msg);
+    this.name = "Interrupted";
+  }
+}
+
 class NotFound extends Error {
   constructor(msg) {
     super(msg);
@@ -82,13 +96,6 @@ class TimedOut extends Error {
   }
 }
 
-class Interrupted extends Error {
-  constructor(msg) {
-    super(msg);
-    this.name = "Interrupted";
-  }
-}
-
 class WriteZero extends Error {
   constructor(msg) {
     super(msg);
@@ -100,13 +107,6 @@ class UnexpectedEof extends Error {
   constructor(msg) {
     super(msg);
     this.name = "UnexpectedEof";
-  }
-}
-
-class BadResource extends Error {
-  constructor(msg) {
-    super(msg);
-    this.name = "BadResource";
   }
 }
 

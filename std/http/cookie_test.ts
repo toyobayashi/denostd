@@ -127,6 +127,31 @@ Deno.test({
 });
 
 Deno.test({
+  name: "Cookie Domain Validation",
+  fn(): void {
+    const res: Response = {};
+    const tokens = ["-domain.com", "domain.org.", "domain.org-"];
+    res.headers = new Headers();
+    tokens.forEach((domain) => {
+      assertThrows(
+        (): void => {
+          setCookie(res, {
+            name: "Space",
+            value: "Cat",
+            httpOnly: true,
+            secure: true,
+            domain,
+            maxAge: 3,
+          });
+        },
+        Error,
+        "Invalid first/last char in cookie domain: " + domain,
+      );
+    });
+  },
+});
+
+Deno.test({
   name: "Cookie Delete",
   fn(): void {
     const res: Response = {};
@@ -134,6 +159,18 @@ Deno.test({
     assertEquals(
       res.headers?.get("Set-Cookie"),
       "deno=; Expires=Thu, 01 Jan 1970 00:00:00 GMT",
+    );
+    res.headers = new Headers();
+    setCookie(res, {
+      name: "Space",
+      value: "Cat",
+      domain: "deno.land",
+      path: "/",
+    });
+    deleteCookie(res, "Space", { domain: "", path: "" });
+    assertEquals(
+      res.headers?.get("Set-Cookie"),
+      "Space=Cat; Domain=deno.land; Path=/, Space=; Expires=Thu, 01 Jan 1970 00:00:00 GMT",
     );
   },
 });
@@ -177,6 +214,19 @@ Deno.test({
       "Space=Cat; Secure; HttpOnly; Max-Age=2",
     );
 
+    res.headers = new Headers();
+    setCookie(res, {
+      name: "Space",
+      value: "Cat",
+      httpOnly: true,
+      secure: true,
+      maxAge: 0,
+    });
+    assertEquals(
+      res.headers.get("Set-Cookie"),
+      "Space=Cat; Secure; HttpOnly; Max-Age=0",
+    );
+
     let error = false;
     res.headers = new Headers();
     try {
@@ -185,7 +235,7 @@ Deno.test({
         value: "Cat",
         httpOnly: true,
         secure: true,
-        maxAge: 0,
+        maxAge: -1,
       });
     } catch {
       error = true;

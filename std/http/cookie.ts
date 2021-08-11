@@ -11,7 +11,7 @@ export interface Cookie {
   value: string;
   /** Expiration date of the cookie. */
   expires?: Date;
-  /** Max-Age of the Cookie. Must be integer superior to 0. */
+  /** Max-Age of the Cookie. Max-Age must be an integer superior or equal to 0. */
   maxAge?: number;
   /** Specifies those hosts to which the cookie will be sent. */
   domain?: string;
@@ -57,10 +57,14 @@ function toString(cookie: Cookie): string {
     out.push("HttpOnly");
   }
   if (typeof cookie.maxAge === "number" && Number.isInteger(cookie.maxAge)) {
-    assert(cookie.maxAge > 0, "Max-Age must be an integer superior to 0");
+    assert(
+      cookie.maxAge >= 0,
+      "Max-Age must be an integer superior or equal to 0",
+    );
     out.push(`Max-Age=${cookie.maxAge}`);
   }
   if (cookie.domain) {
+    validateDomain(cookie.domain);
     out.push(`Domain=${cookie.domain}`);
   }
   if (cookie.sameSite) {
@@ -112,7 +116,7 @@ function validatePath(path: string | null): void {
 }
 
 /**
- *Validate Cookie Value.
+ * Validate Cookie Value.
  * @see https://tools.ietf.org/html/rfc6265#section-4.1
  * @param value Cookie value.
  */
@@ -135,6 +139,24 @@ function validateValue(name: string, value: string | null): void {
           c.charCodeAt(0).toString(16),
       );
     }
+  }
+}
+
+/**
+ * Validate Cookie Domain.
+ * @see https://datatracker.ietf.org/doc/html/rfc6265#section-4.1.2.3
+ * @param domain Cookie domain.
+ */
+function validateDomain(domain: string): void {
+  if (domain == null) {
+    return;
+  }
+  const char1 = domain.charAt(0);
+  const charN = domain.charAt(domain.length - 1);
+  if (char1 == "-" || charN == "." || charN == "-") {
+    throw new Error(
+      "Invalid first/last char in cookie domain: " + domain,
+    );
   }
 }
 
@@ -166,6 +188,9 @@ export function getCookies(req: { headers: Headers }): Record<string, string> {
  * Example:
  *
  * ```ts
+ * import { setCookie } from "./cookie.ts";
+ *
+ * const response = new Response("");
  * setCookie(response, { name: 'deno', value: 'runtime',
  *   httpOnly: true, secure: true, maxAge: 2, domain: "deno.land" });
  * ```
@@ -190,11 +215,18 @@ export function setCookie(res: { headers?: Headers }, cookie: Cookie): void {
  * Example:
  *
  *     deleteCookie(res,'foo');
+ *     deleteCookie(res,'foo', {path:'/demo'});
+ *     deleteCookie(res,'foo', {domain:'deno.land'});
  */
-export function deleteCookie(res: { headers?: Headers }, name: string): void {
+export function deleteCookie(
+  res: { headers?: Headers },
+  name: string,
+  attributes?: { path?: string; domain?: string },
+): void {
   setCookie(res, {
     name: name,
     value: "",
     expires: new Date(0),
+    ...attributes,
   });
 }

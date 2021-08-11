@@ -22,6 +22,7 @@
 import "./global.ts";
 
 import nodeAssert from "./assert.ts";
+import nodeAssertStrict from "./assert/strict.ts";
 import nodeBuffer from "./buffer.ts";
 import nodeCrypto from "./crypto.ts";
 import nodeConsole from "./console.ts";
@@ -29,8 +30,10 @@ import nodeConstants from "./constants.ts";
 import nodeChildProcess from "./child_process.ts";
 import nodeEvents from "./events.ts";
 import nodeFS from "./fs.ts";
+import nodeFSPromises from "./fs/promises.ts";
 import nodeOs from "./os.ts";
 import nodePath from "./path.ts";
+import nodePerfHooks from "./perf_hooks.ts";
 import nodeQueryString from "./querystring.ts";
 import nodeStream from "./stream.ts";
 import nodeStringDecoder from "./string_decoder.ts";
@@ -534,7 +537,21 @@ class Module {
       filename instanceof URL ||
       (typeof filename === "string" && !path.isAbsolute(filename))
     ) {
-      filepath = fileURLToPath(filename);
+      try {
+        filepath = fileURLToPath(filename);
+      } catch (err) {
+        if (
+          err instanceof Deno.errors.InvalidData &&
+          err.message.includes("invalid url scheme")
+        ) {
+          // Provide a descriptive error when url scheme is invalid.
+          throw new Error(
+            `${createRequire.name} only supports 'file://' URLs for the 'filename' parameter`,
+          );
+        } else {
+          throw err;
+        }
+      }
     } else if (typeof filename !== "string") {
       throw new Error("filename should be a string");
     } else {
@@ -604,6 +621,10 @@ function createNativeModule(id: string, exports: any): Module {
 }
 
 nativeModulePolyfill.set("assert", createNativeModule("assert", nodeAssert));
+nativeModulePolyfill.set(
+  "assert/strict",
+  createNativeModule("assert/strict", nodeAssertStrict),
+);
 nativeModulePolyfill.set("buffer", createNativeModule("buffer", nodeBuffer));
 nativeModulePolyfill.set(
   "constants",
@@ -619,9 +640,17 @@ nativeModulePolyfill.set(
   createNativeModule("events", nodeEvents),
 );
 nativeModulePolyfill.set("fs", createNativeModule("fs", nodeFS));
+nativeModulePolyfill.set(
+  "fs/promises",
+  createNativeModule("fs/promises", nodeFSPromises),
+);
 nativeModulePolyfill.set("module", createNativeModule("module", Module));
 nativeModulePolyfill.set("os", createNativeModule("os", nodeOs));
 nativeModulePolyfill.set("path", createNativeModule("path", nodePath));
+nativeModulePolyfill.set(
+  "perf_hooks",
+  createNativeModule("perf_hooks", nodePerfHooks),
+);
 nativeModulePolyfill.set(
   "querystring",
   createNativeModule("querystring", nodeQueryString),

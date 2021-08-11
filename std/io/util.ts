@@ -1,5 +1,5 @@
 import { Buffer } from "./buffer.ts";
-import { copy } from "../bytes/mod.ts";
+import { copy as copyBytes } from "../bytes/mod.ts";
 import { assert } from "../testing/asserts.ts";
 
 const DEFAULT_BUFFER_SIZE = 32 * 1024;
@@ -8,6 +8,8 @@ const DEFAULT_BUFFER_SIZE = 32 * 1024;
  * Uint8Array`.
  *
  * ```ts
+ * import { readAll } from "./util.ts";
+ * import { Buffer } from "./buffer.ts";
  *
  * // Example from stdin
  * const stdinContent = await readAll(Deno.stdin);
@@ -34,6 +36,9 @@ export async function readAll(r: Deno.Reader): Promise<Uint8Array> {
  * as `Uint8Array`.
  *
  * ```ts
+ * import { readAllSync } from "./util.ts";
+ * import { Buffer } from "./buffer.ts";
+ *
  * // Example from stdin
  * const stdinContent = readAllSync(Deno.stdin);
  *
@@ -69,10 +74,13 @@ export interface ByteRange {
  * range.
  *
  * ```ts
+ * import { assertEquals } from "../testing/asserts.ts";
+ * import { readRange } from "./util.ts";
+ *
  * // Read the first 10 bytes of a file
  * const file = await Deno.open("example.txt", { read: true });
  * const bytes = await readRange(file, { start: 0, end: 9 });
- * assert(bytes.length, 10);
+ * assertEquals(bytes.length, 10);
  * ```
  */
 export async function readRange(
@@ -90,7 +98,7 @@ export async function readRange(
     const nread = await r.read(p);
     assert(nread !== null, "Unexpected EOF reach while reading a range.");
     assert(nread > 0, "Unexpected read of 0 bytes while reading a range.");
-    copy(p, result, off);
+    copyBytes(p, result, off);
     off += nread;
     length -= nread;
     assert(length >= 0, "Unexpected length remaining after reading range.");
@@ -104,10 +112,13 @@ export async function readRange(
  * within that range.
  *
  * ```ts
+ * import { assertEquals } from "../testing/asserts.ts";
+ * import { readRangeSync } from "./util.ts";
+ *
  * // Read the first 10 bytes of a file
  * const file = Deno.openSync("example.txt", { read: true });
  * const bytes = readRangeSync(file, { start: 0, end: 9 });
- * assert(bytes.length, 10);
+ * assertEquals(bytes.length, 10);
  * ```
  */
 export function readRangeSync(
@@ -125,7 +136,7 @@ export function readRangeSync(
     const nread = r.readSync(p);
     assert(nread !== null, "Unexpected EOF reach while reading a range.");
     assert(nread > 0, "Unexpected read of 0 bytes while reading a range.");
-    copy(p, result, off);
+    copyBytes(p, result, off);
     off += nread;
     length -= nread;
     assert(length >= 0, "Unexpected length remaining after reading range.");
@@ -136,18 +147,21 @@ export function readRangeSync(
 /** Write all the content of the array buffer (`arr`) to the writer (`w`).
  *
  * ```ts
+ * import { Buffer } from "./buffer.ts";
+ * import { writeAll } from "./util.ts";
+
  * // Example writing to stdout
- * const contentBytes = new TextEncoder().encode("Hello World");
+ * let contentBytes = new TextEncoder().encode("Hello World");
  * await writeAll(Deno.stdout, contentBytes);
  *
  * // Example writing to file
- * const contentBytes = new TextEncoder().encode("Hello World");
+ * contentBytes = new TextEncoder().encode("Hello World");
  * const file = await Deno.open('test.file', {write: true});
  * await writeAll(file, contentBytes);
  * Deno.close(file.rid);
  *
  * // Example writing to buffer
- * const contentBytes = new TextEncoder().encode("Hello World");
+ * contentBytes = new TextEncoder().encode("Hello World");
  * const writer = new Buffer();
  * await writeAll(writer, contentBytes);
  * console.log(writer.bytes().length);  // 11
@@ -164,18 +178,21 @@ export async function writeAll(w: Deno.Writer, arr: Uint8Array) {
  * writer (`w`).
  *
  * ```ts
+ * import { Buffer } from "./buffer.ts";
+ * import { writeAllSync } from "./util.ts";
+ *
  * // Example writing to stdout
- * const contentBytes = new TextEncoder().encode("Hello World");
+ * let contentBytes = new TextEncoder().encode("Hello World");
  * writeAllSync(Deno.stdout, contentBytes);
  *
  * // Example writing to file
- * const contentBytes = new TextEncoder().encode("Hello World");
+ * contentBytes = new TextEncoder().encode("Hello World");
  * const file = Deno.openSync('test.file', {write: true});
  * writeAllSync(file, contentBytes);
  * Deno.close(file.rid);
  *
  * // Example writing to buffer
- * const contentBytes = new TextEncoder().encode("Hello World");
+ * contentBytes = new TextEncoder().encode("Hello World");
  * const writer = new Buffer();
  * writeAllSync(writer, contentBytes);
  * console.log(writer.bytes().length);  // 11
@@ -191,6 +208,8 @@ export function writeAllSync(w: Deno.WriterSync, arr: Uint8Array): void {
 /** Turns a Reader, `r`, into an async iterator.
  *
  * ```ts
+ * import { iter } from "./util.ts";
+ *
  * let f = await Deno.open("/etc/passwd");
  * for await (const chunk of iter(f)) {
  *   console.log(chunk);
@@ -202,11 +221,13 @@ export function writeAllSync(w: Deno.WriterSync, arr: Uint8Array): void {
  * Default size of the buffer is 32kB.
  *
  * ```ts
+ * import { iter } from "./util.ts";
+ *
  * let f = await Deno.open("/etc/passwd");
- * const iter = iter(f, {
+ * const it = iter(f, {
  *   bufSize: 1024 * 1024
  * });
- * for await (const chunk of iter) {
+ * for await (const chunk of it) {
  *   console.log(chunk);
  * }
  * f.close();
@@ -238,6 +259,8 @@ export async function* iter(
 /** Turns a ReaderSync, `r`, into an iterator.
  *
  * ```ts
+ * import { iterSync } from "./util.ts";
+ *
  * let f = Deno.openSync("/etc/passwd");
  * for (const chunk of iterSync(f)) {
  *   console.log(chunk);
@@ -249,6 +272,8 @@ export async function* iter(
  * Default size of the buffer is 32kB.
  *
  * ```ts
+ * import { iterSync } from "./util.ts";
+
  * let f = await Deno.open("/etc/passwd");
  * const iter = iterSync(f, {
  *   bufSize: 1024 * 1024
@@ -280,4 +305,47 @@ export function* iterSync(
 
     yield b.subarray(0, result);
   }
+}
+
+/** Copies from `src` to `dst` until either EOF (`null`) is read from `src` or
+ * an error occurs. It resolves to the number of bytes copied or rejects with
+ * the first error encountered while copying.
+ *
+ * ```ts
+ * import { copy } from "./util.ts";
+ *
+ * const source = await Deno.open("my_file.txt");
+ * const bytesCopied1 = await copy(source, Deno.stdout);
+ * const destination = await Deno.create("my_file_2.txt");
+ * const bytesCopied2 = await copy(source, destination);
+ * ```
+ *
+ * @param src The source to copy from
+ * @param dst The destination to copy to
+ * @param options Can be used to tune size of the buffer. Default size is 32kB
+ */
+export async function copy(
+  src: Deno.Reader,
+  dst: Deno.Writer,
+  options?: {
+    bufSize?: number;
+  },
+): Promise<number> {
+  let n = 0;
+  const bufSize = options?.bufSize ?? DEFAULT_BUFFER_SIZE;
+  const b = new Uint8Array(bufSize);
+  let gotEOF = false;
+  while (gotEOF === false) {
+    const result = await src.read(b);
+    if (result === null) {
+      gotEOF = true;
+    } else {
+      let nwritten = 0;
+      while (nwritten < result) {
+        nwritten += await dst.write(b.subarray(nwritten, result));
+      }
+      n += nwritten;
+    }
+  }
+  return n;
 }

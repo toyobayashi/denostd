@@ -368,7 +368,7 @@ function fail(message?: string | Error): never {
       message: message ?? "Failed",
       operator: "fail",
       generatedMessage: message == null,
-    } as any);
+    });
   } else {
     throw message;
   }

@@ -1,4 +1,5 @@
 # This is a full-line comment
+ # Comment line starting with whitespaces (#823 case 3) foo = "..."
 str0 = 'value' # This is a comment at the end of a line
 str1 = "# This is not a comment" # but this is
 str2 = """ # this is not a comment!
@@ -19,6 +20,9 @@ point1 = { x = 7, y = 8, z = 9, str0 = "#not a comment"} # comment
 features = ["#secure by default", "supports typescript # not a comment"] # Comment caused Issue #7072
 url = "https://deno.land/" # comment
 is_not_node = true # comment
+
+# """
+# '''
 
 [toml] # Comment caused Issue #7072 (case 2)
 name = "Tom's Obvious, Minimal Language"
