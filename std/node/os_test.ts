@@ -10,6 +10,19 @@ Deno.test({
 });
 
 Deno.test({
+  name: "build architecture",
+  fn() {
+    if (Deno.build.arch == "x86_64") {
+      assertEquals(os.arch(), "x64");
+    } else if (Deno.build.arch == "aarch64") {
+      assertEquals(os.arch(), "arm64");
+    } else {
+      throw new Error("unreachable");
+    }
+  },
+});
+
+Deno.test({
   name: "home directory is a string",
   ignore: true,
   fn() {
@@ -19,7 +32,6 @@ Deno.test({
 
 Deno.test({
   name: "tmp directory is a string",
-  ignore: true,
   fn() {
     assertEquals(typeof os.tmpdir(), "string");
   },
@@ -167,9 +179,9 @@ Deno.test({
   name: "Signals are as expected",
   fn() {
     // Test a few random signals for equality
-    assertEquals(os.constants.signals.SIGKILL, Deno.Signal.SIGKILL);
-    assertEquals(os.constants.signals.SIGCONT, Deno.Signal.SIGCONT);
-    assertEquals(os.constants.signals.SIGXFSZ, Deno.Signal.SIGXFSZ);
+    assertEquals(os.constants.signals.SIGKILL, "SIGKILL");
+    assertEquals(os.constants.signals.SIGCONT, "SIGCONT");
+    assertEquals(os.constants.signals.SIGXFSZ, "SIGXFSZ");
   },
 });
 

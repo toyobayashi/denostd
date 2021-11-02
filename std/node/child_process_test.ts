@@ -7,8 +7,7 @@ import {
 } from "../testing/asserts.ts";
 import { spawn } from "./child_process.ts";
 import { Deferred, deferred } from "../async/deferred.ts";
-
-const isWindows = Deno.build.os === "windows";
+import { isWindows } from "../_util/os.ts";
 
 function withTimeout(timeoutInMS: number): Deferred<void> {
   const promise = deferred<void>();
@@ -68,7 +67,7 @@ Deno.test({
       });
       childProcess.stdin.write("  console.log('hello')", "utf-8");
       childProcess.stdin.end();
-      childProcess.on("exit", () => {
+      childProcess.on("close", () => {
         promise.resolve();
       });
       await promise;

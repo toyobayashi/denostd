@@ -7,16 +7,12 @@
 // https://github.com/indexzero/http-server/blob/master/test/http-server-test.js
 
 import { extname, posix } from "../path/mod.ts";
-import {
-  HTTPSOptions,
-  listenAndServe,
-  listenAndServeTLS,
-  Response,
-  ServerRequest,
-} from "./server.ts";
+import { listenAndServe, listenAndServeTls } from "./server.ts";
+import { Status, STATUS_TEXT } from "./http_status.ts";
 import { parse } from "../flags/mod.ts";
 import { assert } from "../_util/assert.ts";
-import { readRange } from "../io/util.ts";
+import { readRange } from "../io/files.ts";
+import { red } from "../fmt/colors.ts";
 
 interface EntryInfo {
   mode: string;
@@ -73,7 +69,7 @@ const MEDIA_TYPES: Record<string, string> = {
   ".woff": "font/woff",
   ".woff2": "font/woff2",
   ".conf": "text/plain",
-  ".list": "textplain",
+  ".list": "text/plain",
   ".log": "text/plain",
   ".ini": "text/plain",
   ".vtt": "text/vtt",
@@ -189,7 +185,7 @@ function contentType(path: string): string | undefined {
 // Generates a SHA-1 hash for the provided string
 async function createEtagHash(message: string) {
   const byteToHex = (b: number) => b.toString(16).padStart(2, "00");
-  const hashType = "SHA-1"; // Faster, and this isn't a security senitive cryptographic use case
+  const hashType = "SHA-1"; // Faster, and this isn't a security sensitive cryptographic use case
 
   // see: https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/digest
   const msgUint8 = new TextEncoder().encode(message);
@@ -239,12 +235,12 @@ function fileLenToString(len: number): string {
 }
 
 /**
- * Returns an HTTP Response with the requested file as the body
- * @param req The server request context used to cleanup the file handle
- * @param filePath Path of the file to serve
+ * Returns an HTTP Response with the requested file as the body.
+ * @param req The server request context used to cleanup the file handle.
+ * @param filePath Path of the file to serve.
  */
 export async function serveFile(
-  req: ServerRequest,
+  req: Request,
   filePath: string,
 ): Promise<Response> {
   const [file, fileInfo] = await Promise.all([
@@ -253,14 +249,6 @@ export async function serveFile(
   ]);
 
   const headers = setBaseHeaders();
-
-  // Base response
-  const response = {
-    status: 200,
-    statusText: "OK",
-    body: new Uint8Array(),
-    headers,
-  };
 
   // Set mime-type using the file extension in filePath
   const contentTypeValue = contentType(filePath);
@@ -295,9 +283,16 @@ export async function serveFile(
       (ifNoneMatch === null && ifModifiedSince &&
         fileInfo.mtime.getTime() < (new Date(ifModifiedSince).getTime() + 1000))
     ) {
-      response.status = 304;
-      response.statusText = "Not Modified";
-      return response;
+      const status = Status.NotModified;
+      const statusText = STATUS_TEXT.get(status);
+
+      file.close();
+
+      return new Response(null, {
+        status,
+        statusText,
+        headers,
+      });
     }
   }
 
@@ -310,10 +305,11 @@ export async function serveFile(
   const start = parsed && parsed[1] ? +parsed[1] : 0;
   const end = parsed && parsed[2] ? +parsed[2] : Math.max(0, fileInfo.size - 1);
 
+  let status = Status.OK;
+
   // If there is a range, set the status to 206, and set the "Content-range" header.
   if (range && parsed) {
-    response.status = 206;
-    response.statusText = "Partial Content";
+    status = Status.PartialContent;
     headers.set("content-range", `bytes ${start}-${end}/${fileInfo.size}`);
   }
 
@@ -326,11 +322,19 @@ export async function serveFile(
     (typeof start !== "number" || start > end || start > maxRange ||
       end > maxRange)
   ) {
-    response.status = 416;
-    response.statusText = "Range Not Satisfiable";
-    response.body = encoder.encode("Range Not Satisfiable");
-    return response;
+    const status = Status.RequestedRangeNotSatisfiable;
+    const statusText = STATUS_TEXT.get(status);
+
+    file.close();
+
+    return new Response(statusText, {
+      status,
+      statusText,
+      headers,
+    });
   }
+
+  let body = null;
 
   try {
     // Read the selected range of the file
@@ -338,22 +342,26 @@ export async function serveFile(
 
     // Set content length and response body
     headers.set("content-length", bytes.length.toString());
-    response.body = bytes;
+    body = bytes;
   } catch (e) {
     // Fallback on URIError (400 Bad Request) if unable to read range
-    throw URIError(e);
+    throw URIError(String(e));
   }
 
-  req.done.then(() => {
-    file.close();
-  });
+  file.close();
 
-  return response;
+  const statusText = STATUS_TEXT.get(status);
+
+  return new Response(body, {
+    status,
+    statusText,
+    headers,
+  });
 }
 
 // TODO(bartlomieju): simplify this after deno.stat and deno.readDir are fixed
 async function serveDir(
-  req: ServerRequest,
+  req: Request,
   dirPath: string,
 ): Promise<Response> {
   const showDotfiles = serverArgs.dotfiles ?? true;
@@ -377,7 +385,7 @@ async function serveDir(
       continue;
     }
     const filePath = posix.join(dirPath, entry.name);
-    const fileUrl = posix.join(dirUrl, entry.name);
+    const fileUrl = encodeURI(posix.join(dirUrl, entry.name));
     if (entry.name === "index.html" && entry.isFile) {
       // in case index.html as dir...
       return serveFile(req, filePath);
@@ -399,37 +407,36 @@ async function serveDir(
   const headers = setBaseHeaders();
   headers.set("content-type", "text/html");
 
-  const res = {
-    status: 200,
-    body: page,
-    headers,
-  };
-  return res;
+  return new Response(page, { status: Status.OK, headers });
 }
 
-function serveFallback(_req: ServerRequest, e: Error): Promise<Response> {
+function serveFallback(_req: Request, e: Error): Promise<Response> {
   if (e instanceof URIError) {
-    return Promise.resolve({
-      status: 400,
-      body: encoder.encode("Bad Request"),
-    });
+    return Promise.resolve(
+      new Response(STATUS_TEXT.get(Status.BadRequest), {
+        status: Status.BadRequest,
+      }),
+    );
   } else if (e instanceof Deno.errors.NotFound) {
-    return Promise.resolve({
-      status: 404,
-      body: encoder.encode("Not Found"),
-    });
-  } else {
-    return Promise.resolve({
-      status: 500,
-      body: encoder.encode("Internal server error"),
-    });
+    return Promise.resolve(
+      new Response(STATUS_TEXT.get(Status.NotFound), {
+        status: Status.NotFound,
+      }),
+    );
   }
+
+  return Promise.resolve(
+    new Response(STATUS_TEXT.get(Status.InternalServerError), {
+      status: Status.InternalServerError,
+    }),
+  );
 }
 
-function serverLog(req: ServerRequest, res: Response): void {
+function serverLog(req: Request, res: Response): void {
   const d = new Date().toISOString();
   const dateFmt = `[${d.slice(0, 10)} ${d.slice(11, 19)}]`;
-  const s = `${dateFmt} "${req.method} ${req.url} ${req.proto}" ${res.status}`;
+  const normalizedUrl = normalizeURL(req.url);
+  const s = `${dateFmt} [${req.method}] ${normalizedUrl} ${res.status}`;
   console.log(s);
 }
 
@@ -445,9 +452,6 @@ function setBaseHeaders(): Headers {
 }
 
 function setCORS(res: Response): void {
-  if (!res.headers) {
-    res.headers = new Headers();
-  }
   res.headers.append("access-control-allow-origin", "*");
   res.headers.append(
     "access-control-allow-headers",
@@ -456,6 +460,8 @@ function setCORS(res: Response): void {
 }
 
 function dirViewerTemplate(dirname: string, entries: EntryInfo[]): string {
+  const paths = dirname.split("/");
+
   return html`
     <!DOCTYPE html>
     <html lang="en">
@@ -509,13 +515,23 @@ function dirViewerTemplate(dirname: string, entries: EntryInfo[]): string {
             text-align: left;
           }
           table td {
-            padding: 12px 24px 0 0;
+            padding: 6px 24px 6px 4px;
           }
         </style>
       </head>
       <body>
         <main>
-          <h1>Index of ${dirname}</h1>
+          <h1>Index of
+          <a href="/">home</a>${
+    paths.map((path, index, array) => {
+      if (path === "") return "";
+      const link = array.slice(0, index + 1).join("/");
+      return (
+        html`<a href="${link}">${path}</a>`
+      );
+    }).join("/")
+  }
+          </h1>
           <table>
             <tr>
               <th>Mode</th>
@@ -565,13 +581,6 @@ function html(strings: TemplateStringsArray, ...values: unknown[]): string {
 
 function normalizeURL(url: string): string {
   let normalizedUrl = url;
-  try {
-    normalizedUrl = decodeURI(normalizedUrl);
-  } catch (e) {
-    if (!(e instanceof URIError)) {
-      throw e;
-    }
-  }
 
   try {
     //allowed per https://www.w3.org/Protocols/rfc2616/rfc2616-sec5.html
@@ -583,12 +592,21 @@ function normalizeURL(url: string): string {
     }
   }
 
+  try {
+    normalizedUrl = decodeURI(normalizedUrl);
+  } catch (e) {
+    if (!(e instanceof URIError)) {
+      throw e;
+    }
+  }
+
   if (normalizedUrl[0] !== "/") {
     throw new URIError("The request URI is malformed.");
   }
 
   normalizedUrl = posix.normalize(normalizedUrl);
   const startOfParams = normalizedUrl.indexOf("?");
+
   return startOfParams > -1
     ? normalizedUrl.slice(0, startOfParams)
     : normalizedUrl;
@@ -599,13 +617,12 @@ function main(): void {
   const port = serverArgs.port ?? serverArgs.p ?? 4507;
   const host = serverArgs.host ?? "0.0.0.0";
   const addr = `${host}:${port}`;
-  const tlsOpts = {} as HTTPSOptions;
-  tlsOpts.certFile = serverArgs.cert ?? serverArgs.c ?? "";
-  tlsOpts.keyFile = serverArgs.key ?? serverArgs.k ?? "";
+  const certFile = serverArgs.cert ?? serverArgs.c ?? "";
+  const keyFile = serverArgs.key ?? serverArgs.k ?? "";
   const dirListingEnabled = serverArgs["dir-listing"] ?? true;
 
-  if (tlsOpts.keyFile || tlsOpts.certFile) {
-    if (tlsOpts.keyFile === "" || tlsOpts.certFile === "") {
+  if (keyFile || certFile) {
+    if (keyFile === "" || certFile === "") {
       console.log("--key and --cert are required for TLS");
       serverArgs.h = true;
     }
@@ -635,15 +652,19 @@ function main(): void {
     Deno.exit();
   }
 
-  const handler = async (req: ServerRequest) => {
-    let response: Response | undefined;
+  const handler = async (req: Request): Promise<Response> => {
+    let response: Response;
+
     try {
       const normalizedUrl = normalizeURL(req.url);
       let fsPath = posix.join(target, normalizedUrl);
+
       if (fsPath.indexOf(target) !== 0) {
         fsPath = target;
       }
+
       const fileInfo = await Deno.stat(fsPath);
+
       if (fileInfo.isDirectory) {
         if (dirListingEnabled) {
           response = await serveDir(req, fsPath);
@@ -654,32 +675,35 @@ function main(): void {
         response = await serveFile(req, fsPath);
       }
     } catch (e) {
-      console.error(e.message);
-      response = await serveFallback(req, e);
-    } finally {
-      if (CORSEnabled) {
-        assert(response);
-        setCORS(response);
-      }
-      serverLog(req, response!);
-      try {
-        await req.respond(response!);
-      } catch (e) {
-        console.error(e.message);
-      }
+      const err = e instanceof Error ? e : new Error("[non-error thrown]");
+      console.error(red(err.message));
+      response = await serveFallback(req, err);
     }
+
+    if (CORSEnabled) {
+      assert(response!);
+      setCORS(response);
+    }
+
+    serverLog(req, response!);
+
+    return response!;
   };
 
   let proto = "http";
-  if (tlsOpts.keyFile || tlsOpts.certFile) {
+
+  if (keyFile || certFile) {
     proto += "s";
-    tlsOpts.hostname = host;
-    tlsOpts.port = port;
-    listenAndServeTLS(tlsOpts, handler);
+    listenAndServeTls(addr, certFile, keyFile, handler);
   } else {
     listenAndServe(addr, handler);
   }
-  console.log(`${proto.toUpperCase()} server listening on ${proto}://${addr}/`);
+
+  console.log(
+    `${proto.toUpperCase()} server listening on ${proto}://${
+      addr.replace("0.0.0.0", "localhost")
+    }/`,
+  );
 }
 
 if (import.meta.main) {

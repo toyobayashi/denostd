@@ -22,6 +22,7 @@ import { notImplemented } from "./_utils.ts";
 import { validateIntegerRange } from "./_utils.ts";
 import { EOL as fsEOL } from "../fs/eol.ts";
 import process from "./process.ts";
+import { isWindows, osType } from "../_util/os.ts";
 
 const SEE_GITHUB_ISSUE = "See https://github.com/denoland/deno/issues/3802";
 
@@ -112,7 +113,13 @@ interface UserInfo {
 
 /** Returns the operating system CPU architecture for which the Deno binary was compiled */
 export function arch(): string {
-  return Deno.build.arch;
+  if (Deno.build.arch == "x86_64") {
+    return "x64";
+  } else if (Deno.build.arch == "aarch64") {
+    return "arm64";
+  } else {
+    throw Error("unreachable");
+  }
 }
 
 /** Not yet implemented */
@@ -124,7 +131,7 @@ export function cpus(): CPUCoreInfo[] {
  * Returns a string identifying the endianness of the CPU for which the Deno
  * binary was compiled. Possible values are 'BE' for big endian and 'LE' for
  * little endian.
- **/
+ */
 export function endianness(): "BE" | "LE" {
   // Source: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DataView#Endianness
   const buffer = new ArrayBuffer(2);
@@ -146,7 +153,7 @@ export function getPriority(pid = 0): number {
 
 /** Returns the string path of the current user's home directory. */
 export function homedir(): string | null {
-  switch (Deno.build.os) {
+  switch (osType) {
     case "windows":
       return Deno.env.get("USERPROFILE") || null;
     case "linux":
@@ -164,7 +171,7 @@ export function hostname(): string {
 
 /** Returns an array containing the 1, 5, and 15 minute load averages */
 export function loadavg(): number[] {
-  if (Deno.build.os === "windows") {
+  if (isWindows) {
     return [0, 0, 0];
   }
   return Deno.loadavg();
@@ -200,7 +207,29 @@ export function setPriority(pid: number, priority?: number): void {
 
 /** Returns the operating system's default directory for temporary files as a string. */
 export function tmpdir(): string | null {
-  notImplemented(SEE_GITHUB_ISSUE);
+  /* This follows the node js implementation, but has a few
+     differences:
+     * On windows, if none of the environment variables are defined,
+       we return null.
+     * On unix we use a plain Deno.env.get, instead of safeGetenv,
+       which special cases setuid binaries.
+     * Node removes a single trailing / or \, we remove all.
+  */
+  if (isWindows) {
+    const temp = Deno.env.get("TEMP") || Deno.env.get("TMP");
+    if (temp) {
+      return temp.replace(/(?<!:)[/\\]*$/, "");
+    }
+    const base = Deno.env.get("SYSTEMROOT") || Deno.env.get("WINDIR");
+    if (base) {
+      return base + "\\temp";
+    }
+    return null;
+  } else { // !isWindows
+    const temp = Deno.env.get("TMPDIR") || Deno.env.get("TMP") ||
+      Deno.env.get("TEMP") || "/tmp";
+    return temp.replace(/(?<!^)\/*$/, "");
+  }
 }
 
 /** Return total physical memory amount */
@@ -243,13 +272,49 @@ export const constants = {
   errno: {
     // see https://nodejs.org/docs/latest-v12.x/api/os.html#os_error_constants
   },
-  signals: Deno.Signal,
+  // Needs to be kept in sync with `Deno.Signal` type.
+  signals: {
+    "SIGABRT": "SIGABRT",
+    "SIGALRM": "SIGALRM",
+    "SIGBUS": "SIGBUS",
+    "SIGCHLD": "SIGCHLD",
+    "SIGCONT": "SIGCONT",
+    "SIGEMT": "SIGEMT",
+    "SIGFPE": "SIGFPE",
+    "SIGHUP": "SIGHUP",
+    "SIGILL": "SIGILL",
+    "SIGINFO": "SIGINFO",
+    "SIGINT": "SIGINT",
+    "SIGIO": "SIGIO",
+    "SIGKILL": "SIGKILL",
+    "SIGPIPE": "SIGPIPE",
+    "SIGPROF": "SIGPROF",
+    "SIGPWR": "SIGPWR",
+    "SIGQUIT": "SIGQUIT",
+    "SIGSEGV": "SIGSEGV",
+    "SIGSTKFLT": "SIGSTKFLT",
+    "SIGSTOP": "SIGSTOP",
+    "SIGSYS": "SIGSYS",
+    "SIGTERM": "SIGTERM",
+    "SIGTRAP": "SIGTRAP",
+    "SIGTSTP": "SIGTSTP",
+    "SIGTTIN": "SIGTTIN",
+    "SIGTTOU": "SIGTTOU",
+    "SIGURG": "SIGURG",
+    "SIGUSR1": "SIGUSR1",
+    "SIGUSR2": "SIGUSR2",
+    "SIGVTALRM": "SIGVTALRM",
+    "SIGWINCH": "SIGWINCH",
+    "SIGXCPU": "SIGXCPU",
+    "SIGXFSZ": "SIGXFSZ",
+  },
   priority: {
     // see https://nodejs.org/docs/latest-v12.x/api/os.html#os_priority_constants
   },
 };
 
-export const EOL = Deno.build.os == "windows" ? fsEOL.CRLF : fsEOL.LF;
+export const EOL = isWindows ? fsEOL.CRLF : fsEOL.LF;
+export const devNull = isWindows ? "\\\\.\\nul" : "/dev/null";
 
 export default {
   arch,
@@ -271,4 +336,5 @@ export default {
   userInfo,
   constants,
   EOL,
+  devNull,
 };

@@ -22,6 +22,7 @@
 // USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import { assert } from "../_util/assert.ts";
+import { notImplemented } from "./_utils.ts";
 import { ERR_INVALID_ARG_TYPE, ERR_OUT_OF_RANGE } from "./_errors.ts";
 import { inspect } from "./util.ts";
 
@@ -62,8 +63,34 @@ type EventMap = Record<
 
 export let defaultMaxListeners = 10;
 function validateMaxListeners(n: number, name: string): void {
-  if (!Number.isInteger(n) || n < 0) {
+  if (!Number.isInteger(n) || Number.isNaN(n) || n < 0) {
     throw new ERR_OUT_OF_RANGE(name, "a non-negative number", inspect(n));
+  }
+}
+
+function setMaxListeners(
+  n: number,
+  ...eventTargets: Array<EventEmitter | EventTarget>
+): void {
+  validateMaxListeners(n, "n");
+  if (eventTargets.length === 0) {
+    defaultMaxListeners = n;
+  } else {
+    for (const target of eventTargets) {
+      if (target instanceof EventEmitter) {
+        target.setMaxListeners(n);
+      } else if (target instanceof EventTarget) {
+        notImplemented(
+          "setMaxListeners currently does not support EventTarget",
+        );
+      } else {
+        throw new ERR_INVALID_ARG_TYPE(
+          "eventTargets",
+          ["EventEmitter", "EventTarget"],
+          target,
+        );
+      }
+    }
   }
 }
 
@@ -82,47 +109,27 @@ export class EventEmitter {
   }
 
   private maxListeners: number | undefined;
-  private _events: EventMap;
+  private _events!: EventMap;
 
-  public constructor() {
-    this._events = Object.create(null);
+  static #init(emitter: EventEmitter): void {
+    if (
+      emitter._events == null ||
+      emitter._events === Object.getPrototypeOf(emitter)._events // If `emitter` does not own `_events` but the prototype does
+    ) {
+      emitter._events = Object.create(null);
+    }
   }
 
-  private _addListener(
-    eventName: string | symbol,
-    listener: GenericFunction | WrappedFunction,
-    prepend: boolean,
-  ): this {
-    this.checkListenerArgument(listener);
-    this.emit("newListener", eventName, this.unwrapListener(listener));
-    if (this.hasListeners(eventName)) {
-      // deno-lint-ignore ban-ts-comment
-      // @ts-expect-error
-      let listeners = this._events[eventName];
-      if (!Array.isArray(listeners)) {
-        listeners = [listeners];
-        // deno-lint-ignore ban-ts-comment
-        // @ts-expect-error
-        this._events[eventName] = listeners;
-      }
+  /**
+   * Overrides `call` to mimic the es5 behavior with the es6 class.
+   */
+  // deno-lint-ignore no-explicit-any
+  static call = function call(thisArg: any): void {
+    EventEmitter.#init(thisArg);
+  };
 
-      if (prepend) {
-        listeners.unshift(listener);
-      } else {
-        listeners.push(listener);
-      }
-    } else {
-      // deno-lint-ignore ban-ts-comment
-      // @ts-expect-error
-      this._events[eventName] = listener;
-    }
-    const max = this.getMaxListeners();
-    if (max > 0 && this.listenerCount(eventName) > max) {
-      const warning = new MaxListenersExceededWarning(this, eventName);
-      this.warnIfNeeded(eventName, warning);
-    }
-
-    return this;
+  constructor() {
+    EventEmitter.#init(this);
   }
 
   /** Alias for emitter.on(eventName, listener). */
@@ -130,7 +137,7 @@ export class EventEmitter {
     eventName: string | symbol,
     listener: GenericFunction | WrappedFunction,
   ): this {
-    return this._addListener(eventName, listener, false);
+    return EventEmitter.#addListener(this, eventName, listener, false);
   }
 
   /**
@@ -141,18 +148,16 @@ export class EventEmitter {
    */
   // deno-lint-ignore no-explicit-any
   public emit(eventName: string | symbol, ...args: any[]): boolean {
-    if (this.hasListeners(eventName)) {
+    if (hasListeners(this._events, eventName)) {
       if (
         eventName === "error" &&
-        this.hasListeners(EventEmitter.errorMonitor)
+        hasListeners(this._events, EventEmitter.errorMonitor)
       ) {
         this.emit(EventEmitter.errorMonitor, ...args);
       }
 
-      // deno-lint-ignore ban-ts-comment
-      // @ts-expect-error
-      const listeners = ensureArray<GenericFunction>(this._events[eventName])
-        .slice(); // We copy with slice() so array is not mutated during emit
+      const listeners = ensureArray(this._events[eventName]!)
+        .slice() as Array<GenericFunction>; // We copy with slice() so array is not mutated during emit
       for (const listener of listeners) {
         try {
           listener.apply(this, args);
@@ -162,7 +167,7 @@ export class EventEmitter {
       }
       return true;
     } else if (eventName === "error") {
-      if (this.hasListeners(EventEmitter.errorMonitor)) {
+      if (hasListeners(this._events, EventEmitter.errorMonitor)) {
         this.emit(EventEmitter.errorMonitor, ...args);
       }
       const errMsg = args.length > 0 ? args[0] : Error("Unhandled error.");
@@ -176,7 +181,9 @@ export class EventEmitter {
    * registered listeners.
    */
   public eventNames(): [string | symbol] {
-    return Reflect.ownKeys(this._events) as [string | symbol];
+    return Reflect.ownKeys(this._events) as [
+      string | symbol,
+    ];
   }
 
   /**
@@ -185,9 +192,7 @@ export class EventEmitter {
    * EventEmitter.defaultMaxListeners.
    */
   public getMaxListeners(): number {
-    return this.maxListeners == null
-      ? EventEmitter.defaultMaxListeners
-      : this.maxListeners;
+    return EventEmitter.#getMaxListeners(this);
   }
 
   /**
@@ -195,14 +200,7 @@ export class EventEmitter {
    * eventName.
    */
   public listenerCount(eventName: string | symbol): number {
-    if (this.hasListeners(eventName)) {
-      // deno-lint-ignore ban-ts-comment
-      // @ts-expect-error
-      const maybeListeners = this._events[eventName];
-      return Array.isArray(maybeListeners) ? maybeListeners.length : 1;
-    } else {
-      return 0;
-    }
+    return EventEmitter.#listenerCount(this, eventName);
   }
 
   static listenerCount(
@@ -217,38 +215,20 @@ export class EventEmitter {
     eventName: string | symbol,
     unwrap: boolean,
   ): GenericFunction[] {
-    if (!target.hasListeners(eventName)) {
+    if (!hasListeners(target._events, eventName)) {
       return [];
     }
 
-    // deno-lint-ignore ban-ts-comment
-    // @ts-expect-error
     const eventListeners = target._events[eventName];
     if (Array.isArray(eventListeners)) {
       return unwrap
-        ? this.unwrapListeners(eventListeners)
+        ? unwrapListeners(eventListeners)
         : eventListeners.slice(0) as GenericFunction[];
     } else {
       return [
-        unwrap ? this.unwrapListener(eventListeners) : eventListeners,
+        unwrap ? unwrapListener(eventListeners) : eventListeners,
       ] as GenericFunction[];
     }
-  }
-
-  private unwrapListeners(
-    arr: (GenericFunction | WrappedFunction)[],
-  ): GenericFunction[] {
-    const unwrappedListeners = new Array(arr.length) as GenericFunction[];
-    for (let i = 0; i < arr.length; i++) {
-      unwrappedListeners[i] = this.unwrapListener(arr[i]);
-    }
-    return unwrappedListeners;
-  }
-
-  private unwrapListener(
-    listener: GenericFunction | WrappedFunction,
-  ): GenericFunction {
-    return (listener as WrappedFunction)["listener"] ?? listener as GenericFunction;
   }
 
   /** Returns a copy of the array of listeners for the event named eventName.*/
@@ -273,7 +253,7 @@ export class EventEmitter {
     // deno-lint-ignore no-unused-vars
     listener: GenericFunction,
     // deno-lint-ignore ban-ts-comment
-    // @ts-expect-error
+    // @ts-ignore
   ): this {
     // The body of this method is empty because it will be overwritten by later code. (`EventEmitter.prototype.off = EventEmitter.prototype.removeListener;`)
     // The purpose of this dirty hack is to get around the current limitation of TypeScript type checking.
@@ -292,7 +272,7 @@ export class EventEmitter {
     // deno-lint-ignore no-unused-vars
     listener: GenericFunction | WrappedFunction,
     // deno-lint-ignore ban-ts-comment
-    // @ts-expect-error
+    // @ts-ignore
   ): this {
     // The body of this method is empty because it will be overwritten by later code. (`EventEmitter.prototype.addListener = EventEmitter.prototype.on;`)
     // The purpose of this dirty hack is to get around the current limitation of TypeScript type checking.
@@ -313,7 +293,7 @@ export class EventEmitter {
     eventName: string | symbol,
     listener: GenericFunction,
   ): WrappedFunction {
-    this.checkListenerArgument(listener);
+    checkListenerArgument(listener);
     const wrapper = function (
       this: {
         eventName: string | symbol;
@@ -362,7 +342,7 @@ export class EventEmitter {
     eventName: string | symbol,
     listener: GenericFunction | WrappedFunction,
   ): this {
-    return this._addListener(eventName, listener, true);
+    return EventEmitter.#addListener(this, eventName, listener, true);
   }
 
   /**
@@ -386,15 +366,13 @@ export class EventEmitter {
     }
 
     if (eventName) {
-      if (this.hasListeners(eventName)) {
-        // deno-lint-ignore ban-ts-comment
-        // @ts-expect-error
+      if (hasListeners(this._events, eventName)) {
         const listeners = ensureArray(this._events[eventName]).slice()
           .reverse();
         for (const listener of listeners) {
           this.removeListener(
             eventName,
-            this.unwrapListener(listener),
+            unwrapListener(listener),
           );
         }
       }
@@ -418,10 +396,8 @@ export class EventEmitter {
     eventName: string | symbol,
     listener: GenericFunction,
   ): this {
-    this.checkListenerArgument(listener);
-    if (this.hasListeners(eventName)) {
-      // deno-lint-ignore ban-ts-comment
-      // @ts-expect-error
+    checkListenerArgument(listener);
+    if (hasListeners(this._events, eventName)) {
       const maybeArr = this._events[eventName];
 
       assert(maybeArr);
@@ -442,13 +418,9 @@ export class EventEmitter {
       if (listenerIndex >= 0) {
         arr.splice(listenerIndex, 1);
         if (arr.length === 0) {
-          // deno-lint-ignore ban-ts-comment
-          // @ts-expect-error
           delete this._events[eventName];
         } else if (arr.length === 1) {
           // If there is only one listener, an array is not necessary.
-          // deno-lint-ignore ban-ts-comment
-          // @ts-expect-error
           this._events[eventName] = arr[0];
         }
 
@@ -635,16 +607,73 @@ export class EventEmitter {
     }
   }
 
-  private checkListenerArgument(listener: unknown): void {
-    if (typeof listener !== "function") {
-      throw new ERR_INVALID_ARG_TYPE("listener", "function", listener);
+  // The generic type here is a workaround for `TS2322 [ERROR]: Type 'EventEmitter' is not assignable to type 'this'.` error.
+  static #addListener<T extends EventEmitter>(
+    target: T,
+    eventName: string | symbol,
+    listener: GenericFunction | WrappedFunction,
+    prepend: boolean,
+  ): T {
+    checkListenerArgument(listener);
+    let events = target._events;
+    if (events == null) {
+      EventEmitter.#init(target);
+      events = target._events;
+    }
+
+    if (events.newListener) {
+      target.emit("newListener", eventName, unwrapListener(listener));
+    }
+
+    if (hasListeners(events, eventName)) {
+      let listeners = events[eventName];
+      if (!Array.isArray(listeners)) {
+        listeners = [listeners];
+        events[eventName] = listeners;
+      }
+
+      if (prepend) {
+        listeners.unshift(listener);
+      } else {
+        listeners.push(listener);
+      }
+    } else if (events) {
+      events[eventName] = listener;
+    }
+
+    const max = EventEmitter.#getMaxListeners(target);
+    if (max > 0 && EventEmitter.#listenerCount(target, eventName) > max) {
+      const warning = new MaxListenersExceededWarning(target, eventName);
+      EventEmitter.#warnIfNeeded(target, eventName, warning);
+    }
+
+    return target;
+  }
+
+  static #getMaxListeners(target: EventEmitter): number {
+    return target.maxListeners == null
+      ? EventEmitter.defaultMaxListeners
+      : target.maxListeners;
+  }
+
+  static #listenerCount(
+    target: EventEmitter,
+    eventName: string | symbol,
+  ): number {
+    if (hasListeners(target._events, eventName)) {
+      const maybeListeners = target._events[eventName];
+      return Array.isArray(maybeListeners) ? maybeListeners.length : 1;
+    } else {
+      return 0;
     }
   }
 
-  private warnIfNeeded(eventName: string | symbol, warning: Error): void {
-    // deno-lint-ignore ban-ts-comment
-    // @ts-expect-error
-    const listeners = this._events[eventName];
+  static #warnIfNeeded(
+    target: EventEmitter,
+    eventName: string | symbol,
+    warning: Error,
+  ) {
+    const listeners = target._events[eventName];
     if (listeners.warned) {
       return;
     }
@@ -653,7 +682,7 @@ export class EventEmitter {
 
     // TODO(uki00a): Here are two problems:
     // * If `global.ts` is not imported, then `globalThis.process` will be undefined.
-    // * Importing `process.ts` from this file will result in circurlar reference.
+    // * Importing `process.ts` from this file will result in circular reference.
     // As a workaround, explicitly check for the existence of `globalThis.process`.
     // deno-lint-ignore no-explicit-any
     const maybeProcess = (globalThis as any).process;
@@ -661,12 +690,35 @@ export class EventEmitter {
       maybeProcess.emit("warning", warning);
     }
   }
+}
 
-  private hasListeners(eventName: string | symbol): boolean {
-    // deno-lint-ignore ban-ts-comment
-    // @ts-expect-error
-    return this._events && Boolean(this._events[eventName]);
+function checkListenerArgument(listener: unknown): void {
+  if (typeof listener !== "function") {
+    throw new ERR_INVALID_ARG_TYPE("listener", "function", listener);
   }
+}
+
+function hasListeners(
+  maybeEvents: EventMap | null | undefined,
+  eventName: string | symbol,
+): boolean {
+  return maybeEvents != null && Boolean(maybeEvents[eventName]);
+}
+
+function unwrapListeners(
+  arr: (GenericFunction | WrappedFunction)[],
+): GenericFunction[] {
+  const unwrappedListeners = new Array(arr.length) as GenericFunction[];
+  for (let i = 0; i < arr.length; i++) {
+    unwrappedListeners[i] = unwrapListener(arr[i]);
+  }
+  return unwrappedListeners;
+}
+
+function unwrapListener(
+  listener: GenericFunction | WrappedFunction,
+): GenericFunction {
+  return (listener as WrappedFunction)["listener"] ?? listener;
 }
 
 // EventEmitter#on should point to the same function as EventEmitter#addListener.
@@ -692,7 +744,7 @@ class MaxListenersExceededWarning extends Error {
   }
 }
 
-export default Object.assign(EventEmitter, { EventEmitter });
+export default Object.assign(EventEmitter, { EventEmitter, setMaxListeners });
 
 export const captureRejectionSymbol = EventEmitter.captureRejectionSymbol;
 export const errorMonitor = EventEmitter.errorMonitor;

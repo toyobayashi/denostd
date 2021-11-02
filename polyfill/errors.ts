@@ -1,130 +1,167 @@
-class BadResource extends Error {
+class Exception extends Error {
+  constructor (message?: string) {
+    super(message)
+    const ErrorConstructor: any = new.target
+    const proto = ErrorConstructor.prototype
+
+    if (!Object.prototype.hasOwnProperty.call(proto, 'name')) {
+      Object.defineProperty(proto, 'name', {
+        configurable: true,
+        writable: true,
+        value: typeof ErrorConstructor.name === 'string'
+          ? ErrorConstructor.name
+          : 'Exception'
+      })
+    }
+
+    if (!(this instanceof Exception)) {
+      const setPrototypeOf = (Object as any).setPrototypeOf
+      if (typeof setPrototypeOf === 'function') {
+        setPrototypeOf.call(Object, this, proto)
+      } else {
+        (this as any).__proto__ = proto
+      }
+      if (typeof (Error as any).captureStackTrace === 'function') {
+        (Error as any).captureStackTrace(this, ErrorConstructor)
+      }
+    }
+  }
+}
+
+Object.defineProperty(Exception.prototype, 'name', {
+  configurable: true,
+  writable: true,
+  value: 'Exception'
+})
+
+
+class BadResource extends Exception {
   constructor(msg) {
     super(msg);
     this.name = "BadResource";
   }
 }
 
-class Interrupted extends Error {
+class Interrupted extends Exception {
   constructor(msg) {
     super(msg);
     this.name = "Interrupted";
   }
 }
 
-class NotFound extends Error {
+class NotFound extends Exception {
   constructor(msg) {
     super(msg);
     this.name = "NotFound";
   }
 }
 
-class PermissionDenied extends Error {
+class PermissionDenied extends Exception {
   constructor(msg) {
     super(msg);
     this.name = "PermissionDenied";
   }
 }
 
-class ConnectionRefused extends Error {
+class ConnectionRefused extends Exception {
   constructor(msg) {
     super(msg);
     this.name = "ConnectionRefused";
   }
 }
 
-class ConnectionReset extends Error {
+class ConnectionReset extends Exception {
   constructor(msg) {
     super(msg);
     this.name = "ConnectionReset";
   }
 }
 
-class ConnectionAborted extends Error {
+class ConnectionAborted extends Exception {
   constructor(msg) {
     super(msg);
     this.name = "ConnectionAborted";
   }
 }
 
-class NotConnected extends Error {
+class NotConnected extends Exception {
   constructor(msg) {
     super(msg);
     this.name = "NotConnected";
   }
 }
 
-class AddrInUse extends Error {
+class AddrInUse extends Exception {
   constructor(msg) {
     super(msg);
     this.name = "AddrInUse";
   }
 }
 
-class AddrNotAvailable extends Error {
+class AddrNotAvailable extends Exception {
   constructor(msg) {
     super(msg);
     this.name = "AddrNotAvailable";
   }
 }
 
-class BrokenPipe extends Error {
+class BrokenPipe extends Exception {
   constructor(msg) {
     super(msg);
     this.name = "BrokenPipe";
   }
 }
 
-class AlreadyExists extends Error {
+class AlreadyExists extends Exception {
   constructor(msg) {
     super(msg);
     this.name = "AlreadyExists";
   }
 }
 
-class InvalidData extends Error {
+class InvalidData extends Exception {
   constructor(msg) {
     super(msg);
     this.name = "InvalidData";
   }
 }
 
-class TimedOut extends Error {
+class TimedOut extends Exception {
   constructor(msg) {
     super(msg);
     this.name = "TimedOut";
   }
 }
 
-class WriteZero extends Error {
+class WriteZero extends Exception {
   constructor(msg) {
     super(msg);
     this.name = "WriteZero";
   }
 }
 
-class UnexpectedEof extends Error {
+class UnexpectedEof extends Exception {
   constructor(msg) {
     super(msg);
     this.name = "UnexpectedEof";
   }
 }
 
-class Http extends Error {
+class Http extends Exception {
   constructor(msg) {
     super(msg);
     this.name = "Http";
   }
 }
 
-class Busy extends Error {
+class Busy extends Exception {
   constructor(msg) {
     super(msg);
     this.name = "Busy";
   }
 }
 
-class NotSupported extends Error {
+class NotSupported extends Exception {
   constructor(msg) {
     super(msg);
     this.name = "NotSupported";

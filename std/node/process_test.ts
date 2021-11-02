@@ -2,7 +2,12 @@
 // Copyright 2018-2021 the Deno authors. All rights reserved. MIT license.
 
 import "./global.ts";
-import { assert, assertEquals, assertThrows } from "../testing/asserts.ts";
+import {
+  assert,
+  assertEquals,
+  assertObjectMatch,
+  assertThrows,
+} from "../testing/asserts.ts";
 import { stripColor } from "../fmt/colors.ts";
 import * as path from "../path/mod.ts";
 import { delay } from "../async/delay.ts";
@@ -49,6 +54,24 @@ Deno.test({
     assertEquals(typeof process.version, "string");
     assertEquals(typeof process.versions, "object");
     assertEquals(typeof process.versions.node, "string");
+    assertEquals(typeof process.versions.v8, "string");
+    assertEquals(typeof process.versions.uv, "string");
+    assertEquals(typeof process.versions.zlib, "string");
+    assertEquals(typeof process.versions.brotli, "string");
+    assertEquals(typeof process.versions.ares, "string");
+    assertEquals(typeof process.versions.modules, "string");
+    assertEquals(typeof process.versions.nghttp2, "string");
+    assertEquals(typeof process.versions.napi, "string");
+    assertEquals(typeof process.versions.llhttp, "string");
+    assertEquals(typeof process.versions.openssl, "string");
+    assertEquals(typeof process.versions.cldr, "string");
+    assertEquals(typeof process.versions.icu, "string");
+    assertEquals(typeof process.versions.tz, "string");
+    assertEquals(typeof process.versions.unicode, "string");
+    // These two are not present in `process.versions` in Node, but we
+    // add them anyway
+    assertEquals(typeof process.versions.deno, "string");
+    assertEquals(typeof process.versions.typescript, "string");
   },
 });
 
@@ -56,6 +79,16 @@ Deno.test({
   name: "process.platform",
   fn() {
     assertEquals(typeof process.platform, "string");
+  },
+});
+
+Deno.test({
+  name: "process.mainModule",
+  fn() {
+    assertEquals(process.mainModule, undefined);
+    // Check that it is writable
+    process.mainModule = "foo";
+    assertEquals(process.mainModule, "foo");
   },
 });
 
@@ -102,6 +135,7 @@ Deno.test({
         Deno.execPath(),
         "run",
         "--quiet",
+        "--unstable",
         "./testdata/process_exit.ts",
       ],
       cwd,
@@ -142,6 +176,8 @@ Deno.test({
   fn() {
     Deno.env.set("HELLO", "WORLD");
 
+    assertObjectMatch(process.env, Deno.env.toObject());
+
     assertEquals(typeof (process.env.HELLO), "string");
     assertEquals(process.env.HELLO, "WORLD");
 
@@ -156,30 +192,40 @@ Deno.test({
 Deno.test({
   name: "process.stdin",
   fn() {
-    assertEquals(typeof process.stdin.fd, "number");
     assertEquals(process.stdin.fd, Deno.stdin.rid);
-    // TODO(jayhelton) Uncomment out this assertion once PTY is supported
-    //assert(process.stdin.isTTY);
+    assertEquals(process.stdin.isTTY, Deno.isatty(Deno.stdin.rid));
   },
 });
 
 Deno.test({
   name: "process.stdout",
   fn() {
-    assertEquals(typeof process.stdout.fd, "number");
     assertEquals(process.stdout.fd, Deno.stdout.rid);
-    // TODO(jayhelton) Uncomment out this assertion once PTY is supported
-    // assert(process.stdout.isTTY);
+    const isTTY = Deno.isatty(Deno.stdout.rid);
+    assertEquals(process.stdout.isTTY, isTTY);
+    const consoleSize = isTTY ? Deno.consoleSize(Deno.stdout.rid) : undefined;
+    assertEquals(process.stdout.columns, consoleSize?.columns);
+    assertEquals(process.stdout.rows, consoleSize?.rows);
+    assertEquals(
+      `${process.stdout.getWindowSize()}`,
+      `${consoleSize && [consoleSize.columns, consoleSize.rows]}`,
+    );
   },
 });
 
 Deno.test({
   name: "process.stderr",
   fn() {
-    assertEquals(typeof process.stderr.fd, "number");
     assertEquals(process.stderr.fd, Deno.stderr.rid);
-    // TODO(jayhelton) Uncomment out this assertion once PTY is supported
-    // assert(process.stderr.isTTY);
+    const isTTY = Deno.isatty(Deno.stderr.rid);
+    assertEquals(process.stderr.isTTY, isTTY);
+    const consoleSize = isTTY ? Deno.consoleSize(Deno.stderr.rid) : undefined;
+    assertEquals(process.stderr.columns, consoleSize?.columns);
+    assertEquals(process.stderr.rows, consoleSize?.rows);
+    assertEquals(
+      `${process.stderr.getWindowSize()}`,
+      `${consoleSize && [consoleSize.columns, consoleSize.rows]}`,
+    );
   },
 });
 
@@ -205,6 +251,8 @@ Deno.test({
 
 Deno.test({
   name: "process.hrtime",
+  // TODO(kt3k): Enable this test
+  ignore: true,
   fn() {
     const [sec0, nano0] = process.hrtime();
     // seconds and nano seconds are positive integers.
@@ -223,4 +271,35 @@ Deno.test({
     assertEquals(sec2, 0);
     assert(nano2 > 0);
   },
+});
+
+Deno.test({
+  name: "[process] stdio",
+  async fn() {
+    const cwd = path.dirname(path.fromFileUrl(import.meta.url));
+    const p = Deno.run({
+      cmd: [
+        Deno.execPath(),
+        "run",
+        "--unstable",
+        "--quiet",
+        "./testdata/process_stdio.ts",
+      ],
+      cwd,
+      stderr: "piped",
+      stdin: "piped",
+      stdout: "piped",
+    });
+    p.stdin.write(new TextEncoder().encode("it works?!"));
+    p.stdin.write(new TextEncoder().encode("yes!"));
+    p.stdin.close();
+    const stderr = new TextDecoder().decode(await p.stderrOutput());
+    const stdout = new TextDecoder().decode(await p.output());
+    assertEquals(
+      stderr + stdout,
+      "helloworldhelloworldfrom pipereceived:it works?!yes!helloworldhelloworldfrom pipe",
+    );
+  },
+  sanitizeResources: false,
+  sanitizeOps: false,
 });
