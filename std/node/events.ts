@@ -156,7 +156,7 @@ export class EventEmitter {
         this.emit(EventEmitter.errorMonitor, ...args);
       }
 
-      const listeners = ensureArray(this._events[eventName]!)
+      const listeners = ensureArray(this._events[eventName as any]!)
         .slice() as Array<GenericFunction>; // We copy with slice() so array is not mutated during emit
       for (const listener of listeners) {
         try {
@@ -219,7 +219,7 @@ export class EventEmitter {
       return [];
     }
 
-    const eventListeners = target._events[eventName];
+    const eventListeners = target._events[eventName as any];
     if (Array.isArray(eventListeners)) {
       return unwrap
         ? unwrapListeners(eventListeners)
@@ -367,7 +367,7 @@ export class EventEmitter {
 
     if (eventName) {
       if (hasListeners(this._events, eventName)) {
-        const listeners = ensureArray(this._events[eventName]).slice()
+        const listeners = ensureArray(this._events[eventName as any]).slice()
           .reverse();
         for (const listener of listeners) {
           this.removeListener(
@@ -398,7 +398,7 @@ export class EventEmitter {
   ): this {
     checkListenerArgument(listener);
     if (hasListeners(this._events, eventName)) {
-      const maybeArr = this._events[eventName];
+      const maybeArr = this._events[eventName as any];
 
       assert(maybeArr);
       const arr = ensureArray(maybeArr);
@@ -418,10 +418,10 @@ export class EventEmitter {
       if (listenerIndex >= 0) {
         arr.splice(listenerIndex, 1);
         if (arr.length === 0) {
-          delete this._events[eventName];
+          delete this._events[eventName as any];
         } else if (arr.length === 1) {
           // If there is only one listener, an array is not necessary.
-          this._events[eventName] = arr[0];
+          this._events[eventName as any] = arr[0];
         }
 
         if (this._events.removeListener) {
@@ -626,10 +626,10 @@ export class EventEmitter {
     }
 
     if (hasListeners(events, eventName)) {
-      let listeners = events[eventName];
+      let listeners = events[eventName as any];
       if (!Array.isArray(listeners)) {
         listeners = [listeners];
-        events[eventName] = listeners;
+        events[eventName as any] = listeners;
       }
 
       if (prepend) {
@@ -638,7 +638,7 @@ export class EventEmitter {
         listeners.push(listener);
       }
     } else if (events) {
-      events[eventName] = listener;
+      events[eventName as any] = listener;
     }
 
     const max = EventEmitter.#getMaxListeners(target);
@@ -661,7 +661,7 @@ export class EventEmitter {
     eventName: string | symbol,
   ): number {
     if (hasListeners(target._events, eventName)) {
-      const maybeListeners = target._events[eventName];
+      const maybeListeners = target._events[eventName as any];
       return Array.isArray(maybeListeners) ? maybeListeners.length : 1;
     } else {
       return 0;
@@ -673,7 +673,7 @@ export class EventEmitter {
     eventName: string | symbol,
     warning: Error,
   ) {
-    const listeners = target._events[eventName];
+    const listeners = target._events[eventName as any];
     if (listeners.warned) {
       return;
     }
@@ -702,7 +702,7 @@ function hasListeners(
   maybeEvents: EventMap | null | undefined,
   eventName: string | symbol,
 ): boolean {
-  return maybeEvents != null && Boolean(maybeEvents[eventName]);
+  return maybeEvents != null && Boolean(maybeEvents[eventName as any]);
 }
 
 function unwrapListeners(
@@ -718,7 +718,7 @@ function unwrapListeners(
 function unwrapListener(
   listener: GenericFunction | WrappedFunction,
 ): GenericFunction {
-  return (listener as WrappedFunction)["listener"] ?? listener;
+  return (listener as any)["listener"] ?? listener;
 }
 
 // EventEmitter#on should point to the same function as EventEmitter#addListener.

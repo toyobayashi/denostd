@@ -5,7 +5,7 @@
 
 import { filterInPlace } from "./_utils.ts";
 
-const { hasOwn } = Object;
+const hasOwn = (obj: any, prop: string | symbol) => Object.prototype.hasOwnProperty.call(obj, prop);
 
 /**
  * Merges the two given Records, recursively merging any nested Records with

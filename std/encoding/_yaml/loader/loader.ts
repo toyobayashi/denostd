@@ -12,7 +12,7 @@ import { LoaderState, LoaderStateOptions, ResultType } from "./loader_state.ts";
 type Any = common.Any;
 type ArrayObject<T = Any> = common.ArrayObject<T>;
 
-const { hasOwn } = Object;
+const hasOwn = (obj: any, prop: string | symbol) => Object.prototype.hasOwnProperty.call(obj, prop);
 
 const CONTEXT_FLOW_IN = 1;
 const CONTEXT_FLOW_OUT = 2;

@@ -8,7 +8,7 @@ import { State } from "../state.ts";
 import type { StyleVariant, Type } from "../type.ts";
 import type { Any, ArrayObject } from "../utils.ts";
 
-const { hasOwn } = Object;
+const hasOwn = (obj: any, prop: string | symbol) => Object.prototype.hasOwnProperty.call(obj, prop);
 
 function compileStyleMap(
   schema: Schema,

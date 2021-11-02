@@ -25,7 +25,7 @@ export function includesValue<T>(
 ): boolean {
   for (const i in record) {
     if (
-      Object.hasOwn(record, i) &&
+      Object.prototype.hasOwnProperty.call(record, i) &&
       (record[i] === value || Number.isNaN(value) && Number.isNaN(record[i]))
     ) {
       return true;

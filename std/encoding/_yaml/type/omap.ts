@@ -6,7 +6,7 @@
 import { Type } from "../type.ts";
 import type { Any } from "../utils.ts";
 
-const { hasOwn } = Object;
+const hasOwn = (obj: any, prop: string | symbol) => Object.prototype.hasOwnProperty.call(obj, prop);
 const _toString = Object.prototype.toString;
 
 function resolveYamlOmap(data: Any): boolean {

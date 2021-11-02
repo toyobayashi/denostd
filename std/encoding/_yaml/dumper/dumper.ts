@@ -12,7 +12,7 @@ type Any = common.Any;
 type ArrayObject<T = Any> = common.ArrayObject<T>;
 
 const _toString = Object.prototype.toString;
-const { hasOwn } = Object;
+const hasOwn = (obj: any, prop: string | symbol) => Object.prototype.hasOwnProperty.call(obj, prop);
 
 const CHAR_TAB = 0x09; /* Tab */
 const CHAR_LINE_FEED = 0x0a; /* LF */
