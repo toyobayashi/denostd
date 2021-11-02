@@ -74,7 +74,7 @@ export function deepMerge<
 
     const a = record[key] as ResultMember;
 
-    if (!hasOwn(other, key)) {
+    if (!Object.prototype.hasOwnProperty.call(other, key)) {
       result[key] = a;
 
       continue;
