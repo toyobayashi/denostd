@@ -16,9 +16,10 @@ import * as yaml from "./std/encoding/yaml.ts";
 
 export const encoding = { ascii85, base32, base64, base64url, hex, toml, yaml };
 
+import * as fmtBytes from "./std/fmt/bytes.ts",;
 import * as colors from "./std/fmt/colors.ts";
 import * as printf from "./std/fmt/printf.ts";
-export const fmt = { colors, printf };
+export const fmt = { bytes: fmtBytes, colors, printf };
 
 import * as fnv from "./std/hash/fnv.ts";
 import * as md5 from "./std/hash/md5.ts";
@@ -34,6 +35,7 @@ import * as buffer from "./std/node/buffer.ts";
 import * as console from "./std/node/console.ts";
 import * as events from "./std/node/events.ts";
 import * as path from "./std/path/mod.ts";
+import * as punycode from "./std/node/punycode.ts",;
 import * as querystring from "./std/node/querystring.ts";
 import * as string_decoder from "./std/node/string_decoder.ts";
 import * as sys from "./std/node/sys.ts";
@@ -41,7 +43,7 @@ import * as timers from "./std/node/timers.ts";
 import * as url from "./std/node/url.ts";
 import * as util from "./std/node/util.ts";
 
-export const node = { assert, buffer, console, events, path, querystring, string_decoder, sys, timers, url, util };
+export const node = { assert, buffer, console, events, path, punycode, querystring, string_decoder, sys, timers, url, util };
 
 export { path };
 

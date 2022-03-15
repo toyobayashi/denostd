@@ -1,4 +1,4 @@
-// Copyright 2018-2021 the Deno authors. All rights reserved. MIT license.
+// Copyright 2018-2022 the Deno authors. All rights reserved. MIT license.
 import {
   assert,
   assertEquals,
@@ -7,20 +7,30 @@ import {
 import { BufReader } from "../io/buffer.ts";
 import { iterateReader, readAll, writeAll } from "../streams/conversion.ts";
 import { TextProtoReader } from "../textproto/mod.ts";
-import { FileServerArgs, serveFile } from "./file_server.ts";
+import { serveDir, serveFile } from "./file_server.ts";
 import { dirname, fromFileUrl, join, resolve } from "../path/mod.ts";
 import { isWindows } from "../_util/os.ts";
 
 let fileServer: Deno.Process<Deno.RunOptions & { stdout: "piped" }>;
 
-type FileServerCfg = Omit<FileServerArgs, "_"> & { target?: string };
+interface FileServerCfg {
+  port?: string;
+  cors?: boolean;
+  "dir-listing"?: boolean;
+  dotfiles?: boolean;
+  host?: string;
+  cert?: string;
+  key?: string;
+  help?: boolean;
+  target?: string;
+}
 
 const moduleDir = dirname(fromFileUrl(import.meta.url));
 const testdataDir = resolve(moduleDir, "testdata");
 
 async function startFileServer({
   target = ".",
-  port = 4507,
+  port = "4507",
   "dir-listing": dirListing = true,
   dotfiles = true,
 }: FileServerCfg = {}) {
@@ -28,6 +38,7 @@ async function startFileServer({
     cmd: [
       Deno.execPath(),
       "run",
+      "--no-check",
       "--quiet",
       "--allow-read",
       "--allow-net",
@@ -51,10 +62,11 @@ async function startFileServer({
 }
 
 async function startFileServerAsLibrary({}: FileServerCfg = {}) {
-  fileServer = await Deno.run({
+  fileServer = Deno.run({
     cmd: [
       Deno.execPath(),
       "run",
+      "--no-check",
       "--quiet",
       "--allow-read",
       "--allow-net",
@@ -185,7 +197,7 @@ Deno.test(
   },
 );
 
-Deno.test("serveDirectory", async function () {
+Deno.test("serveDirIndex", async function () {
   await startFileServer();
   try {
     const res = await fetch("http://localhost:4507/");
@@ -197,7 +209,7 @@ Deno.test("serveDirectory", async function () {
     // TODO(bartlomieju): `mode` should work correctly in the future.
     // Correct this test case accordingly.
     isWindows === false &&
-      assert(/<td class="mode">(\s)*\([a-zA-Z-]{10}\)(\s)*<\/td>/.test(page));
+      assert(/<td class="mode">(\s)*[a-zA-Z- ]{14}(\s)*<\/td>/.test(page));
     isWindows &&
       assert(/<td class="mode">(\s)*\(unknown mode\)(\s)*<\/td>/.test(page));
     assert(page.includes(`<a href="/README.md">README.md</a>`));
@@ -205,7 +217,7 @@ Deno.test("serveDirectory", async function () {
     await killFileServer();
   }
 });
-Deno.test("serveDirectory with filename including percent symbol", async function () {
+Deno.test("serveDirIndex with filename including percent symbol", async function () {
   await startFileServer();
   try {
     const res = await fetch("http://localhost:4507/testdata/");
@@ -285,9 +297,16 @@ Deno.test("checkURIEncodedPathTraversal", async function () {
 Deno.test("serveWithUnorthodoxFilename", async function () {
   await startFileServer();
   try {
-    const malformedRes = await fetch("http://localhost:4507/testdata/%");
-    assertEquals(malformedRes.status, 400);
-    await malformedRes.text(); // Consuming the body so that the test doesn't leak resources
+    let res = await fetch("http://localhost:4507/testdata/%");
+    assert(res.headers.has("access-control-allow-origin"));
+    assert(res.headers.has("access-control-allow-headers"));
+    assertEquals(res.status, 200);
+    const _ = await res.text();
+    res = await fetch("http://localhost:4507/testdata/test%20file.txt");
+    assert(res.headers.has("access-control-allow-origin"));
+    assert(res.headers.has("access-control-allow-headers"));
+    assertEquals(res.status, 200);
+    await res.text(); // Consuming the body so that the test doesn't leak resources
   } finally {
     await killFileServer();
   }
@@ -317,10 +336,8 @@ Deno.test("printHelp", async function () {
     cmd: [
       Deno.execPath(),
       "run",
+      "--no-check",
       "--quiet",
-      // TODO(ry) It ought to be possible to get the help output without
-      // --allow-read.
-      "--allow-read",
       "file_server.ts",
       "--help",
     ],
@@ -375,12 +392,13 @@ Deno.test("file_server should ignore query params", async () => {
 
 async function startTlsFileServer({
   target = ".",
-  port = 4577,
+  port = "4577",
 }: FileServerCfg = {}) {
   fileServer = Deno.run({
     cmd: [
       Deno.execPath(),
       "run",
+      "--no-check",
       "--quiet",
       "--allow-read",
       "--allow-net",
@@ -407,7 +425,7 @@ async function startTlsFileServer({
   assert(s !== null && s.includes("server listening"));
 }
 
-Deno.test("serveDirectory TLS", async function () {
+Deno.test("serveDirIndex TLS", async function () {
   await startTlsFileServer();
   try {
     // Valid request after invalid
@@ -437,6 +455,7 @@ Deno.test("partial TLS arguments fail", async function () {
     cmd: [
       Deno.execPath(),
       "run",
+      "--no-check",
       "--quiet",
       "--allow-read",
       "--allow-net",
@@ -510,7 +529,7 @@ Deno.test("file_server should show .. if it makes sense", async function (): Pro
 });
 
 Deno.test(
-  "file_server should download first byte of `hello.html` file",
+  "file_server should download first byte of hello.html file",
   async () => {
     await startFileServer();
     try {
@@ -946,5 +965,40 @@ Deno.test(
     const res = await serveFile(req, testdataPath);
     assertEquals(res.status, 304);
     assertEquals(res.statusText, "Not Modified");
+  },
+);
+
+Deno.test(
+  "serveDir (without options) serves files under the current dir",
+  async () => {
+    const req = new Request("http://localhost:4507/http/testdata/hello.html");
+    const res = await serveDir(req);
+    assertEquals(res.status, 200);
+    assertStringIncludes(await res.text(), "Hello World");
+  },
+);
+
+Deno.test(
+  "serveDir (with fsRoot option) serves files under the given dir",
+  async () => {
+    const req = new Request("http://localhost:4507/testdata/hello.html");
+    const res = await serveDir(req, { fsRoot: "http" });
+    assertEquals(res.status, 200);
+    assertStringIncludes(await res.text(), "Hello World");
+  },
+);
+
+Deno.test(
+  "serveDir (with fsRoot, urlRoot option) serves files under the given dir",
+  async () => {
+    const req = new Request(
+      "http://localhost:4507/my-static-root/testdata/hello.html",
+    );
+    const res = await serveDir(req, {
+      fsRoot: "http",
+      urlRoot: "my-static-root",
+    });
+    assertEquals(res.status, 200);
+    assertStringIncludes(await res.text(), "Hello World");
   },
 );

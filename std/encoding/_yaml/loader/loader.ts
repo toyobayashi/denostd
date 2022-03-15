@@ -1,7 +1,7 @@
 // Ported from js-yaml v3.13.1:
 // https://github.com/nodeca/js-yaml/commit/665aadda42349dcae869f12040d9b10ef18d12da
 // Copyright 2011-2015 by Vitaly Puzrin. All rights reserved. MIT license.
-// Copyright 2018-2021 the Deno authors. All rights reserved. MIT license.
+// Copyright 2018-2022 the Deno authors. All rights reserved. MIT license.
 
 import { YAMLError } from "../error.ts";
 import { Mark } from "../mark.ts";
@@ -12,7 +12,7 @@ import { LoaderState, LoaderStateOptions, ResultType } from "./loader_state.ts";
 type Any = common.Any;
 type ArrayObject<T = Any> = common.ArrayObject<T>;
 
-const hasOwn = (obj: any, prop: string | symbol) => Object.prototype.hasOwnProperty.call(obj, prop);
+const { hasOwn } = Object;
 
 const CONTEXT_FLOW_IN = 1;
 const CONTEXT_FLOW_OUT = 2;
@@ -150,8 +150,8 @@ function charFromCodepoint(c: number): string {
   );
 }
 
-const simpleEscapeCheck = new Array(256); // integer, for fast access
-const simpleEscapeMap = new Array(256);
+const simpleEscapeCheck = Array.from<number>({ length: 256 }); // integer, for fast access
+const simpleEscapeMap = Array.from<string>({ length: 256 });
 for (let i = 0; i < 256; i++) {
   simpleEscapeCheck[i] = simpleEscapeSequence(i) ? 1 : 0;
   simpleEscapeMap[i] = simpleEscapeSequence(i);

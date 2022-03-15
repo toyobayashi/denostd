@@ -1,4 +1,5 @@
-// Copyright 2018-2021 the Deno authors. All rights reserved. MIT license.
+// Copyright 2018-2022 the Deno authors. All rights reserved. MIT license.
+// This module is browser compatible.
 
 import { assert } from "../_util/assert.ts";
 
@@ -63,7 +64,7 @@ interface NestedMapping {
   [key: string]: NestedMapping | unknown;
 }
 
-const hasOwn = (obj: any, prop: string | symbol) => Object.prototype.hasOwnProperty.call(obj, prop);
+const { hasOwn } = Object;
 
 function get<T>(obj: Record<string, T>, key: string): T | undefined {
   if (hasOwn(obj, key)) {

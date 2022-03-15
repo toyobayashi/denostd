@@ -21,6 +21,7 @@ const browserlist = [
   ...createConfig('bytes'),
 
   ...createConfig('collections'),
+  ...createConfig('collections', 'aggregate_groups.js', 'aggregate_groups', 'collections.aggregate_groups'),
   ...createConfig('collections', 'associate_by.js', 'associate_by', 'collections.associate_by'),
   ...createConfig('collections', 'associate_with.js', 'associate_with', 'collections.associate_with'),
   ...createConfig('collections', 'chunk.js', 'chunk', 'collections.chunk'),
@@ -72,6 +73,7 @@ const browserlist = [
   ...createConfig('encoding', 'toml.js', 'toml', 'encoding.toml'),
   ...createConfig('encoding', 'yaml.js', 'yaml', 'encoding.yaml'),
   ...createConfig('flags'),
+  ...createConfig('fmt', 'bytes.js', 'bytes', 'fmt.bytes'),
   ...createConfig('fmt', 'printf.js', 'printf', 'fmt.printf'),
   ...createConfig('fmt', 'colors.js', 'colors', 'fmt.colors'),
   ...createConfig('hash', 'fnv.js', 'fnv', 'hash.fnv'),
@@ -84,6 +86,7 @@ const browserlist = [
   ...createConfig('node', 'buffer.js', 'buffer', 'node.buffer'),
   ...createConfig('node', 'console.js', 'console', 'node.console'),
   ...createConfig('node', 'events.js', 'events', 'node.events'),
+  ...createConfig('node', 'punycode.js', 'punycode', 'node.punycode'),
   ...createConfig('node', 'path.js', 'path', 'node.path'),
   ...createConfig('node', 'querystring.js', 'querystring', 'node.querystring'),
   ...createConfig('node', 'string_decoder.js', 'string_decoder', 'node.string_decoder'),
@@ -117,6 +120,7 @@ function extractApis () {
   extractApi('bytes')
 
   extractApi('collections'),
+  extractApi('collections', 'aggregate_groups', 'aggregate_groups', 'collections.aggregate_groups'),
   extractApi('collections', 'associate_by', 'associate_by', 'collections.associate_by'),
   extractApi('collections', 'associate_with', 'associate_with', 'collections.associate_with'),
   extractApi('collections', 'chunk', 'chunk', 'collections.chunk'),
@@ -168,6 +172,7 @@ function extractApis () {
   extractApi('encoding', 'toml', 'toml', 'encoding.toml')
   extractApi('encoding', 'yaml', 'yaml', 'encoding.yaml')
   extractApi('flags')
+  extractApi('fmt', 'bytes', 'bytes', 'fmt.bytes')
   extractApi('fmt', 'printf', 'printf', 'fmt.printf')
   extractApi('fmt', 'colors', 'colors', 'fmt.colors')
   extractApi('hash', 'fnv', 'fnv', 'hash.fnv')
@@ -200,9 +205,8 @@ export default _default;`)
 
   extractApi('node', 'events', 'events', 'node.events')
 
-  // just copy std/path
-  // extractApi('node', 'path', 'path', 'node.path')
-
+  extractApi('node', 'path', 'path', 'node.path')
+  extractApi('node', 'punycode', 'punycode', 'node.punycode')
   extractApi('node', 'querystring', 'querystring', 'node.querystring')
   extractApi('node', 'string_decoder', 'string_decoder', 'node.string_decoder')
   extractApi('node', 'timers', 'timers', 'node.timers')

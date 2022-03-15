@@ -1,4 +1,4 @@
-// Copyright 2018-2021 the Deno authors. All rights reserved. MIT license.
+// Copyright 2018-2022 the Deno authors. All rights reserved. MIT license.
 import {
   GlobOptions,
   globToRegExp,
@@ -78,7 +78,7 @@ export async function* expandGlob(
     root = Deno.cwd(),
     exclude = [],
     includeDirs = true,
-    extended = false,
+    extended = true,
     globstar = false,
     caseInsensitive,
   }: ExpandGlobOptions = {},
@@ -149,11 +149,11 @@ export async function* expandGlob(
     // Advancing the list of current matches may introduce duplicates, so we
     // pass everything through this Map.
     const nextMatchMap: Map<string, WalkEntry> = new Map();
-    for (const currentMatch of currentMatches) {
+    await Promise.all(currentMatches.map(async (currentMatch) => {
       for await (const nextMatch of advanceMatch(currentMatch, segment)) {
         nextMatchMap.set(nextMatch.path, nextMatch);
       }
-    }
+    }));
     currentMatches = [...nextMatchMap.values()].sort(comparePath);
   }
   if (hasTrailingSep) {
@@ -186,7 +186,7 @@ export function* expandGlobSync(
     root = Deno.cwd(),
     exclude = [],
     includeDirs = true,
-    extended = false,
+    extended = true,
     globstar = false,
     caseInsensitive,
   }: ExpandGlobOptions = {},

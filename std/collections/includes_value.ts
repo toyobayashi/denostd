@@ -1,4 +1,4 @@
-// Copyright 2018-2021 the Deno authors. All rights reserved. MIT license.
+// Copyright 2018-2022 the Deno authors. All rights reserved. MIT license.
 // This module is browser compatible.
 
 /**
@@ -25,7 +25,7 @@ export function includesValue<T>(
 ): boolean {
   for (const i in record) {
     if (
-      Object.prototype.hasOwnProperty.call(record, i) &&
+      Object.hasOwn(record, i) &&
       (record[i] === value || Number.isNaN(value) && Number.isNaN(record[i]))
     ) {
       return true;

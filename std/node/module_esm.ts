@@ -1,3 +1,4 @@
+// Copyright 2018-2022 the Deno authors. All rights reserved. MIT license.
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -36,7 +37,7 @@ import {
   ERR_PACKAGE_IMPORT_NOT_DEFINED,
   ERR_PACKAGE_PATH_NOT_EXPORTED,
   NodeError,
-} from "./_errors.ts";
+} from "./internal/errors.ts";
 
 const { hasOwn } = Object;
 
@@ -58,9 +59,9 @@ function throwInvalidSubpath(
   );
 }
 
-// deno-lint-ignore no-explicit-any
 function throwInvalidPackageTarget(
   subpath: string,
+  // deno-lint-ignore no-explicit-any
   target: any,
   packageJSONUrl: string,
   internal: boolean,
@@ -85,7 +86,11 @@ function throwImportNotDefined(
   packageJSONUrl: URL | undefined,
   base: string | URL,
 ): TypeError & { code: string } {
-  throw new ERR_PACKAGE_IMPORT_NOT_DEFINED(specifier, packageJSONUrl, base);
+  throw new ERR_PACKAGE_IMPORT_NOT_DEFINED(
+    specifier,
+    packageJSONUrl && fileURLToPath(new URL(".", packageJSONUrl)),
+    fileURLToPath(base),
+  );
 }
 
 function throwExportsNotFound(
@@ -95,8 +100,8 @@ function throwExportsNotFound(
 ): Error & { code: string } {
   throw new ERR_PACKAGE_PATH_NOT_EXPORTED(
     subpath,
-    packageJSONUrl,
-    base,
+    fileURLToPath(new URL(".", packageJSONUrl)),
+    base && fileURLToPath(base),
   );
 }
 
@@ -155,31 +160,37 @@ function legacyMainResolve(
     } else if (
       fileExists(guess = new URL(`./${packageConfig.main}.js`, packageJSONUrl))
     ) {
+      // pass
     } else if (
       fileExists(
         guess = new URL(`./${packageConfig.main}.json`, packageJSONUrl),
       )
     ) {
+      // pass
     } else if (
       fileExists(
         guess = new URL(`./${packageConfig.main}.node`, packageJSONUrl),
       )
     ) {
+      // pass
     } else if (
       fileExists(
         guess = new URL(`./${packageConfig.main}/index.js`, packageJSONUrl),
       )
     ) {
+      // pass
     } else if (
       fileExists(
         guess = new URL(`./${packageConfig.main}/index.json`, packageJSONUrl),
       )
     ) {
+      // pass
     } else if (
       fileExists(
         guess = new URL(`./${packageConfig.main}/index.node`, packageJSONUrl),
       )
     ) {
+      // pass
     } else guess = undefined;
     if (guess) {
       // TODO(bartlomieju):
@@ -189,11 +200,14 @@ function legacyMainResolve(
     }
     // Fallthrough.
   }
-  if (fileExists(guess = new URL("./index.js", packageJSONUrl))) {}
-  // So fs.
-  else if (fileExists(guess = new URL("./index.json", packageJSONUrl))) {}
-  else if (fileExists(guess = new URL("./index.node", packageJSONUrl))) {}
-  else guess = undefined;
+  if (fileExists(guess = new URL("./index.js", packageJSONUrl))) {
+    // pass
+  } // So fs.
+  else if (fileExists(guess = new URL("./index.json", packageJSONUrl))) {
+    // pass
+  } else if (fileExists(guess = new URL("./index.node", packageJSONUrl))) {
+    // pass
+  } else guess = undefined;
   if (guess) {
     // TODO(bartlomieju):
     // emitLegacyIndexDeprecation(guess, packageJSONUrl, base, packageConfig.main);
@@ -316,6 +330,8 @@ function packageResolve(
     // Cross-platform root check.
   } while (packageJSONPath.length !== lastPath.length);
 
+  // TODO(bartlomieju): this is false positive
+  // deno-lint-ignore no-unreachable
   throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base));
 }
 
@@ -345,7 +361,9 @@ function resolvePackageTargetString(
       try {
         new URL(target);
         isURL = true;
-      } catch {}
+      } catch {
+        // pass
+      }
       if (!isURL) {
         const exportTarget = pattern
           ? target.replace(patternRegEx, () => subpath)
@@ -389,9 +407,9 @@ function isArrayIndex(key: string): boolean {
   return keyNum >= 0 && keyNum < 0xFFFF_FFFF;
 }
 
-// deno-lint-ignore no-explicit-any
 function resolvePackageTarget(
   packageJSONUrl: string,
+  // deno-lint-ignore no-explicit-any
   target: any,
   subpath: string,
   packageSubpath: string,
@@ -502,7 +520,7 @@ export function packageExportsResolve(
   packageConfig: PackageConfig,
   base: string,
   conditions: Set<string>,
-  // @ts-ignore
+  // @ts-ignore `URL` needs to be forced due to control flow
 ): URL {
   let exports = packageConfig.exports;
   if (isConditionalExportsMainSugar(exports, packageJSONUrl, base)) {
@@ -601,7 +619,6 @@ export interface PackageConfig {
   exports?: any;
   // deno-lint-ignore no-explicit-any
   imports?: any;
-  // deno-lint-ignore no-explicit-any
   type?: string;
 }
 
@@ -647,7 +664,7 @@ function getPackageConfig(
     throw new ERR_INVALID_PACKAGE_CONFIG(
       path,
       (base ? `"${specifier}" from ` : "") + fileURLToPath(base || specifier),
-      // @ts-ignore
+      // @ts-ignore there's no assertion for type and `error` is thus `unknown`
       error.message,
     );
   }
@@ -711,7 +728,7 @@ export function packageImportsResolve(
   name: string,
   base: string,
   conditions: Set<string>,
-  // @ts-ignore
+  // @ts-ignore `URL` needs to be forced due to control flow
 ): URL {
   if (
     name === "#" || name.startsWith("#/") ||
@@ -794,8 +811,8 @@ export function packageImportsResolve(
   throwImportNotDefined(name, packageJSONUrl, base);
 }
 
-// deno-lint-ignore no-explicit-any
 function isConditionalExportsMainSugar(
+  // deno-lint-ignore no-explicit-any
   exports: any,
   packageJSONUrl: string,
   base: string,

@@ -4,16 +4,6 @@ class Exception extends Error {
     const ErrorConstructor: any = new.target
     const proto = ErrorConstructor.prototype
 
-    if (!Object.prototype.hasOwnProperty.call(proto, 'name')) {
-      Object.defineProperty(proto, 'name', {
-        configurable: true,
-        writable: true,
-        value: typeof ErrorConstructor.name === 'string'
-          ? ErrorConstructor.name
-          : 'Exception'
-      })
-    }
-
     if (!(this instanceof Exception)) {
       const setPrototypeOf = (Object as any).setPrototypeOf
       if (typeof setPrototypeOf === 'function') {

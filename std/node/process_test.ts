@@ -1,5 +1,5 @@
 // deno-lint-ignore-file no-undef
-// Copyright 2018-2021 the Deno authors. All rights reserved. MIT license.
+// Copyright 2018-2022 the Deno authors. All rights reserved. MIT license.
 
 import "./global.ts";
 import {
@@ -9,6 +9,7 @@ import {
   assertThrows,
 } from "../testing/asserts.ts";
 import { stripColor } from "../fmt/colors.ts";
+import { deferred } from "../async/deferred.ts";
 import * as path from "../path/mod.ts";
 import { delay } from "../async/delay.ts";
 import { env } from "./process.ts";
@@ -96,8 +97,13 @@ Deno.test({
   name: "process.arch",
   fn() {
     assertEquals(typeof process.arch, "string");
-    // TODO(rsp): make sure that the arch strings should be the same in Node and Deno:
-    assertEquals(process.arch, Deno.build.arch);
+    if (Deno.build.arch == "x86_64") {
+      assertEquals(process.arch, "x64");
+    } else if (Deno.build.arch == "aarch64") {
+      assertEquals(process.arch, "arm64");
+    } else {
+      throw new Error("unreachable");
+    }
   },
 });
 
@@ -113,13 +119,6 @@ Deno.test({
   name: "process.on",
   async fn() {
     assertEquals(typeof process.on, "function");
-    assertThrows(
-      () => {
-        process.on("uncaughtException", (_err: Error) => {});
-      },
-      Error,
-      "implemented",
-    );
 
     let triggered = false;
     process.on("exit", () => {
@@ -153,6 +152,66 @@ Deno.test({
 });
 
 Deno.test({
+  name: "process.on signal",
+  ignore: Deno.build.os == "windows",
+  async fn() {
+    const promise = deferred();
+    let c = 0;
+    const listener = () => {
+      c += 1;
+    };
+    process.on("SIGINT", listener);
+    setTimeout(async () => {
+      // Sends SIGINT 3 times.
+      for (const _ of Array(3)) {
+        await delay(20);
+        Deno.kill(Deno.pid, "SIGINT");
+      }
+      await delay(20);
+      Deno.removeSignalListener("SIGINT", listener);
+      promise.resolve();
+    });
+    await promise;
+    assertEquals(c, 3);
+  },
+});
+
+Deno.test({
+  name: "process.off signal",
+  ignore: Deno.build.os == "windows",
+  async fn() {
+    const promise = deferred();
+    let c = 0;
+    const listener = () => {
+      c += 1;
+      process.off("SIGINT", listener);
+    };
+    process.on("SIGINT", listener);
+    setTimeout(async () => {
+      // Sends SIGINT 3 times.
+      for (const _ of Array(3)) {
+        await delay(20);
+        Deno.kill(Deno.pid, "SIGINT");
+      }
+      await delay(20);
+      promise.resolve();
+    });
+    await promise;
+    assertEquals(c, 1);
+  },
+});
+
+Deno.test({
+  name: "process.on SIGBREAK doesn't throw",
+  ignore: Deno.build.os == "windows",
+  fn() {
+    const listener = () => {};
+    process.on("SIGBREAK", listener);
+    process.off("SIGBREAK", listener);
+  },
+});
+
+Deno.test({
   name: "process.argv",
   fn() {
     assert(Array.isArray(process.argv));
@@ -172,6 +231,17 @@ Deno.test({
 });
 
 Deno.test({
+  name: "process.execArgv",
+  fn() {
+    assert(Array.isArray(process.execArgv));
+    assert(process.execArgv.length == 0);
+    // execArgv supports array methods.
+    assert(Array.isArray(process.argv.slice(0)));
+    assertEquals(process.argv.indexOf("foo"), -1);
+  },
+});
+
+Deno.test({
   name: "process.env",
   fn() {
     Deno.env.set("HELLO", "WORLD");
@@ -186,6 +256,14 @@ Deno.test({
 
     assert(Object.getOwnPropertyNames(process.env).includes("HELLO"));
     assert(Object.keys(process.env).includes("HELLO"));
+
+    assert(Object.prototype.hasOwnProperty.call(process.env, "HELLO"));
+    assert(
+      !Object.prototype.hasOwnProperty.call(
+        process.env,
+        "SURELY_NON_EXISTENT_VAR",
+      ),
+    );
   },
 });
 
@@ -274,32 +352,108 @@ Deno.test({
 });
 
 Deno.test({
-  name: "[process] stdio",
+  name: "process.hrtime.bigint",
+  fn() {
+    const time = process.hrtime.bigint();
+    assertEquals(typeof time, "bigint");
+    assert(time > 0n);
+  },
+});
+
+Deno.test("process.on, process.off, process.removeListener doesn't throw on unimplemented events", () => {
+  const events = [
+    "beforeExit",
+    "disconnect",
+    "message",
+    "multipleResolves",
+    "rejectionHandled",
+    "uncaughtException",
+    "uncaughtExceptionMonitor",
+    "unhandledRejection",
+  ];
+  const handler = () => {};
+  events.forEach((ev) => {
+    process.on(ev, handler);
+    process.off(ev, handler);
+    process.on(ev, handler);
+    process.removeListener(ev, handler);
+  });
+});
+
+Deno.test("process.memoryUsage()", () => {
+  const mem = process.memoryUsage();
+  assert(typeof mem.rss === "number");
+  assert(typeof mem.heapTotal === "number");
+  assert(typeof mem.heapUsed === "number");
+  assert(typeof mem.external === "number");
+  assert(typeof mem.arrayBuffers === "number");
+  assertEquals(mem.arrayBuffers, 0);
+});
+
+Deno.test("process.memoryUsage.rss()", () => {
+  const rss = process.memoryUsage.rss();
+  assert(typeof rss === "number");
+});
+
+Deno.test("process in worker", async () => {
+  const promise = deferred();
+
+  const worker = new Worker(
+    new URL("./testdata/process_worker.ts", import.meta.url).href,
+    { type: "module", deno: true },
+  );
+  worker.addEventListener("message", (e) => {
+    assertEquals(e.data, "hello");
+    promise.resolve();
+  });
+
+  await promise;
+  worker.terminate();
+});
+
+Deno.test("process.exitCode", () => {
+  assert(process.exitCode === undefined);
+  process.exitCode = 127;
+  assert(process.exitCode === 127);
+});
+
+Deno.test("process.config", () => {
+  assert(process.config !== undefined);
+  assert(process.config.target_defaults !== undefined);
+  assert(process.config.variables !== undefined);
+});
+
+Deno.test("process._exiting", () => {
+  assert(process._exiting === false);
+});
+
+Deno.test("process.execPath", () => {
+  assertEquals(process.execPath, process.argv[0]);
+});
+
+Deno.test({
+  name: "process.exit",
   async fn() {
     const cwd = path.dirname(path.fromFileUrl(import.meta.url));
+
     const p = Deno.run({
       cmd: [
         Deno.execPath(),
         "run",
-        "--unstable",
         "--quiet",
-        "./testdata/process_stdio.ts",
+        "--unstable",
+        "./testdata/process_exit2.ts",
       ],
       cwd,
-      stderr: "piped",
-      stdin: "piped",
       stdout: "piped",
     });
-    p.stdin.write(new TextEncoder().encode("it works?!"));
-    p.stdin.write(new TextEncoder().encode("yes!"));
-    p.stdin.close();
-    const stderr = new TextDecoder().decode(await p.stderrOutput());
-    const stdout = new TextDecoder().decode(await p.output());
+
+    const decoder = new TextDecoder();
+    const rawOutput = await p.output();
     assertEquals(
-      stderr + stdout,
-      "helloworldhelloworldfrom pipereceived:it works?!yes!helloworldhelloworldfrom pipe",
+      stripColor(decoder.decode(rawOutput).trim()),
+      "exit",
     );
+    p.close();
   },
-  sanitizeResources: false,
-  sanitizeOps: false,
 });

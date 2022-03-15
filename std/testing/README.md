@@ -18,6 +18,8 @@ pretty-printed diff of failing assertion.
   and `expected` are equal.
 - `assertStrictEquals()` - Compares `actual` and `expected` strictly, therefore
   for non-primitives the values must reference the same instance.
+- `assertAlmostEquals()` - Make an assertion that `actual` is almost equal to
+  `expected`, according to a given `epsilon` _(defaults to `1e-7`)_
 - `assertStringIncludes()` - Make an assertion that `actual` includes
   `expected`.
 - `assertMatch()` - Make an assertion that `actual` match RegExp `expected`.
@@ -36,7 +38,6 @@ pretty-printed diff of failing assertion.
   will reject _(⚠️ you should normally await this assertion)_. Also optionally
   accepts an Error class which the expected error must be an instance of, and a
   string which must be a substring of the error's `.message`.
-- `assertThrowsAsync()` - Deprecated. Use `assertRejects`.
 - `unimplemented()` - Use this to stub out methods that will throw when invoked.
 - `unreachable()` - Used to assert unreachable code.
 
@@ -113,28 +114,28 @@ Deno.test("fails", function (): void {
 });
 ```
 
-Using `assertThrowsAsync()`:
+Using `assertRejects()`:
 
 ```ts
-import { assertThrowsAsync } from "https://deno.land/std@$STD_VERSION/testing/asserts.ts";
+import { assertRejects } from "https://deno.land/std@$STD_VERSION/testing/asserts.ts";
 
 Deno.test("doesThrow", async function () {
-  await assertThrowsAsync(
+  await assertRejects(
     async () => {
       throw new TypeError("hello world!");
     },
   );
-  await assertThrowsAsync(async () => {
+  await assertRejects(async () => {
     throw new TypeError("hello world!");
   }, TypeError);
-  await assertThrowsAsync(
+  await assertRejects(
     async () => {
       throw new TypeError("hello world!");
     },
     TypeError,
     "hello",
   );
-  await assertThrowsAsync(
+  await assertRejects(
     async () => {
       return Promise.reject(new Error());
     },
@@ -143,7 +144,7 @@ Deno.test("doesThrow", async function () {
 
 // This test will not pass.
 Deno.test("fails", async function () {
-  await assertThrowsAsync(
+  await assertRejects(
     async () => {
       console.log("Hello world");
     },

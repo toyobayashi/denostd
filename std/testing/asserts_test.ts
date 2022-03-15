@@ -1,7 +1,8 @@
-// Copyright 2018-2021 the Deno authors. All rights reserved. MIT license.
+// Copyright 2018-2022 the Deno authors. All rights reserved. MIT license.
 import {
   _format,
   assert,
+  assertAlmostEquals,
   assertArrayIncludes,
   assertEquals,
   assertExists,
@@ -22,6 +23,18 @@ import {
   unreachable,
 } from "./asserts.ts";
 import { bold, gray, green, red, stripColor, yellow } from "../fmt/colors.ts";
+
+Deno.test("testingEqualDifferentZero", () => {
+  assert(equal(0, -0));
+  assert(equal(0, +0));
+  assert(equal(+0, -0));
+  assert(equal([0], [-0]));
+  assert(equal(["hello", 12.21, 0], ["hello", 12.21, -0]));
+  assert(equal(["hello", 12.21, 0], ["hello", 12.21, +0]));
+  assert(equal(["hello", 12.21, -0], ["hello", 12.21, +0]));
+  assert(equal({ msg: "hello", case: 0 }, { msg: "hello", case: -0 }));
+  assert(equal({ msg: "hello", array: [0] }, { msg: "hello", array: [-0] }));
+});
 
 Deno.test("testingEqual", function (): void {
   assert(equal("world", "world"));
@@ -365,6 +378,15 @@ Deno.test("testingAssertObjectMatching", function (): void {
   const g: r = { foo: true, bar: false };
   const h = { foo: [1, 2, 3], bar: true };
   const i = { foo: [a, e], bar: true };
+  const j = { foo: [[1, 2, 3]], bar: true };
+  const k = { foo: [[1, [2, [3]]]], bar: true };
+  const l = { foo: [[1, [2, [a, e, j, k]]]], bar: true };
+  const m = { foo: /abc+/i, bar: [/abc/g, /abc/m] };
+  const n = {
+    foo: new Set(["foo", "bar"]),
+    bar: new Map([["foo", 1], ["bar", 2]]),
+    baz: new Map([["a", a], ["b", b]]),
+  };
 
   // Simple subset
   assertObjectMatch(a, {
@@ -422,6 +444,19 @@ Deno.test("testingAssertObjectMatching", function (): void {
       { bar: { bar: { bar: { foo: true } } } },
     ],
   });
+  // Subset with nested array inside
+  assertObjectMatch(j, { foo: [[1, 2, 3]] });
+  assertObjectMatch(k, { foo: [[1, [2, [3]]]] });
+  assertObjectMatch(l, { foo: [[1, [2, [a, e, j, k]]]] });
+  // Regexp
+  assertObjectMatch(m, { foo: /abc+/i });
+  assertObjectMatch(m, { bar: [/abc/g, /abc/m] });
+  //Built-in data structures
+  assertObjectMatch(n, { foo: new Set(["foo"]) });
+  assertObjectMatch(n, { bar: new Map([["bar", 2]]) });
+  assertObjectMatch(n, { baz: new Map([["b", b]]) });
+  assertObjectMatch(n, { baz: new Map([["b", { foo: true }]]) });
+
   // Missing key
   {
     let didThrow;
@@ -582,6 +617,37 @@ Deno.test("testingAssertObjectMatching", function (): void {
     assertObjectMatch({ test: { a: 1 } }, { test: new A(1) });
     assertObjectMatch({ test: new A(1) }, { test: new A(1) });
   }
+  {
+    // actual/expected contains same instance of Map/TypedArray/etc
+    const body = new Uint8Array([0, 1, 2]);
+    assertObjectMatch({ body, foo: "foo" }, { body });
+  }
+  {
+    // match subsets of arrays
+    assertObjectMatch({ positions: [[1, 2, 3, 4]] }, {
+      positions: [[1, 2, 3]],
+    });
+  }
+  //Regexp
+  assertThrows(() => assertObjectMatch(m, { foo: /abc+/ }), AssertionError);
+  assertThrows(() => assertObjectMatch(m, { foo: /abc*/i }), AssertionError);
+  assertThrows(
+    () => assertObjectMatch(m, { bar: [/abc/m, /abc/g] }),
+    AssertionError,
+  );
+  //Built-in data structures
+  assertThrows(
+    () => assertObjectMatch(n, { foo: new Set(["baz"]) }),
+    AssertionError,
+  );
+  assertThrows(
+    () => assertObjectMatch(n, { bar: new Map([["bar", 3]]) }),
+    AssertionError,
+  );
+  assertThrows(
+    () => assertObjectMatch(n, { baz: new Map([["a", { baz: true }]]) }),
+    AssertionError,
+  );
 });
 
 Deno.test("testingAssertsUnimplemented", function (): void {
@@ -809,6 +875,30 @@ Deno.test({
 });
 
 Deno.test({
+  name: "strict types test",
+  fn(): void {
+    const x = { number: 2 };
+
+    const y = x as Record<never, never>;
+    const z = x as unknown;
+
+    // y.number;
+    //   ~~~~~~
+    // Property 'number' does not exist on type 'Record<never, never>'.deno-ts(2339)
+
+    assertStrictEquals(y, x);
+    y.number; // ok
+
+    // z.number;
+    // ~
+    // Object is of type 'unknown'.deno-ts(2571)
+
+    assertStrictEquals(z, x);
+    z.number; // ok
+  },
+});
+
+Deno.test({
   name: "strict pass case",
   fn(): void {
     assertStrictEquals(true, true);
@@ -882,6 +972,48 @@ Deno.test({
   fn(): void {
     assertThrows(() => assertNotStrictEquals(1, 1), AssertionError);
   },
+});
+
+Deno.test("assert almost equals number", () => {
+  //Default precision
+  assertAlmostEquals(-0, +0);
+  assertAlmostEquals(Math.PI, Math.PI);
+  assertAlmostEquals(0.1 + 0.2, 0.3);
+  assertThrows(() => assertAlmostEquals(1, 2));
+  assertThrows(() => assertAlmostEquals(1, 1.1));
+
+  //Higher precision
+  assertAlmostEquals(0.1 + 0.2, 0.3, 1e-16);
+  assertThrows(
+    () => assertAlmostEquals(0.1 + 0.2, 0.3, 1e-17),
+    AssertionError,
+    `"${(0.1 + 0.2).toExponential()}" expected to be close to "${
+      (0.3).toExponential()
+    }"`,
+  );
+
+  //Special cases
+  assertAlmostEquals(Infinity, Infinity);
+  assertThrows(
+    () => assertAlmostEquals(0, Infinity),
+    AssertionError,
+    '"0" expected to be close to "Infinity"',
+  );
+  assertThrows(
+    () => assertAlmostEquals(-Infinity, +Infinity),
+    AssertionError,
+    '"-Infinity" expected to be close to "Infinity"',
+  );
+  assertThrows(
+    () => assertAlmostEquals(Infinity, NaN),
+    AssertionError,
+    '"Infinity" expected to be close to "NaN"',
+  );
+  assertThrows(
+    () => assertAlmostEquals(NaN, NaN),
+    AssertionError,
+    '"NaN" expected to be close to "NaN"',
+  );
 });
 
 Deno.test({
@@ -1024,12 +1156,13 @@ Deno.test("assert diff formatting (strings)", () => {
     },
     undefined,
     `
-    a
-    b
-${green("+   x")}
-${red("-   c")}
-    d
+    a\\n
+    b\\n
+${green("+   x")}\\n
+${green("+   d")}\\n
 ${green("+   e")}
+${red("-   c")}\\n
+${red("-   d")}
 `,
   );
 });

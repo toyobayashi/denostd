@@ -1,4 +1,4 @@
-// Copyright 2018-2021 the Deno authors. All rights reserved. MIT license.
+// Copyright 2018-2022 the Deno authors. All rights reserved. MIT license.
 // This module is browser compatible. Do not rely on good formatting of values
 // for AssertionError messages in browsers.
 
@@ -17,7 +17,7 @@ import { diff, DiffResult, diffstr, DiffType } from "./_diff.ts";
 const CAN_NOT_DISPLAY = "[Cannot display]";
 
 export class AssertionError extends Error {
-  name = "AssertionError";
+  override name = "AssertionError";
   constructor(message: string) {
     super(message);
   }
@@ -135,7 +135,10 @@ export function equal(c: unknown, d: unknown): boolean {
       if (Number.isNaN(aTime) && Number.isNaN(bTime)) {
         return true;
       }
-      return a.getTime() === b.getTime();
+      return aTime === bTime;
+    }
+    if (typeof a === "number" && typeof b === "number") {
+      return Number.isNaN(a) && Number.isNaN(b) || a === b;
     }
     if (Object.is(a, b)) {
       return true;
@@ -305,7 +308,7 @@ export function assertNotEquals(
     expectedString = "[Cannot display]";
   }
   if (!msg) {
-    msg = `actual: ${actualString} expected: ${expectedString}`;
+    msg = `actual: ${actualString} expected not to be: ${expectedString}`;
   }
   throw new AssertionError(msg);
 }
@@ -320,21 +323,11 @@ export function assertNotEquals(
  * assertStrictEquals(1, 2)
  * ```
  */
-export function assertStrictEquals(
-  actual: unknown,
-  expected: unknown,
-  msg?: string,
-): void;
 export function assertStrictEquals<T>(
-  actual: T,
+  actual: unknown,
   expected: T,
   msg?: string,
-): void;
-export function assertStrictEquals(
-  actual: unknown,
-  expected: unknown,
-  msg?: string,
-): void {
+): asserts actual is T {
   if (actual === expected) {
     return;
   }
@@ -405,6 +398,43 @@ export function assertNotStrictEquals(
 
   throw new AssertionError(
     msg ?? `Expected "actual" to be strictly unequal to: ${_format(actual)}\n`,
+  );
+}
+
+/**
+ * Make an assertion that `actual` and `expected` are almost equal numbers through
+ * a given tolerance. It can be used to take into account IEEE-754 double-precision
+ * floating-point representation limitations.
+ * If the values are not almost equal then throw.
+ *
+ * ```ts
+ * import { assertAlmostEquals, assertThrows } from "./asserts.ts";
+ *
+ * assertAlmostEquals(0.1, 0.2);
+ *
+ * // Using a custom tolerance value
+ * assertAlmostEquals(0.1 + 0.2, 0.3, 1e-16);
+ * assertThrows(() => assertAlmostEquals(0.1 + 0.2, 0.3, 1e-17));
+ * ```
+ */
+export function assertAlmostEquals(
+  actual: number,
+  expected: number,
+  tolerance = 1e-7,
+  msg?: string,
+) {
+  if (actual === expected) {
+    return;
+  }
+  const delta = Math.abs(expected - actual);
+  if (delta <= tolerance) {
+    return;
+  }
+  const f = (n: number) => Number.isInteger(n) ? n : n.toExponential();
+  throw new AssertionError(
+    msg ??
+      `actual: "${f(actual)}" expected to be close to "${f(expected)}": \
+delta "${f(delta)}" is greater than "${f(tolerance)}"`,
   );
 }
 
@@ -537,48 +567,63 @@ export function assertObjectMatch(
   expected: Record<PropertyKey, unknown>,
 ): void {
   type loose = Record<PropertyKey, unknown>;
-  const seen = new WeakMap();
-  function filter(a: loose, b: loose): loose {
-    // Prevent infinite loop with circular references with same filter
-    if ((seen.has(a)) && (seen.get(a) === b)) {
-      return a;
-    }
-    seen.set(a, b);
-    // Filter keys and symbols which are present in both actual and expected
-    const filtered = {} as loose;
-    const entries = [
-      ...Object.getOwnPropertyNames(a),
-      ...Object.getOwnPropertySymbols(a),
-    ]
-      .filter((key) => key in b)
-      .map((key) => [key, a[key as string]]) as Array<[string, unknown]>;
-    for (const [key, value] of entries) {
-      // On array references, build a filtered array and filter nested objects inside
-      if (Array.isArray(value)) {
-        const subset = (b as loose)[key];
-        if (Array.isArray(subset)) {
-          filtered[key] = value
-            .slice(0, subset.length)
-            .map((element, index) => {
-              const subsetElement = subset[index];
-              if ((typeof subsetElement === "object") && (subsetElement)) {
-                return filter(element, subsetElement);
-              }
-              return element;
-            });
-          continue;
-        }
-      } // On nested objects references, build a filtered object recursively
-      else if (typeof value === "object") {
-        const subset = (b as loose)[key];
-        if ((typeof subset === "object") && (subset)) {
-          filtered[key] = filter(value as loose, subset as loose);
-          continue;
-        }
+
+  function filter(a: loose, b: loose) {
+    const seen = new WeakMap();
+    return fn(a, b);
+
+    function fn(a: loose, b: loose): loose {
+      // Prevent infinite loop with circular references with same filter
+      if ((seen.has(a)) && (seen.get(a) === b)) {
+        return a;
       }
-      filtered[key] = value;
+      seen.set(a, b);
+      // Filter keys and symbols which are present in both actual and expected
+      const filtered = {} as loose;
+      const entries = [
+        ...Object.getOwnPropertyNames(a),
+        ...Object.getOwnPropertySymbols(a),
+      ]
+        .filter((key) => key in b)
+        .map((key) => [key, a[key as string]]) as Array<[string, unknown]>;
+      for (const [key, value] of entries) {
+        // On array references, build a filtered array and filter nested objects inside
+        if (Array.isArray(value)) {
+          const subset = (b as loose)[key];
+          if (Array.isArray(subset)) {
+            filtered[key] = fn({ ...value }, { ...subset });
+            continue;
+          }
+        } // On regexp references, keep value as it to avoid loosing pattern and flags
+        else if (value instanceof RegExp) {
+          filtered[key] = value;
+          continue;
+        } // On nested objects references, build a filtered object recursively
+        else if (typeof value === "object") {
+          const subset = (b as loose)[key];
+          if ((typeof subset === "object") && (subset)) {
+            // When both operands are maps, build a filtered map with common keys and filter nested objects inside
+            if ((value instanceof Map) && (subset instanceof Map)) {
+              filtered[key] = new Map(
+                [...value].filter(([k]) => subset.has(k)).map((
+                  [k, v],
+                ) => [k, typeof v === "object" ? fn(v, subset.get(k)) : v]),
+              );
+              continue;
+            }
+            // When both operands are set, build a filtered set with common values
+            if ((value instanceof Set) && (subset instanceof Set)) {
+              filtered[key] = new Set([...value].filter((v) => subset.has(v)));
+              continue;
+            }
+            filtered[key] = fn(value as loose, subset as loose);
+            continue;
+          }
+        }
+        filtered[key] = value;
+      }
+      return filtered;
     }
-    return filtered;
   }
   return assertEquals(
     // get the intersection of "actual" and "expected"
@@ -767,15 +812,6 @@ export async function assertRejects<E extends Error = Error>(
     throw new AssertionError(msg);
   }
 }
-
-/**
- * Executes a function which returns a promise, expecting it to throw or reject.
- * If it does not, then it throws.  An error class and a string that should be
- * included in the error message can also be asserted.
- *
- * @deprecated
- */
-export { assertRejects as assertThrowsAsync };
 
 /** Use this to stub out methods that will throw when invoked. */
 export function unimplemented(msg?: string): never {

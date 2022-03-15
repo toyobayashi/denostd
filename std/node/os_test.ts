@@ -1,4 +1,4 @@
-// Copyright 2018-2021 the Deno authors. All rights reserved. MIT license.
+// Copyright 2018-2022 the Deno authors. All rights reserved. MIT license.
 import { assert, assertEquals, assertThrows } from "../testing/asserts.ts";
 import * as os from "./os.ts";
 
@@ -24,7 +24,6 @@ Deno.test({
 
 Deno.test({
   name: "home directory is a string",
-  ignore: true,
   fn() {
     assertEquals(typeof os.homedir(), "string");
   },
@@ -39,7 +38,6 @@ Deno.test({
 
 Deno.test({
   name: "hostname is a string",
-  ignore: true,
   fn() {
     assertEquals(typeof os.hostname(), "string");
   },
@@ -234,25 +232,28 @@ Deno.test({
 });
 
 Deno.test({
+  name: "os.cpus()",
+  fn() {
+    assertEquals(os.cpus().length, navigator.hardwareConcurrency);
+
+    for (const cpu of os.cpus()) {
+      assertEquals(cpu.model, "");
+      assertEquals(cpu.speed, 0);
+      assertEquals(cpu.times.user, 0);
+      assertEquals(cpu.times.nice, 0);
+      assertEquals(cpu.times.sys, 0);
+      assertEquals(cpu.times.idle, 0);
+      assertEquals(cpu.times.irq, 0);
+    }
+  },
+});
+
+Deno.test({
   name: "APIs not yet implemented",
   fn() {
     assertThrows(
       () => {
-        os.cpus();
-      },
-      Error,
-      "Not implemented",
-    );
-    assertThrows(
-      () => {
         os.getPriority();
-      },
-      Error,
-      "Not implemented",
-    );
-    assertThrows(
-      () => {
-        os.networkInterfaces();
       },
       Error,
       "Not implemented",

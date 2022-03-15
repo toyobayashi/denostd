@@ -1,18 +1,18 @@
 #!/usr/bin/env -S deno run --allow-net --allow-read
-// Copyright 2018-2021 the Deno authors. All rights reserved. MIT license.
+// Copyright 2018-2022 the Deno authors. All rights reserved. MIT license.
 
 // This program serves files in the current directory over HTTP.
-// TODO(bartlomieju): Stream responses instead of reading them into memory.
 // TODO(bartlomieju): Add tests like these:
 // https://github.com/indexzero/http-server/blob/master/test/http-server-test.js
 
 import { extname, posix } from "../path/mod.ts";
-import { listenAndServe, listenAndServeTls } from "./server.ts";
+import { serve, serveTls } from "./server.ts";
 import { Status, STATUS_TEXT } from "./http_status.ts";
 import { parse } from "../flags/mod.ts";
 import { assert } from "../_util/assert.ts";
-import { readRange } from "../io/files.ts";
 import { red } from "../fmt/colors.ts";
+
+const DEFAULT_CHUNK_SIZE = 16_640;
 
 interface EntryInfo {
   mode: string;
@@ -21,33 +21,28 @@ interface EntryInfo {
   name: string;
 }
 
-export interface FileServerArgs {
+interface FileServerArgs {
   _: string[];
   // -p --port
-  p?: number;
-  port?: number;
+  port: string;
   // --cors
-  cors?: boolean;
+  cors: boolean;
   // --no-dir-listing
-  "dir-listing"?: boolean;
-  dotfiles?: boolean;
+  "dir-listing": boolean;
+  dotfiles: boolean;
   // --host
-  host?: string;
+  host: string;
   // -c --cert
-  c?: string;
-  cert?: string;
+  cert: string;
   // -k --key
-  k?: string;
-  key?: string;
+  key: string;
   // -h --help
-  h?: boolean;
-  help?: boolean;
+  help: boolean;
+  // --quiet
+  quiet: boolean;
 }
 
 const encoder = new TextEncoder();
-
-const serverArgs = parse(Deno.args) as FileServerArgs;
-const target = posix.resolve(serverArgs._[0] ?? "");
 
 const MEDIA_TYPES: Record<string, string> = {
   ".md": "text/markdown",
@@ -188,7 +183,7 @@ async function createEtagHash(message: string) {
   const hashType = "SHA-1"; // Faster, and this isn't a security sensitive cryptographic use case
 
   // see: https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/digest
-  const msgUint8 = new TextEncoder().encode(message);
+  const msgUint8 = encoder.encode(message);
   const hashBuffer = await crypto.subtle.digest(hashType, msgUint8);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   const hashHex = hashArray.map(byteToHex).join("");
@@ -211,9 +206,9 @@ function modeToString(isDir: boolean, maybeMode: number | null): string {
     .reverse()
     .slice(0, 3)
     .forEach((v): void => {
-      output = modeMap[+v] + output;
+      output = `${modeMap[+v]} ${output}`;
     });
-  output = `(${isDir ? "d" : "-"}${output})`;
+  output = `${isDir ? "d" : "-"} ${output}`;
   return output;
 }
 
@@ -280,8 +275,9 @@ export async function serveFile(
     const ifModifiedSince = req.headers.get("if-modified-since");
     if (
       (ifNoneMatch && ifNoneMatch === simpleEtag) ||
-      (ifNoneMatch === null && ifModifiedSince &&
-        fileInfo.mtime.getTime() < (new Date(ifModifiedSince).getTime() + 1000))
+      (ifNoneMatch === null &&
+        ifModifiedSince &&
+        fileInfo.mtime.getTime() < new Date(ifModifiedSince).getTime() + 1000)
     ) {
       const status = Status.NotModified;
       const statusText = STATUS_TEXT.get(status);
@@ -303,7 +299,7 @@ export async function serveFile(
 
   // Use the parsed value if available, fallback to the start and end of the entire file
   const start = parsed && parsed[1] ? +parsed[1] : 0;
-  const end = parsed && parsed[2] ? +parsed[2] : Math.max(0, fileInfo.size - 1);
+  const end = parsed && parsed[2] ? +parsed[2] : fileInfo.size - 1;
 
   let status = Status.OK;
 
@@ -314,12 +310,14 @@ export async function serveFile(
   }
 
   // Return 416 if `start` isn't less than or equal to `end`, or `start` or `end` are greater than the file's size
-  const maxRange =
-    (typeof fileInfo.size === "number" ? Math.max(0, fileInfo.size - 1) : 0);
+  const maxRange = fileInfo.size - 1;
 
   if (
-    range && !parsed ||
-    (typeof start !== "number" || start > end || start > maxRange ||
+    range &&
+    (!parsed ||
+      typeof start !== "number" ||
+      start > end ||
+      start > maxRange ||
       end > maxRange)
   ) {
     const status = Status.RequestedRangeNotSatisfiable;
@@ -334,21 +332,36 @@ export async function serveFile(
     });
   }
 
-  let body = null;
+  // Set content length
+  const contentLength = end - start + 1;
+  headers.set("content-length", `${contentLength}`);
 
-  try {
-    // Read the selected range of the file
-    const bytes = await readRange(file, { start, end });
-
-    // Set content length and response body
-    headers.set("content-length", bytes.length.toString());
-    body = bytes;
-  } catch (e) {
-    // Fallback on URIError (400 Bad Request) if unable to read range
-    throw URIError(String(e));
-  }
-
-  file.close();
+  // Create a stream of the file instead of loading it into memory
+  let bytesSent = 0;
+  const body = new ReadableStream({
+    async start() {
+      if (start > 0) {
+        await file.seek(start, Deno.SeekMode.Start);
+      }
+    },
+    async pull(controller) {
+      const bytes = new Uint8Array(DEFAULT_CHUNK_SIZE);
+      const bytesRead = await file.read(bytes);
+      if (bytesRead === null) {
+        file.close();
+        controller.close();
+        return;
+      }
+      controller.enqueue(
+        bytes.slice(0, Math.min(bytesRead, contentLength - bytesSent)),
+      );
+      bytesSent += bytesRead;
+      if (bytesSent > contentLength) {
+        file.close();
+        controller.close();
+      }
+    },
+  });
 
   const statusText = STATUS_TEXT.get(status);
 
@@ -360,12 +373,16 @@ export async function serveFile(
 }
 
 // TODO(bartlomieju): simplify this after deno.stat and deno.readDir are fixed
-async function serveDir(
+async function serveDirIndex(
   req: Request,
   dirPath: string,
+  options: {
+    dotfiles: boolean;
+    target: string;
+  },
 ): Promise<Response> {
-  const showDotfiles = serverArgs.dotfiles ?? true;
-  const dirUrl = `/${posix.relative(target, dirPath)}`;
+  const showDotfiles = options.dotfiles;
+  const dirUrl = `/${posix.relative(options.target, dirPath)}`;
   const listEntry: EntryInfo[] = [];
 
   // if ".." makes sense
@@ -432,12 +449,13 @@ function serveFallback(_req: Request, e: Error): Promise<Response> {
   );
 }
 
-function serverLog(req: Request, res: Response): void {
+function serverLog(req: Request, status: number): void {
   const d = new Date().toISOString();
   const dateFmt = `[${d.slice(0, 10)} ${d.slice(11, 19)}]`;
   const normalizedUrl = normalizeURL(req.url);
-  const s = `${dateFmt} [${req.method}] ${normalizedUrl} ${res.status}`;
-  console.log(s);
+  const s = `${dateFmt} [${req.method}] ${normalizedUrl} ${status}`;
+  // using console.debug instead of console.log so chrome inspect users can hide request logs
+  console.debug(s);
 }
 
 function setBaseHeaders(): Headers {
@@ -451,18 +469,10 @@ function setBaseHeaders(): Headers {
   return headers;
 }
 
-function setCORS(res: Response): void {
-  res.headers.append("access-control-allow-origin", "*");
-  res.headers.append(
-    "access-control-allow-headers",
-    "Origin, X-Requested-With, Content-Type, Accept, Range",
-  );
-}
-
 function dirViewerTemplate(dirname: string, entries: EntryInfo[]): string {
   const paths = dirname.split("/");
 
-  return html`
+  return `
     <!DOCTYPE html>
     <html lang="en">
       <head>
@@ -477,8 +487,11 @@ function dirViewerTemplate(dirname: string, entries: EntryInfo[]): string {
           }
           @media (prefers-color-scheme: dark) {
             :root {
-              --background-color: #303030;
+              --background-color: #292929;
               --color: #fff;
+            }
+            thead {
+              color: #7f7f7f;
             }
           }
           @media (min-width: 960px) {
@@ -511,11 +524,21 @@ function dirViewerTemplate(dirname: string, entries: EntryInfo[]): string {
           a:hover {
             text-decoration: underline;
           }
-          table th {
+          thead {
             text-align: left;
           }
+          thead th {
+            padding-bottom: 12px;
+          }
           table td {
-            padding: 6px 24px 6px 4px;
+            padding: 6px 36px 6px 0px;
+          }
+          .size {
+            text-align: right;
+            padding: 6px 12px 6px 24px;
+          }
+          .mode {
+            font-family: monospace, monospace;
           }
         </style>
       </head>
@@ -523,30 +546,32 @@ function dirViewerTemplate(dirname: string, entries: EntryInfo[]): string {
         <main>
           <h1>Index of
           <a href="/">home</a>${
-    paths.map((path, index, array) => {
-      if (path === "") return "";
-      const link = array.slice(0, index + 1).join("/");
-      return (
-        html`<a href="${link}">${path}</a>`
-      );
-    }).join("/")
+    paths
+      .map((path, index, array) => {
+        if (path === "") return "";
+        const link = array.slice(0, index + 1).join("/");
+        return `<a href="${link}">${path}</a>`;
+      })
+      .join("/")
   }
           </h1>
           <table>
-            <tr>
-              <th>Mode</th>
-              <th>Size</th>
-              <th>Name</th>
-            </tr>
+            <thead>
+              <tr>
+                <th>Mode</th>
+                <th>Size</th>
+                <th>Name</th>
+              </tr>
+            </thead>
             ${
-    entries.map(
-      (entry) =>
-        html`
+    entries
+      .map(
+        (entry) => `
                   <tr>
                     <td class="mode">
                       ${entry.mode}
                     </td>
-                    <td>
+                    <td class="size">
                       ${entry.size}
                     </td>
                     <td>
@@ -554,7 +579,8 @@ function dirViewerTemplate(dirname: string, entries: EntryInfo[]): string {
                     </td>
                   </tr>
                 `,
-    )
+      )
+      .join("")
   }
           </table>
         </main>
@@ -563,20 +589,100 @@ function dirViewerTemplate(dirname: string, entries: EntryInfo[]): string {
   `;
 }
 
-function html(strings: TemplateStringsArray, ...values: unknown[]): string {
-  const l = strings.length - 1;
-  let html = "";
+interface ServeDirOptions {
+  fsRoot?: string;
+  urlRoot?: string;
+  showDirListing?: boolean;
+  showDotfiles?: boolean;
+  enableCors?: boolean;
+  quiet?: boolean;
+}
 
-  for (let i = 0; i < l; i++) {
-    let v = values[i];
-    if (v instanceof Array) {
-      v = v.join("");
+/**
+ * Serves the files under the given directory root (opts.fsRoot).
+ *
+ * ```ts
+ * import { serve } from "https://deno.land/std@$STD_VERSION/http/server.ts";
+ * import { serveDir } from "https://deno.land/std@$STD_VERSION/http/file_server.ts";
+ *
+ * serve((req) => {
+ *   const pathname = new URL(req.url).pathname;
+ *   if (pathname.startsWith("/static")) {
+ *     return serveDir(req, {
+ *       fsRoot: "path/to/static/files/dir",
+ *     });
+ *   }
+ *   // Do dynamic responses
+ *   return new Response();
+ * });
+ * ```
+ *
+ * Optionally you can pass `urlRoot` option. If it's specified that part is stripped from the beginning of the requested pathname.
+ *
+ * ```ts
+ * import { serveDir } from "https://deno.land/std@$STD_VERSION/http/file_server.ts";
+ *
+ * // ...
+ * serveDir(new Request("http://localhost/static/path/to/file"), {
+ *   fsRoot: "public",
+ *   urlRoot: "static",
+ * });
+ * ```
+ *
+ * The above example serves `./public/path/to/file` for the request to `/static/path/to/file`.
+ *
+ * @param request The request to handle
+ * @param opts
+ * @returns
+ */
+export async function serveDir(req: Request, opts: ServeDirOptions = {}) {
+  let response: Response;
+  const target = opts.fsRoot || ".";
+  const urlRoot = opts.urlRoot;
+
+  try {
+    let normalizedPath = normalizeURL(req.url);
+    if (urlRoot) {
+      if (normalizedPath.startsWith("/" + urlRoot)) {
+        normalizedPath = normalizedPath.replace(urlRoot, "");
+      } else {
+        throw new Deno.errors.NotFound();
+      }
     }
-    const s = strings[i] + v;
-    html += s;
+    const fsPath = posix.join(target, normalizedPath);
+
+    const fileInfo = await Deno.stat(fsPath);
+
+    if (fileInfo.isDirectory) {
+      if (opts.showDirListing) {
+        response = await serveDirIndex(req, fsPath, {
+          dotfiles: opts.showDotfiles || false,
+          target,
+        });
+      } else {
+        throw new Deno.errors.NotFound();
+      }
+    } else {
+      response = await serveFile(req, fsPath);
+    }
+  } catch (e) {
+    const err = e instanceof Error ? e : new Error("[non-error thrown]");
+    console.error(red(err.message));
+    response = await serveFallback(req, err);
   }
-  html += strings[l];
-  return html;
+
+  if (opts.enableCors) {
+    assert(response);
+    response.headers.append("access-control-allow-origin", "*");
+    response.headers.append(
+      "access-control-allow-headers",
+      "Origin, X-Requested-With, Content-Type, Accept, Range",
+    );
+  }
+
+  if (!opts.quiet) serverLog(req, response!.status);
+
+  return response!;
 }
 
 function normalizeURL(url: string): string {
@@ -586,7 +692,8 @@ function normalizeURL(url: string): string {
     //allowed per https://www.w3.org/Protocols/rfc2616/rfc2616-sec5.html
     const absoluteURI = new URL(normalizedUrl);
     normalizedUrl = absoluteURI.pathname;
-  } catch (e) { //wasn't an absoluteURI
+  } catch (e) {
+    //wasn't an absoluteURI
     if (!(e instanceof TypeError)) {
       throw e;
     }
@@ -613,97 +720,102 @@ function normalizeURL(url: string): string {
 }
 
 function main(): void {
-  const CORSEnabled = serverArgs.cors ? true : false;
-  const port = serverArgs.port ?? serverArgs.p ?? 4507;
-  const host = serverArgs.host ?? "0.0.0.0";
-  const addr = `${host}:${port}`;
-  const certFile = serverArgs.cert ?? serverArgs.c ?? "";
-  const keyFile = serverArgs.key ?? serverArgs.k ?? "";
-  const dirListingEnabled = serverArgs["dir-listing"] ?? true;
+  const serverArgs = parse(Deno.args, {
+    string: ["port", "host", "cert", "key"],
+    boolean: ["help", "dir-listing", "dotfiles", "cors", "quiet"],
+    default: {
+      "dir-listing": true,
+      dotfiles: true,
+      cors: true,
+      quiet: false,
+      host: "0.0.0.0",
+      port: "4507",
+      cert: "",
+      key: "",
+    },
+    alias: {
+      p: "port",
+      c: "cert",
+      k: "key",
+      h: "help",
+    },
+  }) as FileServerArgs;
+  const port = serverArgs.port;
+  const host = serverArgs.host;
+  const certFile = serverArgs.cert;
+  const keyFile = serverArgs.key;
+
+  if (serverArgs.help) {
+    printUsage();
+    Deno.exit();
+  }
 
   if (keyFile || certFile) {
     if (keyFile === "" || certFile === "") {
       console.log("--key and --cert are required for TLS");
-      serverArgs.h = true;
+      printUsage();
+      Deno.exit(1);
     }
   }
 
-  if (serverArgs.h ?? serverArgs.help) {
-    console.log(`Deno File Server
-    Serves a local directory in HTTP.
+  const target = posix.resolve(serverArgs._[0] ?? "");
 
-  INSTALL:
-    deno install --allow-net --allow-read https://deno.land/std/http/file_server.ts
-
-  USAGE:
-    file_server [path] [options]
-
-  OPTIONS:
-    -h, --help          Prints help information
-    -p, --port <PORT>   Set port
-    --cors              Enable CORS via the "Access-Control-Allow-Origin" header
-    --host     <HOST>   Hostname (default is 0.0.0.0)
-    -c, --cert <FILE>   TLS certificate file (enables TLS)
-    -k, --key  <FILE>   TLS key file (enables TLS)
-    --no-dir-listing    Disable directory listing
-    --no-dotfiles       Do not show dotfiles
-
-    All TLS options are required when one is provided.`);
-    Deno.exit();
-  }
-
-  const handler = async (req: Request): Promise<Response> => {
-    let response: Response;
-
-    try {
-      const normalizedUrl = normalizeURL(req.url);
-      let fsPath = posix.join(target, normalizedUrl);
-
-      if (fsPath.indexOf(target) !== 0) {
-        fsPath = target;
-      }
-
-      const fileInfo = await Deno.stat(fsPath);
-
-      if (fileInfo.isDirectory) {
-        if (dirListingEnabled) {
-          response = await serveDir(req, fsPath);
-        } else {
-          throw new Deno.errors.NotFound();
-        }
-      } else {
-        response = await serveFile(req, fsPath);
-      }
-    } catch (e) {
-      const err = e instanceof Error ? e : new Error("[non-error thrown]");
-      console.error(red(err.message));
-      response = await serveFallback(req, err);
-    }
-
-    if (CORSEnabled) {
-      assert(response!);
-      setCORS(response);
-    }
-
-    serverLog(req, response!);
-
-    return response!;
+  const handler = (req: Request): Promise<Response> => {
+    return serveDir(req, {
+      fsRoot: target,
+      showDirListing: serverArgs["dir-listing"],
+      showDotfiles: serverArgs.dotfiles,
+      enableCors: serverArgs.cors,
+      quiet: serverArgs.quiet,
+    });
   };
 
-  let proto = "http";
+  const useTls = Boolean(keyFile || certFile);
 
-  if (keyFile || certFile) {
-    proto += "s";
-    listenAndServeTls(addr, certFile, keyFile, handler);
+  if (useTls) {
+    serveTls(handler, {
+      port: Number(port),
+      hostname: host,
+      certFile,
+      keyFile,
+    });
   } else {
-    listenAndServe(addr, handler);
+    serve(handler, { port: Number(port), hostname: host });
   }
 
+  const protocol = useTls ? "https" : "http";
   console.log(
-    `${proto.toUpperCase()} server listening on ${proto}://${
-      addr.replace("0.0.0.0", "localhost")
-    }/`,
+    `${protocol.toUpperCase()} server listening on ${protocol}://${
+      host.replace(
+        "0.0.0.0",
+        "localhost",
+      )
+    }:${port}/`,
   );
+}
+
+function printUsage() {
+  console.log(`Deno File Server
+  Serves a local directory in HTTP.
+
+INSTALL:
+  deno install --allow-net --allow-read https://deno.land/std/http/file_server.ts
+
+USAGE:
+  file_server [path] [options]
+
+OPTIONS:
+  -h, --help          Prints help information
+  -p, --port <PORT>   Set port
+  --cors              Enable CORS via the "Access-Control-Allow-Origin" header
+  --host     <HOST>   Hostname (default is 0.0.0.0)
+  -c, --cert <FILE>   TLS certificate file (enables TLS)
+  -k, --key  <FILE>   TLS key file (enables TLS)
+  --no-dir-listing    Disable directory listing
+  --no-dotfiles       Do not show dotfiles
+  --quiet             Do not print request level logs
+
+  All TLS options are required when one is provided.`);
 }
 
 if (import.meta.main) {

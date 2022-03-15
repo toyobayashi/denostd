@@ -1,15 +1,51 @@
-// Copyright 2018-2021 the Deno authors. All rights reserved. MIT license.
+// Copyright 2018-2022 the Deno authors. All rights reserved. MIT license.
 // Copyright Joyent, Inc. and Node.js contributors. All rights reserved. MIT license.
-import { notImplemented } from "./_utils.ts";
+import * as DenoUnstable from "../_deno_unstable.ts";
+import { warnNotImplemented } from "./_utils.ts";
 import { EventEmitter } from "./events.ts";
-import { fromFileUrl } from "../path/mod.ts";
-import { isWindows } from "../_util/os.ts";
-import { Readable, Writable } from "./stream.ts";
-import { Buffer } from "./buffer.ts";
-import { validateString } from "./_validators.ts";
-import { ERR_INVALID_ARG_TYPE } from "./_errors.ts";
+import { validateString } from "./internal/validators.mjs";
+import { ERR_INVALID_ARG_TYPE } from "./internal/errors.ts";
 import { getOptionValue } from "./_options.ts";
 import { assert } from "../_util/assert.ts";
+import { fromFileUrl } from "../path/mod.ts";
+import {
+  arch,
+  chdir,
+  cwd,
+  env,
+  nextTick as _nextTick,
+  pid,
+  platform,
+  version,
+  versions,
+} from "./_process/process.ts";
+import { _exiting } from "./_process/exiting.ts";
+export {
+  _nextTick as nextTick,
+  arch,
+  chdir,
+  cwd,
+  env,
+  pid,
+  platform,
+  version,
+  versions,
+};
+import {
+  stderr as stderr_,
+  stdin as stdin_,
+  stdout as stdout_,
+} from "./_process/streams.mjs";
+// TODO(kt3k): Give better types to stdio objects
+// deno-lint-ignore no-explicit-any
+const stderr = stderr_ as any;
+// deno-lint-ignore no-explicit-any
+const stdin = stdin_ as any;
+// deno-lint-ignore no-explicit-any
+const stdout = stdout_ as any;
+export { stderr, stdin, stdout };
+import { getBinding } from "./internal_binding/mod.ts";
+import type { BindingName } from "./internal_binding/mod.ts";
 
 const notImplementedEvents = [
   "beforeExit",
@@ -17,22 +53,10 @@ const notImplementedEvents = [
   "message",
   "multipleResolves",
   "rejectionHandled",
-  "SIGBREAK",
-  "SIGBUS",
-  "SIGFPE",
-  "SIGHUP",
-  "SIGILL",
-  "SIGINT",
-  "SIGSEGV",
-  "SIGTERM",
-  "SIGWINCH",
   "uncaughtException",
   "uncaughtExceptionMonitor",
   "unhandledRejection",
 ];
-
-/** https://nodejs.org/api/process.html#process_process_arch */
-export const arch = Deno.build.arch;
 
 // The first 2 items are placeholders.
 // They will be overwritten by the below Object.defineProperty calls.
@@ -42,183 +66,24 @@ Object.defineProperty(argv, "0", { get: Deno.execPath });
 // Overwrites the 2st item with getter.
 Object.defineProperty(argv, "1", { get: () => fromFileUrl(Deno.mainModule) });
 
-/** https://nodejs.org/api/process.html#process_process_chdir_directory */
-export const chdir = Deno.chdir;
-
-/** https://nodejs.org/api/process.html#process_process_cwd */
-export const cwd = Deno.cwd;
-
-/**
- * https://nodejs.org/api/process.html#process_process_env
- * Requires env permissions
- */
-export const env: Record<string, string> = new Proxy({}, {
-  get(_target, prop) {
-    return Deno.env.get(String(prop));
-  },
-  ownKeys: () => Reflect.ownKeys(Deno.env.toObject()),
-  getOwnPropertyDescriptor: () => ({ enumerable: true, configurable: true }),
-  set(_target, prop, value) {
-    Deno.env.set(String(prop), String(value));
-    return value;
-  },
-});
-
 /** https://nodejs.org/api/process.html#process_process_exit_code */
-export const exit = Deno.exit;
-
-/** https://nodejs.org/api/process.html#process_process_nexttick_callback_args */
-export function nextTick(this: unknown, cb: () => void): void;
-export function nextTick<T extends Array<unknown>>(
-  this: unknown,
-  cb: (...args: T) => void,
-  ...args: T
-): void;
-export function nextTick<T extends Array<unknown>>(
-  this: unknown,
-  cb: (...args: T) => void,
-  ...args: T
-) {
-  if (args) {
-    queueMicrotask(() => cb.call(this, ...args));
-  } else {
-    queueMicrotask(cb);
+export const exit = (code?: number | string) => {
+  if (code || code === 0) {
+    if (typeof code === "string") {
+      const parsedCode = parseInt(code);
+      process.exitCode = isNaN(parsedCode) ? undefined : parsedCode;
+    } else {
+      process.exitCode = code;
+    }
   }
-}
 
-/** https://nodejs.org/api/process.html#process_process_pid */
-export const pid = Deno.pid;
+  if (!process._exiting) {
+    process._exiting = true;
+    process.emit("exit", process.exitCode || 0);
+  }
 
-/** https://nodejs.org/api/process.html#process_process_platform */
-export const platform = isWindows ? "win32" : Deno.build.os;
-
-/**
- * https://nodejs.org/api/process.html#process_process_version
- *
- * This value is hard coded to latest stable release of Node, as
- * some packages are checking it for compatibility. Previously
- * it pointed to Deno version, but that led to incompability
- * with some packages.
- */
-export const version = "v16.11.1";
-
-/**
- * https://nodejs.org/api/process.html#process_process_versions
- *
- * This value is hard coded to latest stable release of Node, as
- * some packages are checking it for compatibility. Previously
- * it contained only output of `Deno.version`, but that led to incompability
- * with some packages. Value of `v8` field is still taken from `Deno.version`.
- */
-export const versions = {
-  node: "16.11.1",
-  uv: "1.42.0",
-  zlib: "1.2.11",
-  brotli: "1.0.9",
-  ares: "1.17.2",
-  modules: "93",
-  nghttp2: "1.45.1",
-  napi: "8",
-  llhttp: "6.0.4",
-  openssl: "1.1.1l",
-  cldr: "39.0",
-  icu: "69.1",
-  tz: "2021a",
-  unicode: "13.0",
-  ...Deno.version,
+  Deno.exit(process.exitCode || 0);
 };
-
-interface _Readable extends Readable {
-  get isTTY(): true | undefined;
-  destroySoon: Readable["destroy"];
-  fd: number;
-  _isStdio: undefined;
-}
-
-interface _Writable extends Writable {
-  get isTTY(): true | undefined;
-  get columns(): number | undefined;
-  get rows(): number | undefined;
-  getWindowSize(): [columns: number, rows: number] | undefined;
-  destroySoon: Writable["destroy"];
-  fd: number;
-  _isStdio: true;
-}
-
-// https://github.com/nodejs/node/blob/00738314828074243c9a52a228ab4c68b04259ef/lib/internal/bootstrap/switches/is_main_thread.js#L41
-function createWritableStdioStream(writer: typeof Deno.stdout): _Writable {
-  const stream = new Writable({
-    write(buf: Uint8Array, enc: string, cb) {
-      writer.writeSync(buf instanceof Uint8Array ? buf : Buffer.from(buf, enc));
-      cb();
-    },
-    destroy(err, cb) {
-      cb(err);
-      this._undestroy();
-      if (!this._writableState.emitClose) {
-        queueMicrotask(() => this.emit("close"));
-      }
-    },
-  }) as _Writable;
-  stream.fd = writer.rid;
-  stream.destroySoon = stream.destroy;
-  stream._isStdio = true;
-  stream.once("close", () => writer.close());
-  Object.defineProperties(stream, {
-    columns: {
-      enumerable: true,
-      configurable: true,
-      get: () =>
-        Deno.isatty(writer.rid)
-          ? Deno.consoleSize(writer.rid).columns
-          : undefined,
-    },
-    rows: {
-      enumerable: true,
-      configurable: true,
-      get: () =>
-        Deno.isatty(writer.rid) ? Deno.consoleSize(writer.rid).rows : undefined,
-    },
-    isTTY: {
-      enumerable: true,
-      configurable: true,
-      get: () => Deno.isatty(writer.rid),
-    },
-    getWindowSize: {
-      enumerable: true,
-      configurable: true,
-      value: () =>
-        Deno.isatty(writer.rid)
-          ? Object.values(Deno.consoleSize(writer.rid))
-          : undefined,
-    },
-  });
-  return stream;
-}
-
-/** https://nodejs.org/api/process.html#process_process_stderr */
-export const stderr = createWritableStdioStream(Deno.stderr);
-
-/** https://nodejs.org/api/process.html#process_process_stdin */
-export const stdin = new Readable({
-  read(this: Readable, size: number) {
-    const p = Buffer.alloc(size || 16 * 1024);
-    const length = Deno.stdin.readSync(p);
-    this.push(length === null ? null : p.slice(0, length));
-  },
-}) as _Readable;
-stdin.on("close", () => Deno.stdin.close());
-stdin.fd = Deno.stdin.rid;
-Object.defineProperty(stdin, "isTTY", {
-  enumerable: true,
-  configurable: true,
-  get() {
-    return Deno.isatty(Deno.stdin.rid);
-  },
-});
-
-/** https://nodejs.org/api/process.html#process_process_stdout */
-export const stdout = createWritableStdioStream(Deno.stdout);
 
 function addReadOnlyProcessAlias(
   name: string,
@@ -258,6 +123,7 @@ function createWarningObject(
     warningErr.detail = detail;
   }
 
+  // @ts-ignore this function is not available in lib.dom.d.ts
   Error.captureStackTrace(warningErr, ctor || process.emitWarning);
 
   return warningErr;
@@ -332,16 +198,48 @@ export function emitWarning(
   process.nextTick(doEmitWarning, warning);
 }
 
+function hrtime(time?: [number, number]): [number, number] {
+  const milli = performance.now();
+  const sec = Math.floor(milli / 1000);
+  const nano = Math.floor(milli * 1_000_000 - sec * 1_000_000_000);
+  if (!time) {
+    return [sec, nano];
+  }
+  const [prevSec, prevNano] = time;
+  return [sec - prevSec, nano - prevNano];
+}
+
+hrtime.bigint = function (): BigInt {
+  const [sec, nano] = hrtime();
+  return BigInt(sec) * 1_000_000_000n + BigInt(nano);
+};
+
+function memoryUsage(): {
+  rss: number;
+  heapTotal: number;
+  heapUsed: number;
+  external: number;
+  arrayBuffers: number;
+} {
+  return {
+    ...Deno.memoryUsage(),
+    arrayBuffers: 0,
+  };
+}
+
+memoryUsage.rss = function (): number {
+  return memoryUsage().rss;
+};
+
 class Process extends EventEmitter {
   constructor() {
     super();
 
-    //This causes the exit event to be binded to the unload event
-    // deno-lint-ignore no-window-prefix
-    window.addEventListener("unload", () => {
-      //TODO(Soremwar)
-      //Get the exit code from the unload event
-      super.emit("exit", 0);
+    globalThis.addEventListener("unload", () => {
+      if (!process._exiting) {
+        process._exiting = true;
+        super.emit("exit", process.exitCode || 0);
+      }
     });
   }
 
@@ -357,11 +255,14 @@ class Process extends EventEmitter {
   /** https://nodejs.org/api/process.html#process_process_chdir_directory */
   chdir = chdir;
 
+  /** https://nodejs.org/api/process.html#processconfig */
+  config = {
+    target_defaults: {},
+    variables: {},
+  };
+
   /** https://nodejs.org/api/process.html#process_process_cwd */
   cwd = cwd;
-
-  /** https://nodejs.org/api/process.html#process_process_exit_code */
-  exit = exit;
 
   /**
    * https://nodejs.org/api/process.html#process_process_env
@@ -369,24 +270,71 @@ class Process extends EventEmitter {
    */
   env = env;
 
+  /** https://nodejs.org/api/process.html#process_process_execargv */
+  execArgv: string[] = [];
+
+  /** https://nodejs.org/api/process.html#process_process_exit_code */
+  exit = exit;
+
+  _exiting = _exiting;
+
+  /** https://nodejs.org/api/process.html#processexitcode_1 */
+  exitCode: undefined | number = undefined;
+
   // Typed as any to avoid importing "module" module for types
   // deno-lint-ignore no-explicit-any
   mainModule: any = undefined;
 
   /** https://nodejs.org/api/process.html#process_process_nexttick_callback_args */
-  nextTick = nextTick;
+  nextTick = _nextTick;
 
   /** https://nodejs.org/api/process.html#process_process_events */
-  //deno-lint-ignore ban-types
-  on(event: typeof notImplementedEvents[number], listener: Function): never;
-  on(event: "exit", listener: (code: number) => void): this;
-  //deno-lint-ignore no-explicit-any
-  on(event: string, listener: (...args: any[]) => void): this {
+  override on(event: "exit", listener: (code: number) => void): this;
+  // deno-lint-ignore no-explicit-any
+  override on(event: string, listener: (...args: any[]) => void): this;
+  override on(
+    event: typeof notImplementedEvents[number],
+    // deno-lint-ignore ban-types
+    listener: Function,
+  ): this;
+  // deno-lint-ignore no-explicit-any
+  override on(event: string, listener: (...args: any[]) => void): this {
     if (notImplementedEvents.includes(event)) {
-      notImplemented(`process.on("${event}")`);
+      warnNotImplemented(`process.on("${event}")`);
+    } else if (event.startsWith("SIG")) {
+      if (event === "SIGBREAK" && Deno.build.os !== "windows") {
+        // Ignores SIGBREAK if the platform is not windows.
+      } else {
+        DenoUnstable.addSignalListener(event as Deno.Signal, listener);
+      }
+    } else {
+      super.on(event, listener);
     }
 
-    super.on(event, listener);
+    return this;
+  }
+
+  override off(event: "exit", listener: (code: number) => void): this;
+  // deno-lint-ignore no-explicit-any
+  override off(event: string, listener: (...args: any[]) => void): this;
+  override off(
+    event: typeof notImplementedEvents[number],
+    // deno-lint-ignore ban-types
+    listener: Function,
+  ): this;
+  // deno-lint-ignore no-explicit-any
+  override off(event: string, listener: (...args: any[]) => void): this {
+    if (notImplementedEvents.includes(event)) {
+      warnNotImplemented(`process.off("${event}")`);
+    } else if (event.startsWith("SIG")) {
+      if (event === "SIGBREAK" && Deno.build.os !== "windows") {
+        // Ignores SIGBREAK if the platform is not windows.
+      } else {
+        DenoUnstable.removeSignalListener(event as Deno.Signal, listener);
+      }
+    } else {
+      super.off(event, listener);
+    }
 
     return this;
   }
@@ -397,20 +345,26 @@ class Process extends EventEmitter {
   /** https://nodejs.org/api/process.html#process_process_platform */
   platform = platform;
 
-  removeAllListeners(event: string): never {
-    notImplemented(`process.removeAllListeners("${event}")`);
+  // @ts-ignore `deno_std`'s types are scricter than types from DefinitelyTyped for Node.js thus causing problems
+  removeAllListeners(eventName?: string | symbol): this {
+    // @ts-ignore `deno_std`'s types are scricter than types from DefinitelyTyped for Node.js thus causing problems
+    return super.removeAllListeners(eventName);
   }
 
+  // @ts-ignore `deno_std`'s types are scricter than types from DefinitelyTyped for Node.js thus causing problems
   removeListener(
     event: typeof notImplementedEvents[number],
     //deno-lint-ignore ban-types
     listener: Function,
-  ): never;
+  ): this;
+  // @ts-ignore `deno_std`'s types are scricter than types from DefinitelyTyped for Node.js thus causing problems
   removeListener(event: "exit", listener: (code: number) => void): this;
+  // @ts-ignore `deno_std`'s types are scricter than types from DefinitelyTyped for Node.js thus causing problems
   //deno-lint-ignore no-explicit-any
   removeListener(event: string, listener: (...args: any[]) => void): this {
     if (notImplementedEvents.includes(event)) {
-      notImplemented(`process.removeListener("${event}")`);
+      warnNotImplemented(`process.removeListener("${event}")`);
+      return this;
     }
 
     super.removeListener("exit", listener);
@@ -431,16 +385,9 @@ class Process extends EventEmitter {
    * These times are relative to an arbitrary time in the past, and not related to the time of day and therefore not subject to clock drift. The primary use is for measuring performance between intervals.
    * https://nodejs.org/api/process.html#process_process_hrtime_time
    */
-  hrtime(time?: [number, number]): [number, number] {
-    const milli = performance.now();
-    const sec = Math.floor(milli / 1000);
-    const nano = Math.floor(milli * 1_000_000 - sec * 1_000_000_000);
-    if (!time) {
-      return [sec, nano];
-    }
-    const [prevSec, prevNano] = time;
-    return [sec - prevSec, nano - prevNano];
-  }
+  hrtime = hrtime;
+
+  memoryUsage = memoryUsage;
 
   /** https://nodejs.org/api/process.html#process_process_stderr */
   stderr = stderr;
@@ -459,6 +406,45 @@ class Process extends EventEmitter {
 
   /** https://nodejs.org/api/process.html#process_process_emitwarning_warning_options */
   emitWarning = emitWarning;
+
+  binding(name: BindingName) {
+    return getBinding(name);
+  }
+
+  /** https://nodejs.org/api/process.html#processumaskmask */
+  umask() {
+    // Always return the system default umask value.
+    // We don't use Deno.umask here because it has a race
+    // condition bug.
+    // See https://github.com/denoland/deno_std/issues/1893#issuecomment-1032897779
+    return 0o22;
+  }
+
+  /** https://nodejs.org/api/process.html#processgetuid */
+  getuid(): number {
+    // TODO(kt3k): return user id in mac and linux
+    return NaN;
+  }
+
+  /** https://nodejs.org/api/process.html#processgetgid */
+  getgid(): number {
+    // TODO(kt3k): return group id in mac and linux
+    return NaN;
+  }
+
+  // TODO(kt3k): Implement this when we added -e option to node compat mode
+  _eval: string | undefined = undefined;
+
+  /** https://nodejs.org/api/process.html#processexecpath */
+  get execPath() {
+    return argv[0];
+  }
+
+  #startTime = Date.now();
+  /** https://nodejs.org/api/process.html#processuptime */
+  uptime() {
+    return (Date.now() - this.#startTime) / 1000;
+  }
 }
 
 /** https://nodejs.org/api/process.html#process_process */
