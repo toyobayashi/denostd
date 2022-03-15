@@ -16,7 +16,7 @@ import * as yaml from "./std/encoding/yaml.ts";
 
 export const encoding = { ascii85, base32, base64, base64url, hex, toml, yaml };
 
-import * as fmtBytes from "./std/fmt/bytes.ts",;
+import * as fmtBytes from "./std/fmt/bytes.ts";
 import * as colors from "./std/fmt/colors.ts";
 import * as printf from "./std/fmt/printf.ts";
 export const fmt = { bytes: fmtBytes, colors, printf };
