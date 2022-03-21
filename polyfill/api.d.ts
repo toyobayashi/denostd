@@ -7,6 +7,10 @@ declare interface ReadableStream<R = any> {
   getIterator(): AsyncIterableIterator<R>
 }
 
+declare interface AbortSignal {
+  reason?: any
+}
+
 declare namespace Deno {
   export const build: {
     os: "darwin" | "linux" | "windows"

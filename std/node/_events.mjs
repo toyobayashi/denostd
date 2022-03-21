@@ -784,7 +784,7 @@ function unwrapListeners(arr) {
 /**
  * Returns a copy of the array of listeners for the event name
  * specified as `type`.
- * @param {EventEmitter | EventTarget} emitterOrTarget
+ * @param {EventEmitter} emitterOrTarget
  * @param {string | symbol} type
  * @returns {Function[]}
  */
@@ -793,24 +793,9 @@ export function getEventListeners(emitterOrTarget, type) {
   if (typeof emitterOrTarget.listeners === "function") {
     return emitterOrTarget.listeners(type);
   }
-  // Require event target lazily to avoid always loading it
-  const { isEventTarget, kEvents } = require("internal/event_target");
-  if (isEventTarget(emitterOrTarget)) {
-    const root = emitterOrTarget[kEvents].get(type);
-    const listeners = [];
-    let handler = root?.next;
-    while (handler?.listener !== undefined) {
-      const listener = handler.listener?.deref
-        ? handler.listener.deref()
-        : handler.listener;
-      listeners.push(listener);
-      handler = handler.next;
-    }
-    return listeners;
-  }
   throw new ERR_INVALID_ARG_TYPE(
     "emitter",
-    ["EventEmitter", "EventTarget"],
+    ["EventEmitter"],
     emitterOrTarget,
   );
 }

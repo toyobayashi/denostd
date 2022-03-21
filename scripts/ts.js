@@ -116,7 +116,7 @@ function compile (tsconfig, opts = {}) {
 
   compilerHost.resolveModuleNames = function (moduleNames, containingFile/* , reusedNames, redirectedReference, options */) {
 
-    const tryExt = ['.ts', '.tsx', '.d.ts', '.json', '.js', '.jsx']
+    const tryExt = ['.ts', '.tsx', '.d.ts', '.json', '.js', '.jsx', '.mjs']
     return moduleNames.map((request, index) => {
       const ext = extname(request)
       if (request[0] !== '.') {
@@ -146,9 +146,9 @@ function compile (tsconfig, opts = {}) {
 
       const targetPath = join(dirname(containingFile), request)
 
-      if ((['.ts', '.tsx']).includes(ext)) {
+      if ((['.ts', '.tsx', '.mjs']).includes(ext)) {
         return {
-          resolvedFileName: targetPath,
+          resolvedFileName: targetPath.replace(/\.mjs$/, '.d.ts'),
           isExternalLibraryImport: false
         }
       }

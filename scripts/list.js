@@ -164,21 +164,21 @@ export const isWindows = NATIVE_OS == "windows";`
   //     }
   //   ]
   // },
-  {
-    path: 'std/node/timers.ts',
-    opts: [
-      {
-        type: 'replace',
-        test: /window\./g,
-        value: 'globalThis.'
-      },
-      {
-        type: 'replace',
-        test: /(setTimeout\(cb, 0, \.\.\.args\));/g,
-        value: '$1 as any;'
-      }
-    ]
-  },
+  // {
+  //   path: 'std/node/timers.ts',
+  //   opts: [
+  //     {
+  //       type: 'replace',
+  //       test: /window\./g,
+  //       value: 'globalThis.'
+  //     },
+  //     {
+  //       type: 'replace',
+  //       test: /(setTimeout\(cb, 0, \.\.\.args\));/g,
+  //       value: '$1 as any;'
+  //     }
+  //   ]
+  // },
   // {
   //   path: 'std/node/url.ts',
   //   opts: [
@@ -239,74 +239,74 @@ export const isWindows = NATIVE_OS == "windows";`
       }
     ]
   },
-  {
-    path: 'std/node/_util/_util_promisify.ts',
-    opts: [
-      {
-        type: 'replace',
-        test: /\/\/ @ts-expect-error.*/g,
-        value: `// @ts-ignore`
-      }
-    ]
-  },
-  {
-    path: 'std/node/util.ts',
-    opts: [
-      {
-        type: 'insert',
-        line: 0,
-        value: `import * as Deno from "../../polyfill/deno.ts";`
-      }/* ,
-      {
-        type: 'replace',
-        test: /Deno\.customInspect/g,
-        value: 'Symbol("Deno.customInspect")'
-      } */
-    ]
-  },
-  {
-    path: 'std/node/assertion_error.ts',
-    opts: [
-      {
-        type: 'replace',
-        test: /return \(Deno as DenoUnstable\)\.consoleSize\?\.\(Deno\.stderr\.rid\)\.columns \?\? 80;/,
-        value: `return (${isNode} && process.stderr.isTTY) ? process.stderr.getWindowSize()[0] : 80;`
-      },
-      {
-        type: 'replace',
-        test: /Deno\.isatty\(Deno\.stderr\.rid\)/g,
-        value: `(${isNode} && process.stderr.isTTY)`
-      },
-      {
-        type: 'replace',
-        test: /Deno\.noColor/g,
-        value: `(!${isNode})`
-      },
-      {
-        type: 'replace',
-        test: /const \{ Error \} = globalThis;/g,
-        value: ''
-      }
-    ]
-  },
-  {
-    path: 'std/node/_errors.ts',
-    opts: [
-      {
-        type: 'replace',
-        test: /const \{ os \} = Deno\.build;/g,
-        value: `
-const os = typeof (globalThis as any).Deno !== 'undefined' ? (globalThis as any).Deno.build : ((${isNode}) ? (process.platform === 'win32' ? 'windows' : process.platform) : (
-  (function () {
-    if (typeof navigator === 'undefined') return 'linux';
-    if (navigator.userAgent.indexOf('Win') !== -1) return 'windows';
-    if (navigator.userAgent.indexOf('Linux') !== -1) return 'linux';
-    if (navigator.userAgent.indexOf('Mac') !== -1) return 'darwin';
-    return 'linux';
-  })()
-));
-`
-      }
-    ]
-  }
+  // {
+  //   path: 'std/node/_util/_util_promisify.ts',
+  //   opts: [
+  //     {
+  //       type: 'replace',
+  //       test: /\/\/ @ts-expect-error.*/g,
+  //       value: `// @ts-ignore`
+  //     }
+  //   ]
+  // },
+  // {
+  //   path: 'std/node/util.ts',
+  //   opts: [
+  //     {
+  //       type: 'insert',
+  //       line: 0,
+  //       value: `import * as Deno from "../../polyfill/deno.ts";`
+  //     }/* ,
+  //     {
+  //       type: 'replace',
+  //       test: /Deno\.customInspect/g,
+  //       value: 'Symbol("Deno.customInspect")'
+  //     } */
+  //   ]
+  // },
+  // {
+  //   path: 'std/node/assertion_error.ts',
+  //   opts: [
+  //     {
+  //       type: 'replace',
+  //       test: /return \(Deno as DenoUnstable\)\.consoleSize\?\.\(Deno\.stderr\.rid\)\.columns \?\? 80;/,
+  //       value: `return (${isNode} && process.stderr.isTTY) ? process.stderr.getWindowSize()[0] : 80;`
+  //     },
+  //     {
+  //       type: 'replace',
+  //       test: /Deno\.isatty\(Deno\.stderr\.rid\)/g,
+  //       value: `(${isNode} && process.stderr.isTTY)`
+  //     },
+  //     {
+  //       type: 'replace',
+  //       test: /Deno\.noColor/g,
+  //       value: `(!${isNode})`
+  //     },
+  //     {
+  //       type: 'replace',
+  //       test: /const \{ Error \} = globalThis;/g,
+  //       value: ''
+  //     }
+  //   ]
+  // },
+//   {
+//     path: 'std/node/_errors.ts',
+//     opts: [
+//       {
+//         type: 'replace',
+//         test: /const \{ os \} = Deno\.build;/g,
+//         value: `
+// const os = typeof (globalThis as any).Deno !== 'undefined' ? (globalThis as any).Deno.build : ((${isNode}) ? (process.platform === 'win32' ? 'windows' : process.platform) : (
+//   (function () {
+//     if (typeof navigator === 'undefined') return 'linux';
+//     if (navigator.userAgent.indexOf('Win') !== -1) return 'windows';
+//     if (navigator.userAgent.indexOf('Linux') !== -1) return 'linux';
+//     if (navigator.userAgent.indexOf('Mac') !== -1) return 'darwin';
+//     return 'linux';
+//   })()
+// ));
+// `
+//       }
+//     ]
+//   }
 ]

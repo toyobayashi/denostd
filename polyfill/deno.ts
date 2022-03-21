@@ -59,4 +59,14 @@ export function inspect(value: any, opts?: any): string {
   }
 }
 
+declare global {
+  interface Object {
+    hasOwn (obj: object, key: string | number | symbol): boolean
+  }
+}
+
+Object.hasOwn = Object.hasOwn || function (obj, key) {
+  return Object.prototype.hasOwnProperty.call(obj, key)
+}
+
 export { errors };

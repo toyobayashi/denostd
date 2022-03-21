@@ -12,9 +12,9 @@ import * as base64 from "./std/encoding/base64.ts";
 import * as base64url from "./std/encoding/base64url.ts";
 import * as hex from "./std/encoding/hex.ts";
 import * as toml from "./std/encoding/toml.ts";
-import * as yaml from "./std/encoding/yaml.ts";
+// import * as yaml from "./std/encoding/yaml.ts";
 
-export const encoding = { ascii85, base32, base64, base64url, hex, toml, yaml };
+export const encoding = { ascii85, base32, base64, base64url, hex, toml };
 
 import * as fmtBytes from "./std/fmt/bytes.ts";
 import * as colors from "./std/fmt/colors.ts";
@@ -30,20 +30,20 @@ import * as sha512 from "./std/hash/sha512.ts";
 
 export const hash = { fnv, md5, sha1, sha3, sha256, sha512 };
 
-import * as assert from "./std/node/assert.ts";
-import * as buffer from "./std/node/buffer.ts";
-import * as console from "./std/node/console.ts";
-import * as events from "./std/node/events.ts";
+// import * as assert from "./std/node/assert.ts";
+// import * as buffer from "./std/node/buffer.ts";
+// import * as console from "./std/node/console.ts";
+// import * as events from "./std/node/events.ts";
 import * as path from "./std/path/mod.ts";
-import * as punycode from "./std/node/punycode.ts",;
-import * as querystring from "./std/node/querystring.ts";
-import * as string_decoder from "./std/node/string_decoder.ts";
-import * as sys from "./std/node/sys.ts";
-import * as timers from "./std/node/timers.ts";
-import * as url from "./std/node/url.ts";
-import * as util from "./std/node/util.ts";
+// import * as punycode from "./std/node/punycode.ts",;
+// import * as querystring from "./std/node/querystring.ts";
+// import * as string_decoder from "./std/node/string_decoder.ts";
+// import * as sys from "./std/node/sys.ts";
+// import * as timers from "./std/node/timers.ts";
+// import * as url from "./std/node/url.ts";
+// import * as util from "./std/node/util.ts";
 
-export const node = { assert, buffer, console, events, path, punycode, querystring, string_decoder, sys, timers, url, util };
+// export const node = { assert, buffer, console, events, path, punycode, querystring, string_decoder, sys, timers, url, util };
 
 export { path };
 

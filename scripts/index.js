@@ -33,8 +33,6 @@ const browserlist = [
   ...createConfig('collections', 'filter_entries.js', 'filter_entries', 'collections.filter_entries'),
   ...createConfig('collections', 'filter_keys.js', 'filter_keys', 'collections.filter_keys'),
   ...createConfig('collections', 'filter_values.js', 'filter_values', 'collections.filter_values'),
-  ...createConfig('collections', 'find_last_index.js', 'find_last_index', 'collections.find_last_index'),
-  ...createConfig('collections', 'find_last.js', 'find_last', 'collections.find_last'),
   ...createConfig('collections', 'find_single.js', 'find_single', 'collections.find_single'),
   ...createConfig('collections', 'first_not_nullish_of.js', 'first_not_nullish_of', 'collections.first_not_nullish_of'),
   ...createConfig('collections', 'group_by.js', 'group_by', 'collections.group_by'),
@@ -71,7 +69,7 @@ const browserlist = [
   ...createConfig('encoding', 'base64url.js', 'base64url', 'encoding.base64url'),
   ...createConfig('encoding', 'hex.js', 'hex', 'encoding.hex'),
   ...createConfig('encoding', 'toml.js', 'toml', 'encoding.toml'),
-  ...createConfig('encoding', 'yaml.js', 'yaml', 'encoding.yaml'),
+  // ...createConfig('encoding', 'yaml.js', 'yaml', 'encoding.yaml'),
   ...createConfig('flags'),
   ...createConfig('fmt', 'bytes.js', 'bytes', 'fmt.bytes'),
   ...createConfig('fmt', 'printf.js', 'printf', 'fmt.printf'),
@@ -82,18 +80,18 @@ const browserlist = [
   ...createConfig('hash', 'sha3.js', 'sha3', 'hash.sha3'),
   ...createConfig('hash', 'sha256.js', 'sha256', 'hash.sha256'),
   ...createConfig('hash', 'sha512.js', 'sha512', 'hash.sha512'),
-  ...createConfig('node', 'assert.js', 'assert', 'node.assert'),
-  ...createConfig('node', 'buffer.js', 'buffer', 'node.buffer'),
-  ...createConfig('node', 'console.js', 'console', 'node.console'),
-  ...createConfig('node', 'events.js', 'events', 'node.events'),
-  ...createConfig('node', 'punycode.js', 'punycode', 'node.punycode'),
-  ...createConfig('node', 'path.js', 'path', 'node.path'),
-  ...createConfig('node', 'querystring.js', 'querystring', 'node.querystring'),
-  ...createConfig('node', 'string_decoder.js', 'string_decoder', 'node.string_decoder'),
-  ...createConfig('node', 'sys.js', 'sys', 'node.sys'),
-  ...createConfig('node', 'timers.js', 'timers', 'node.timers'),
-  ...createConfig('node', 'url.js', 'url', 'node.url'),
-  ...createConfig('node', 'util.js', 'util', 'node.util'),
+  // ...createConfig('node', 'assert.js', 'assert', 'node.assert'),
+  // ...createConfig('node', 'buffer.js', 'buffer', 'node.buffer'),
+  // ...createConfig('node', 'console.js', 'console', 'node.console'),
+  // ...createConfig('node', 'events.js', 'events', 'node.events'),
+  // ...createConfig('node', 'punycode.js', 'punycode', 'node.punycode'),
+  // ...createConfig('node', 'path.js', 'path', 'node.path'),
+  // ...createConfig('node', 'querystring.js', 'querystring', 'node.querystring'),
+  // ...createConfig('node', 'string_decoder.js', 'string_decoder', 'node.string_decoder'),
+  // ...createConfig('node', 'sys.js', 'sys', 'node.sys'),
+  // ...createConfig('node', 'timers.js', 'timers', 'node.timers'),
+  // ...createConfig('node', 'url.js', 'url', 'node.url'),
+  // ...createConfig('node', 'util.js', 'util', 'node.util'),
   ...createConfig('path'),
   ...createConfig('testing', 'asserts.js', 'asserts', 'testing.asserts'),
   ...createConfig('testing', 'bench.js', 'bench', 'testing.bench'),
@@ -132,8 +130,6 @@ function extractApis () {
   extractApi('collections', 'filter_entries', 'filter_entries', 'collections.filter_entries'),
   extractApi('collections', 'filter_keys', 'filter_keys', 'collections.filter_keys'),
   extractApi('collections', 'filter_values', 'filter_values', 'collections.filter_values'),
-  extractApi('collections', 'find_last_index', 'find_last_index', 'collections.find_last_index'),
-  extractApi('collections', 'find_last', 'find_last', 'collections.find_last'),
   extractApi('collections', 'find_single', 'find_single', 'collections.find_single'),
   extractApi('collections', 'first_not_nullish_of', 'first_not_nullish_of', 'collections.first_not_nullish_of'),
   extractApi('collections', 'group_by', 'group_by', 'collections.group_by'),
@@ -170,7 +166,7 @@ function extractApis () {
   extractApi('encoding', 'base64url', 'base64url', 'encoding.base64url')
   extractApi('encoding', 'hex', 'hex', 'encoding.hex')
   extractApi('encoding', 'toml', 'toml', 'encoding.toml')
-  extractApi('encoding', 'yaml', 'yaml', 'encoding.yaml')
+  // extractApi('encoding', 'yaml', 'yaml', 'encoding.yaml')
   extractApi('flags')
   extractApi('fmt', 'bytes', 'bytes', 'fmt.bytes')
   extractApi('fmt', 'printf', 'printf', 'fmt.printf')
@@ -182,37 +178,37 @@ function extractApis () {
   extractApi('hash', 'sha256', 'sha256', 'hash.sha256')
   extractApi('hash', 'sha512', 'sha512', 'hash.sha512')
 
-  extractApi('node', 'assert', 'assert', 'node.assert')
-  extractApi('node', 'buffer', 'buffer', 'node.buffer')
-  // writeFileSync(getPath(outputPrefix, 'node/buffer.d.ts'), readFileSync(getPath(outputPrefix, 'node/buffer.d.ts'), 'utf8') + `${EOL}declare const Buffer: typeof denostd.node.buffer.Buffer;${EOL}`, 'utf8')
-  const globalBuffer = `declare type _Buffer = typeof Buffer;
-declare global {
-    export const Buffer: _Buffer;
-}
-`
-  writeFileSync(getPath('dist/cjs-modern/std/node/buffer.d.ts'), readFileSync(getPath('dist/cjs-modern/std/node/buffer.d.ts'), 'utf8') + `${EOL}${globalBuffer}`, 'utf8')
-  writeFileSync(getPath('dist/esm/std/node/buffer.d.ts'), readFileSync(getPath('dist/esm/std/node/buffer.d.ts'), 'utf8') + `${EOL}${globalBuffer}`, 'utf8')
-  writeFileSync(getPath('dist/esm-modern/std/node/buffer.d.ts'), readFileSync(getPath('dist/esm-modern/std/node/buffer.d.ts'), 'utf8') + `${EOL}${globalBuffer}`, 'utf8')
+//   extractApi('node', 'assert', 'assert', 'node.assert')
+//   extractApi('node', 'buffer', 'buffer', 'node.buffer')
+//   // writeFileSync(getPath(outputPrefix, 'node/buffer.d.ts'), readFileSync(getPath(outputPrefix, 'node/buffer.d.ts'), 'utf8') + `${EOL}declare const Buffer: typeof denostd.node.buffer.Buffer;${EOL}`, 'utf8')
+//   const globalBuffer = `declare type _Buffer = typeof Buffer;
+// declare global {
+//     export const Buffer: _Buffer;
+// }
+// `
+//   writeFileSync(getPath('dist/cjs-modern/std/node/buffer.d.ts'), readFileSync(getPath('dist/cjs-modern/std/node/buffer.d.ts'), 'utf8') + `${EOL}${globalBuffer}`, 'utf8')
+//   writeFileSync(getPath('dist/esm/std/node/buffer.d.ts'), readFileSync(getPath('dist/esm/std/node/buffer.d.ts'), 'utf8') + `${EOL}${globalBuffer}`, 'utf8')
+//   writeFileSync(getPath('dist/esm-modern/std/node/buffer.d.ts'), readFileSync(getPath('dist/esm-modern/std/node/buffer.d.ts'), 'utf8') + `${EOL}${globalBuffer}`, 'utf8')
 
-  const consoledts = readFileSync(getPath('dist/esm/std/node/console.d.ts'), 'utf8')
-  const consoledtsChanged = consoledts
-    .replace(/export default console;/, `declare const _default: typeof console;
-export default _default;`)
-    .replace(/import\("util"\)\.InspectOptions/, 'NodeJS.InspectOptions')
-  writeFileSync(getPath('dist/esm/std/node/console.d.ts'), consoledtsChanged, 'utf8')
-  extractApi('node', 'console', 'console', 'node.console')
-  writeFileSync(getPath('dist/esm/std/node/console.d.ts'), consoledts, 'utf8')
+//   const consoledts = readFileSync(getPath('dist/esm/std/node/console.d.ts'), 'utf8')
+//   const consoledtsChanged = consoledts
+//     .replace(/export default console;/, `declare const _default: typeof console;
+// export default _default;`)
+//     .replace(/import\("util"\)\.InspectOptions/, 'NodeJS.InspectOptions')
+//   writeFileSync(getPath('dist/esm/std/node/console.d.ts'), consoledtsChanged, 'utf8')
+//   extractApi('node', 'console', 'console', 'node.console')
+//   writeFileSync(getPath('dist/esm/std/node/console.d.ts'), consoledts, 'utf8')
 
-  extractApi('node', 'events', 'events', 'node.events')
+//   extractApi('node', 'events', 'events', 'node.events')
 
-  extractApi('node', 'path', 'path', 'node.path')
-  extractApi('node', 'punycode', 'punycode', 'node.punycode')
-  extractApi('node', 'querystring', 'querystring', 'node.querystring')
-  extractApi('node', 'string_decoder', 'string_decoder', 'node.string_decoder')
-  extractApi('node', 'timers', 'timers', 'node.timers')
-  extractApi('node', 'url', 'url', 'node.url')
+//   extractApi('node', 'path', 'path', 'node.path')
+//   extractApi('node', 'punycode', 'punycode', 'node.punycode')
+//   extractApi('node', 'querystring', 'querystring', 'node.querystring')
+//   extractApi('node', 'string_decoder', 'string_decoder', 'node.string_decoder')
+//   extractApi('node', 'timers', 'timers', 'node.timers')
+//   extractApi('node', 'url', 'url', 'node.url')
 
-  extractApi('node', 'util', 'util', 'node.util')
+//   extractApi('node', 'util', 'util', 'node.util')
   /* const dtspath = getPath('dist/esm/std/node/util.d.ts')
   const utildts = readFileSync(dtspath, 'utf8')
   let newCode = utildts.replace(/import\("\.\/_utils"\)\._Text(\S{2})coder/g, 'typeof globalThis.Text$1coder.prototype')
@@ -226,14 +222,14 @@ export default _default;`)
   writeFileSync(dtspath, utildts, 'utf8') */
 
   extractApi('path')
-  const dest = getPath(outputPrefix, 'node/path.d.ts')
-  const dest2 = getPath(outputPrefix, 'node/path.global.d.ts')
-  copyFileSync(getPath(outputPrefix, 'path/path.d.ts'), dest)
-  copyFileSync(getPath(outputPrefix, 'path/path.global.d.ts'), dest2)
-  const code = readFileSync(dest2, 'utf8').split(/\r?\n/)
-  code.splice(1, 0, 'export namespace node {')
-  code.push('}')
-  writeFileSync(dest2, code.join(EOL), 'utf8')
+  // const dest = getPath(outputPrefix, 'node/path.d.ts')
+  // const dest2 = getPath(outputPrefix, 'node/path.global.d.ts')
+  // copyFileSync(getPath(outputPrefix, 'path/path.d.ts'), dest)
+  // copyFileSync(getPath(outputPrefix, 'path/path.global.d.ts'), dest2)
+  // const code = readFileSync(dest2, 'utf8').split(/\r?\n/)
+  // code.splice(1, 0, 'export namespace node {')
+  // code.push('}')
+  // writeFileSync(dest2, code.join(EOL), 'utf8')
 
   extractApi('testing', 'asserts', 'asserts', 'testing.asserts')
   extractApi('testing', 'bench', 'bench', 'testing.bench')
@@ -264,8 +260,8 @@ async function main () {
 
     console.log('Output dist/esm ...')
     compile(getPath('tsconfig.esm.json'))
-    replaceBufferConstructor(getPath('dist/cjs/std/node/buffer.js'))
-    replaceBufferConstructor(getPath('dist/esm/std/node/buffer.js'))
+    // replaceBufferConstructor(getPath('dist/cjs/std/node/buffer.js'))
+    // replaceBufferConstructor(getPath('dist/esm/std/node/buffer.js'))
 
     console.log('Output dist/esm-modern ...')
     compile(getPath('tsconfig.modern.json'))
