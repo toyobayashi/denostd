@@ -48,13 +48,10 @@ Standalone:
 
 ``` html
 <script src="https://cdn.jsdelivr.net/npm/@tybys/denostd/dist/umd/fmt/printf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tybys/denostd/dist/umd/node/buffer.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tybys/denostd/dist/umd/node/events.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tybys/denostd/dist/umd/node/path.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tybys/denostd/dist/umd/async/async.min.js"></script>
 <script>
 console.log(denostd.fmt);
-console.log(denostd.node);
-console.log(denostd.node.buffer.Buffer);
+console.log(denostd.async);
 </script>
 ```
 
@@ -62,10 +59,9 @@ ES Module:
 
 ``` html
 <script type="module">
-import { hash, node } from "https://cdn.jsdelivr.net/npm/@tybys/denostd/dist/esm-modern/index.js";
-const md5 = new hash.md5.Md5();
-const buffer = node.buffer.Buffer.from(md5.digest());
-console.log(buffer.toString('hex'));
+import { async } from "https://cdn.jsdelivr.net/npm/@tybys/denostd/dist/esm-modern/index.js";
+const d = async.deferred();
+console.log(d instanceof Promise);
 </script>
 ```
 
