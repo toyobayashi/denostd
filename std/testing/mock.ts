@@ -800,7 +800,7 @@ export function returnsNext<
     const { value } = next;
     if (value instanceof Error) throw value;
     return value;
-  };
+  } as any;
 }
 
 /** Creates a function that resolves the awaited iterable values. Any awaited iterable values that are errors will be thrown. */
@@ -828,5 +828,5 @@ export function resolvesNext<
     const { value } = next;
     if (value instanceof Error) throw value;
     return value;
-  };
+  } as any;
 }

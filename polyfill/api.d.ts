@@ -18,6 +18,8 @@ declare namespace Deno {
 
   export function inspect (v: any, options?: any): string
 
+  export function test (_options: any): void
+
   export namespace errors {
     export class NotFound extends Error {
       constructor(msg?: string)
@@ -94,6 +96,43 @@ declare namespace Deno {
     export class NotSupported extends Error {
       constructor(msg?: string)
     }
+  }
+
+  export interface TestContext {
+    step(t: TestStepDefinition): Promise<boolean>;
+    step(name: string, fn: (t: TestContext) => void | Promise<void>): Promise<boolean>;
+  }
+
+  export interface TestStepDefinition {
+    fn: (t: TestContext) => void | Promise<void>;
+    ignore?: boolean;
+    name: string;
+    sanitizeExit?: boolean;
+    sanitizeOps?: boolean;
+    sanitizeResources?: boolean;
+  }
+
+  export type PermissionOptions = "inherit" | "none" | PermissionOptionsObject;
+
+  export interface PermissionOptionsObject {
+    env?: "inherit" | boolean | string[];
+    ffi?: "inherit" | boolean | Array<string | URL>;
+    hrtime?: "inherit" | boolean;
+    net?: "inherit" | boolean | string[];
+    read?: "inherit" | boolean | Array<string | URL>;
+    run?: "inherit" | boolean | Array<string | URL>;
+    write?: "inherit" | boolean | Array<string | URL>;
+  }
+
+  export interface TestDefinition {
+    fn: (t: TestContext) => void | Promise<void>;
+    ignore?: boolean;
+    name: string;
+    only?: boolean;
+    permissions?: PermissionOptions;
+    sanitizeExit?: boolean;
+    sanitizeOps?: boolean;
+    sanitizeResources?: boolean;
   }
 }
 

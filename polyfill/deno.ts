@@ -70,3 +70,5 @@ Object.hasOwn = Object.hasOwn || function (obj, key) {
 }
 
 export { errors };
+
+export function test (_options: any) {}

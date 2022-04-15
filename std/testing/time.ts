@@ -181,9 +181,13 @@ function setTimer(
 
 function overrideGlobals(): void {
   globalThis.Date = FakeDate as DateConstructor;
+  // @ts-expect-error
   globalThis.setTimeout = fakeSetTimeout;
+  // @ts-expect-error
   globalThis.clearTimeout = fakeClearTimeout;
+  // @ts-expect-error
   globalThis.setInterval = fakeSetInterval;
+  // @ts-expect-error
   globalThis.clearInterval = fakeClearInterval;
 }
 
@@ -283,7 +287,7 @@ export class FakeTime {
     advanceIntervalId = advanceRate > 0
       ? _internals.setInterval.call(null, () => {
         this.tick(advanceRate * advanceFrequency);
-      }, advanceFrequency)
+      }, advanceFrequency) as any
       : undefined;
   }
 
@@ -380,7 +384,7 @@ export class FakeTime {
         resolve();
       };
       FakeTime.restoreFor(() => setTimeout(done, ms))
-        .then((id) => timer = id);
+        .then((id) => timer = (id as any));
       signal?.addEventListener("abort", abort, { once: true });
     });
   }
