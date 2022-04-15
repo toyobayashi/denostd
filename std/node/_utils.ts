@@ -18,7 +18,7 @@ export type TextEncodings =
 
 export type Encodings = BinaryEncodings | TextEncodings;
 
-export function notImplemented(msg?: string): never {
+export function notImplemented(msg: string): never {
   const message = msg ? `Not implemented: ${msg}` : "Not implemented";
   throw new Error(message);
 }
@@ -226,29 +226,29 @@ export async function assertCallbackErrorUncaught(
 ) {
   // Since the error has to be uncaught, and that will kill the Deno process,
   // the only way to test this is to spawn a subprocess.
-  // const p = Deno.run({
-  //   cmd: [
-  //     Deno.execPath(),
-  //     "eval",
-  //     "--no-check", // Running TSC for every one of these tests would take way too long
-  //     "--unstable",
-  //     `${prelude ?? ""}
+  const p = Deno.run({
+    cmd: [
+      Deno.execPath(),
+      "eval",
+      "--no-check", // Running TSC for every one of these tests would take way too long
+      "--unstable",
+      `${prelude ?? ""}
 
-  //     ${invocation}(err) => {
-  //       // If the bug is present and the callback is called again with an error,
-  //       // don't throw another error, so if the subprocess fails we know it had the correct behaviour.
-  //       if (!err) throw new Error("success");
-  //     });`,
-  //   ],
-  //   stderr: "piped",
-  // });
-  // const status = await p.status();
-  // const stderr = new TextDecoder().decode(await readAll(p.stderr));
-  // p.close();
-  // p.stderr.close();
-  // await cleanup?.();
-  // assert(!status.success);
-  // assertStringIncludes(stderr, "Error: success");
+      ${invocation}(err) => {
+        // If the bug is present and the callback is called again with an error,
+        // don't throw another error, so if the subprocess fails we know it had the correct behaviour.
+        if (!err) throw new Error("success");
+      });`,
+    ],
+    stderr: "piped",
+  });
+  const status = await p.status();
+  const stderr = new TextDecoder().decode(await readAll(p.stderr));
+  p.close();
+  p.stderr.close();
+  await cleanup?.();
+  assert(!status.success);
+  assertStringIncludes(stderr, "Error: success");
 }
 
 export function makeMethodsEnumerable(klass: { new (): unknown }): void {

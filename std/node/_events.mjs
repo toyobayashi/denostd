@@ -95,7 +95,6 @@ EventEmitter.prototype._maxListeners = undefined;
 // By default EventEmitters will print a warning if more than 10 listeners are
 // added to it. This is a useful default which helps finding memory leaks.
 export let defaultMaxListeners = 10;
-let isEventTarget;
 
 function checkListener(listener) {
   validateFunction(listener, "listener");
@@ -149,13 +148,9 @@ EventEmitter.setMaxListeners = function (
   if (eventTargets.length === 0) {
     defaultMaxListeners = n;
   } else {
-    if (isEventTarget === undefined) {
-      isEventTarget = require("internal/event_target").isEventTarget;
-    }
-
     for (let i = 0; i < eventTargets.length; i++) {
       const target = eventTargets[i];
-      if (isEventTarget(target)) {
+      if (target instanceof EventTarget) {
         target[kMaxEventTargetListeners] = n;
         target[kMaxEventTargetListenersWarned] = false;
       } else if (typeof target.setMaxListeners === "function") {
@@ -784,7 +779,7 @@ function unwrapListeners(arr) {
 /**
  * Returns a copy of the array of listeners for the event name
  * specified as `type`.
- * @param {EventEmitter} emitterOrTarget
+ * @param {EventEmitter | EventTarget} emitterOrTarget
  * @param {string | symbol} type
  * @returns {Function[]}
  */
@@ -793,9 +788,22 @@ export function getEventListeners(emitterOrTarget, type) {
   if (typeof emitterOrTarget.listeners === "function") {
     return emitterOrTarget.listeners(type);
   }
+  if (emitterOrTarget instanceof EventTarget) {
+    const root = emitterOrTarget[kEvents].get(type);
+    const listeners = [];
+    let handler = root?.next;
+    while (handler?.listener !== undefined) {
+      const listener = handler.listener?.deref
+        ? handler.listener.deref()
+        : handler.listener;
+      listeners.push(listener);
+      handler = handler.next;
+    }
+    return listeners;
+  }
   throw new ERR_INVALID_ARG_TYPE(
     "emitter",
-    ["EventEmitter"],
+    ["EventEmitter", "EventTarget"],
     emitterOrTarget,
   );
 }
